@@ -12,13 +12,20 @@ import { getReceita } from '../services/financeiroService';
 import { listReservations } from '../services/reservationsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import MareStat from '../components/shared/MareStat';
+import DicaGrafico from '../components/financial/DicaGrafico';
 import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { useT } from '../i18n';
 import { formatarData, formatarNumero, useLingua } from '../utils/formatoLingua';
 import { MES_CHAVE, rotuloMes } from '../utils/rotuloMes';
+
+/* Estilo Mare: cartao de pagina, titulo de cartao e algarismos alinhados */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+const NUM = 'font-mono tabular-nums';
+const CAIXA = 'bg-mare-head rounded-[14px] p-4';
 
 /* ── helpers ── */
 
@@ -39,14 +46,15 @@ function ChartTooltip({ active, payload, label }) {
   useLingua();
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-n-200 rounded-sm shadow-sm px-3 py-2 text-xs font-body">
+    <DicaGrafico>
       <p className="font-semibold text-n-700 mb-1">{label}</p>
       {payload.map(p => (
-        <p key={p.dataKey} style={{ color: p.color }}>
-          {p.name}: €{formatarNumero(Math.round(p.value))}
+        <p key={p.dataKey} className="flex items-center gap-1.5 text-n-700">
+          <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
+          <span className={NUM}>{p.name}: €{formatarNumero(Math.round(p.value))}</span>
         </p>
       ))}
-    </div>
+    </DicaGrafico>
   );
 }
 
@@ -54,13 +62,13 @@ function ChartTooltip({ active, payload, label }) {
 function SuggestionCard({ type, month, text }) {
   const isHigh = type === 'high';
   return (
-    <div className={`flex items-start gap-3 px-4 py-3 rounded-md border ${
+    <div className={`flex items-start gap-3 px-4 py-3 rounded-[14px] border ${
       isHigh ? 'bg-[var(--success-light)] border-[var(--success)]' : 'bg-ocean-50 border-ocean-200'
     }`}>
       {isHigh
         ? <TrendingUp size={15} strokeWidth={1.75} className="text-[var(--success)] shrink-0 mt-0.5" />
         : <Gift size={15} strokeWidth={1.75} className="text-ocean-700 shrink-0 mt-0.5" />}
-      <p className={`text-xs font-body ${isHigh ? 'text-[var(--success)]' : 'text-ocean-700'}`}>{text}</p>
+      <p className={`text-[13px] font-body ${isHigh ? 'text-[var(--success)]' : 'text-ocean-700'}`}>{text}</p>
     </div>
   );
 }
@@ -185,53 +193,33 @@ export default function Demand() {
       <PageHeader
         title={t('demand.title')}
         subtitle={t('demand.subtitle')}
+        eyebrow={t('nav.sections.gestao')}
         actions={
-          <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
+          <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading} className="min-h-11 md:min-h-0">
             {t('demand.refresh')}
           </Button>
         }
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        {[
-          {
-            label:  t('demand.revenueYtd', { year: yr }),
-            value:  `€${formatarNumero(Math.round(curTotal))}`,
-            color:  'text-ocean-700',
-            icon:   TrendingUp,
-          },
-          {
-            label:  t('demand.vsLastYear'),
-            value:  yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—',
-            color:  yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]',
-            icon:   yoyDelta == null ? Minus : yoyDelta >= 0 ? TrendingUp : TrendingDown,
-          },
-          {
-            label:  t('demand.bestMonth'),
-            value:  bestMonth?.curValue > 0 ? bestMonth.name : '—',
-            color:  'text-[var(--success)]',
-            icon:   BarChart2,
-          },
-          {
-            label:  t('demand.next30'),
-            value:  next30Res.length,
-            color:  'text-n-900',
-            icon:   Calendar,
-          },
-        ].map(m => (
-          <Card key={m.label} padding="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-                <m.icon size={16} strokeWidth={1.75} className="text-ocean-700" />
-              </div>
-              <div>
-                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-                <p className="text-xs font-body text-n-500">{m.label}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <MareStat
+          icon={TrendingUp}
+          label={t('demand.revenueYtd', { year: yr })}
+          value={`€${formatarNumero(Math.round(curTotal))}`}
+        />
+        <MareStat
+          icon={yoyDelta == null ? Minus : yoyDelta >= 0 ? TrendingUp : TrendingDown}
+          tone={yoyDelta == null ? 'default' : yoyDelta >= 0 ? 'bom' : 'aviso'}
+          label={t('demand.vsLastYear')}
+          value={yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—'}
+        />
+        <MareStat
+          icon={BarChart2}
+          label={t('demand.bestMonth')}
+          value={bestMonth?.curValue > 0 ? bestMonth.name : '—'}
+        />
+        <MareStat icon={Calendar} label={t('demand.next30')} value={next30Res.length} />
       </div>
 
       {/* Tabs */}
@@ -244,84 +232,80 @@ export default function Demand() {
       ) : activeTab === 'historico' ? (
         <div className="space-y-5">
           {/* Monthly bar + line chart */}
-          <Card
-            header={
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-semibold text-sm text-n-700">{t('demand.monthlyChart')}</h3>
-                <span className="text-xs font-mono text-n-400">{py} vs {yr}</span>
-              </div>
-            }
-            padding="px-5 pb-5 pt-2"
-          >
+          <section className={CARTAO}>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <h3 className={TITULO}>{t('demand.monthlyChart')}</h3>
+              <span className={`text-xs text-n-500 ${NUM}`}>{py} vs {yr}</span>
+            </div>
             {chartData.every(d => d.curValue === 0 && d.prevValue === 0) ? (
               <EmptyState icon={BarChart2} title={t('demand.noFinancialData')} />
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false}
+                  <CartesianGrid stroke="var(--n200)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 12, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false}
                     tickFormatter={v => v > 999 ? `€${Math.round(v / 1000)}k` : `€${v}`} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
+                  <Legend wrapperStyle={{ fontSize: 12, fontFamily: 'DM Mono' }} />
                   {average > 0 && (
                     <ReferenceLine y={average} stroke="var(--sand-500)" strokeDasharray="4 4"
-                      label={{ value: t('demand.average'), position: 'insideTopRight', fontSize: 10, fill: 'var(--sand-500)', fontFamily: 'DM Mono' }} />
+                      label={{ value: t('demand.average'), position: 'insideTopRight', fontSize: 12, fill: 'var(--n700)', fontFamily: 'DM Mono' }} />
                   )}
-                  <Bar dataKey="prevValue" name={String(py)} fill="var(--n200)" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="curValue"  name={String(yr)} fill="var(--ocean-400)" radius={[2, 2, 0, 0]}>
+                  <Bar dataKey="prevValue" name={String(py)} fill="var(--n400)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="curValue"  name={String(yr)} fill="var(--ocean-500)" radius={[4, 4, 0, 0]}>
                     {chartData.map((d, i) => (
                       <Cell key={i} fill={
-                        highMonths.some(h => h.name === d.name)  ? 'var(--success)' :
+                        highMonths.some(h => h.name === d.name)  ? 'var(--sand-500)' :
                         lowMonths.some(l => l.name === d.name)   ? 'var(--ocean-700)' :
-                        'var(--ocean-400)'
+                        'var(--ocean-500)'
                       } />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </Card>
+          </section>
 
           {/* Season indicators */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.highSeasons')}</h3>
+            <section className={CARTAO}>
+              <h3 className={`${TITULO} mb-3`}>{t('demand.highSeasons')}</h3>
               {highMonths.length === 0 ? (
-                <p className="text-xs font-body text-n-400">{t('demand.noHighSeasons')}</p>
+                <p className="text-[13px] font-body text-n-600">{t('demand.noHighSeasons')}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {highMonths.map(m => (
-                    <span key={m.name} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-light)] border border-[var(--success)] rounded-sm text-xs font-body font-semibold text-[var(--success)]">
+                    <span key={m.name} className={`flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-light)] border border-[var(--success)] rounded-full text-xs font-semibold text-[var(--success)] ${NUM}`}>
                       <TrendingUp size={11} strokeWidth={2} />
                       {m.name} · €{formatarNumero(Math.round(m.curValue))}
                     </span>
                   ))}
                 </div>
               )}
-            </Card>
-            <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.lowSeasons')}</h3>
+            </section>
+            <section className={CARTAO}>
+              <h3 className={`${TITULO} mb-3`}>{t('demand.lowSeasons')}</h3>
               {lowMonths.length === 0 ? (
-                <p className="text-xs font-body text-n-400">{t('demand.noLowSeasons')}</p>
+                <p className="text-[13px] font-body text-n-600">{t('demand.noLowSeasons')}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {lowMonths.map(m => (
-                    <span key={m.name} className="flex items-center gap-1.5 px-3 py-1.5 bg-ocean-50 border border-ocean-200 rounded-sm text-xs font-body font-semibold text-ocean-700">
+                    <span key={m.name} className={`flex items-center gap-1.5 px-3 py-1.5 bg-ocean-50 border border-ocean-200 rounded-full text-xs font-semibold text-ocean-700 ${NUM}`}>
                       <TrendingDown size={11} strokeWidth={2} />
                       {m.name} · €{formatarNumero(Math.round(m.curValue))}
                     </span>
                   ))}
                 </div>
               )}
-            </Card>
+            </section>
           </div>
         </div>
 
       ) : activeTab === 'proximo30' ? (
         <div className="space-y-5">
-          <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">
+          <section className={CARTAO}>
+            <h3 className={`${TITULO} mb-4`}>
               {t('demand.confirmedNext30')}
             </h3>
             {next30Res.length === 0 ? (
@@ -338,21 +322,21 @@ export default function Demand() {
                     const intensity = maxDayCount > 0 ? count / maxDayCount : 0;
                     return (
                       <div key={date} title={t('demand.dayTitle', { day: dayNum, month: monthAbbr, n: count })}
-                        className={`rounded-sm p-1.5 flex flex-col items-center gap-0.5 border cursor-default ${
+                        className={`rounded-[10px] p-1.5 flex flex-col items-center gap-0.5 border cursor-default ${
                           isToday
                             ? 'border-ocean-700 bg-ocean-700'
                             : isHigh
                             ? 'border-[var(--success)] bg-[var(--success-light)]'
                             : count > 0
                             ? 'border-ocean-200 bg-ocean-50'
-                            : 'border-n-100 bg-white'
+                            : 'border-mare-card bg-white'
                         }`}>
-                        <span className={`text-[9px] font-mono ${isToday ? 'text-white' : 'text-n-400'}`}>{monthAbbr}</span>
-                        <span className={`text-xs font-display font-bold ${isToday ? 'text-white' : isHigh ? 'text-[var(--success)]' : count > 0 ? 'text-ocean-700' : 'text-n-400'}`}>
+                        <span className={`text-[10px] ${NUM} ${isToday ? 'text-white' : 'text-n-500'}`}>{monthAbbr}</span>
+                        <span className={`text-xs font-bold ${NUM} ${isToday ? 'text-white' : isHigh ? 'text-[var(--success)]' : count > 0 ? 'text-ocean-700' : 'text-n-500'}`}>
                           {dayNum}
                         </span>
                         {count > 0 && (
-                          <span className={`text-[9px] font-mono font-semibold ${isToday ? 'text-ocean-200' : isHigh ? 'text-[var(--success)]' : 'text-ocean-500'}`}>
+                          <span className={`text-[10px] font-semibold ${NUM} ${isToday ? 'text-ocean-100' : isHigh ? 'text-[var(--success)]' : 'text-ocean-700'}`}>
                             {count}
                           </span>
                         )}
@@ -360,19 +344,19 @@ export default function Demand() {
                     );
                   })}
                 </div>
-                <div className="flex items-center gap-4 text-[10px] font-mono text-n-400">
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[var(--success)] rounded-xs" /> {t('demand.highDemand')}</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-ocean-100 rounded-xs border border-ocean-200" /> {t('demand.bookings')}</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-white rounded-xs border border-n-200" /> {t('demand.free')}</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-body text-n-600">
+                  <span className="flex items-center gap-1.5"><span aria-hidden="true" className="w-3 h-3 bg-[var(--success-light)] rounded-[4px] border border-[var(--success)]" /> {t('demand.highDemand')}</span>
+                  <span className="flex items-center gap-1.5"><span aria-hidden="true" className="w-3 h-3 bg-ocean-50 rounded-[4px] border border-ocean-200" /> {t('demand.bookings')}</span>
+                  <span className="flex items-center gap-1.5"><span aria-hidden="true" className="w-3 h-3 bg-white rounded-[4px] border border-n-300" /> {t('demand.free')}</span>
                 </div>
               </>
             )}
-          </Card>
+          </section>
 
           {/* Top busy days */}
           {next30Res.length > 0 && (
-            <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.busiestDays')}</h3>
+            <section className={CARTAO}>
+              <h3 className={`${TITULO} mb-3`}>{t('demand.busiestDays')}</h3>
               <div className="space-y-2">
                 {next30Days
                   .filter(d => d.count > 0)
@@ -380,27 +364,27 @@ export default function Demand() {
                   .slice(0, 5)
                   .map(({ date, count }) => (
                     <div key={date} className="flex items-center gap-3">
-                      <span className="text-xs font-mono text-n-500 w-28 shrink-0">
+                      <span className={`text-xs text-n-600 w-28 shrink-0 ${NUM}`}>
                         {formatarData(new Date(date + 'T00:00:00Z'), { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
                       </span>
                       <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
                         <div className="h-full rounded-full bg-ocean-500 transition-all"
                           style={{ width: `${(count / maxDayCount) * 100}%` }} />
                       </div>
-                      <span className="text-xs font-mono font-semibold text-ocean-700 w-24 text-right shrink-0 whitespace-nowrap">
+                      <span className={`text-xs font-semibold text-ocean-700 w-24 text-right shrink-0 whitespace-nowrap ${NUM}`}>
                         {t('demand.bookingsCount', { n: count })}
                       </span>
                     </div>
                   ))}
               </div>
-            </Card>
+            </section>
           )}
         </div>
 
       ) : activeTab === 'sugestoes' ? (
         <div className="space-y-4">
-          <div className="px-4 py-3 bg-ocean-50 border border-ocean-100 rounded-sm">
-            <p className="text-xs font-body text-ocean-700">
+          <div className="px-4 py-3 bg-mare-head border border-mare-card rounded-[14px]">
+            <p className="text-[13px] font-body text-ocean-800">
               <span className="font-semibold">{t('demand.suggestionsIntroBold')}</span>{t('demand.suggestionsIntro')}
             </p>
           </div>
@@ -408,29 +392,29 @@ export default function Demand() {
             <SuggestionCard key={i} type={s.type} text={s.text} />
           ))}
           {bestMonth?.curValue > 0 && (
-            <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.yearComparison')}</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <p className="text-xs font-body text-n-500">{t('demand.revenueYear', { year: yr })}</p>
-                  <p className="font-display font-bold text-lg text-ocean-700">
+            <section className={CARTAO}>
+              <h3 className={`${TITULO} mb-3`}>{t('demand.yearComparison')}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className={CAIXA}>
+                  <p className="text-[13px] font-body font-semibold text-n-600">{t('demand.revenueYear', { year: yr })}</p>
+                  <p className={`text-lg font-bold text-ocean-900 ${NUM}`}>
                     €{formatarNumero(Math.round(curTotal))}
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs font-body text-n-500">{t('demand.revenueYear', { year: py })}</p>
-                  <p className="font-display font-bold text-lg text-n-600">
+                <div className={CAIXA}>
+                  <p className="text-[13px] font-body font-semibold text-n-600">{t('demand.revenueYear', { year: py })}</p>
+                  <p className={`text-lg font-bold text-ocean-900 ${NUM}`}>
                     €{formatarNumero(Math.round(prevTotal))}
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs font-body text-n-500">{t('demand.change')}</p>
-                  <p className={`font-display font-bold text-lg ${yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
+                <div className={CAIXA}>
+                  <p className="text-[13px] font-body font-semibold text-n-600">{t('demand.change')}</p>
+                  <p className={`text-lg font-bold text-ocean-900 ${NUM}`}>
                     {yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—'}
                   </p>
                 </div>
               </div>
-            </Card>
+            </section>
           )}
         </div>
       ) : null}

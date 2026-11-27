@@ -8,6 +8,7 @@ import { getResumo, getUnidades } from '../services/financeiroService';
 import { listUnits } from '../services/unitsService';
 import useUiStore from '../store/uiStore';
 import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
+import { coresDosGraficos } from './helpers/rechartsMock';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/analyticsService', () => ({
@@ -19,26 +20,9 @@ vi.mock('../services/customersService', () => ({ listCustomers: vi.fn() }));
 vi.mock('../services/financeiroService', () => ({ getResumo: vi.fn(), getUnidades: vi.fn() }));
 vi.mock('../services/unitsService', () => ({ listUnits: vi.fn() }));
 
-/* O ResponsiveContainer real nao desenha nada no jsdom: os componentes do recharts sao simulados por
-   <div data-chart> com as props de cor, para se poder ler as cores que a pagina escolhe */
-vi.mock('recharts', async () => {
-  const React = await import('react');
-  const caixa = (nome) => function Simulado({ children, ...p }) {
-    return React.createElement('div', {
-      'data-chart': nome,
-      'data-fill': p.fill,
-      'data-stroke': p.stroke,
-      'data-tickfill': p.tick && p.tick.fill,
-      'data-cursorfill': p.cursor && p.cursor.fill,
-      'data-border': p.contentStyle && p.contentStyle.border,
-      'data-data': Array.isArray(p.data) ? JSON.stringify(p.data) : undefined,
-    }, children);
-  };
-  return {
-    BarChart: caixa('BarChart'), Bar: caixa('Bar'), XAxis: caixa('XAxis'), YAxis: caixa('YAxis'),
-    Tooltip: caixa('Tooltip'), Cell: caixa('Cell'), ResponsiveContainer: caixa('ResponsiveContainer'),
-  };
-});
+/* O ResponsiveContainer real nao desenha nada no jsdom: o recharts e simulado pelo helper partilhado,
+   que expoe cores, dados, chaves das series e a grelha de cada grafico */
+vi.mock('recharts', async () => (await import('./helpers/rechartsMock')).makeRechartsMock());
 
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 const CHAVE = 'saldesk_competition_v1';
@@ -86,12 +70,21 @@ const CLIENTES = [
   {}, { country_code: null },
 ];
 
-/* classifica uma classe de cor em bom / aviso / mau, antes e depois de passar a tokens */
+/* classifica a cor do arco do medidor em bom / aviso / mau */
 function tom(texto) {
-  if (/1A7A4A|--success/.test(texto)) return 'bom';
-  if (/yellow-700|--warning|D4A82A|--sand-500/.test(texto)) return 'aviso';
-  if (/text-error|--error|B91C1C/.test(texto)) return 'mau';
+  if (/--success/.test(texto)) return 'bom';
+  if (/--sand-500/.test(texto)) return 'aviso';
+  if (/--error/.test(texto)) return 'mau';
   return 'outro';
+}
+
+/* o ponto do quadro (MareStat sem icone) diz o tom: turquesa = bom, areia = aviso, oceano = neutro */
+function tomDoQuadro(valorEl) {
+  const ponto = valorEl.closest('article').querySelector('[data-mare-stat-tint]');
+  if (!ponto) return 'neutro';
+  if (/turquoise/.test(ponto.className)) return 'bom';
+  if (/sand/.test(ponto.className)) return 'aviso';
+  return 'neutro';
 }
 
 describe('Analytics', () => {
@@ -138,14 +131,14 @@ describe('Analytics', () => {
 
   /* cada seccao e um cartao: sobe do titulo ate ao cartao branco */
   function cartao(titulo) {
-    return screen.getByText(titulo, { selector: 'h3' }).closest('div.bg-white');
+    return screen.getByText(titulo, { selector: 'h3' }).closest('section');
   }
   function resumo() {
     return screen.getByText('Resumo — Últimos 30 dias').parentElement;
   }
-  /* valor e rotulo de um cartao de numeros: o valor e o irmao anterior do rotulo */
+  /* valor de um quadro de numeros (MareStat): o rotulo e o valor vivem no mesmo <article> */
   function valor(raiz, rotulo) {
-    return within(raiz).getByText(rotulo, { selector: 'p' }).previousElementSibling;
+    return within(raiz).getByText(rotulo, { selector: 'p' }).closest('article').querySelector('p.font-display');
   }
   function graficos(nome) {
     return [...document.querySelectorAll(`[data-chart="${nome}"]`)];
@@ -240,9 +233,9 @@ describe('Analytics', () => {
     await abre();
     const r = resumo();
     expect(valor(r, 'Receita').textContent).toBe(eur(1234));
-    expect(valor(r, 'Receita').parentElement.parentElement.textContent).toContain('+25%');
+    expect(valor(r, 'Receita').closest('article').textContent).toContain('+25%');
     expect(valor(r, 'Reservas').textContent).toBe('18');
-    expect(valor(r, 'Reservas').parentElement.parentElement.textContent).toContain('-8%');
+    expect(valor(r, 'Reservas').closest('article').textContent).toContain('-8%');
     expect(valor(r, 'Novos clientes').textContent).toBe('—');
     expect(valor(r, 'Rating médio').textContent).toBe('4.2');
   });
@@ -281,7 +274,7 @@ describe('Analytics', () => {
     await abre();
     const lista = screen.getByText('Origem de Clientes').parentElement;
     expect(lista.querySelectorAll('span.w-20')).toHaveLength(8);
-    const dados = JSON.parse(graficos('BarChart')[0].getAttribute('data-data'));
+    const dados = JSON.parse(graficos('bar')[0].getAttribute('data-data'));
     expect(dados).toHaveLength(8);
   });
 
@@ -290,7 +283,7 @@ describe('Analytics', () => {
     await abre();
     expect(screen.getByText('Sem dados de origem disponíveis.')).toBeTruthy();
     expect(screen.getByText('Sem dados disponíveis.')).toBeTruthy();
-    expect(graficos('BarChart')).toHaveLength(0);
+    expect(graficos('bar')).toHaveLength(0);
   });
 
   it('funil_em_falta_mostra_o_aviso', async () => {
@@ -343,27 +336,29 @@ describe('Analytics', () => {
     expect(valor(c, 'Receita').textContent).toBe(eur(1234));
     expect(valor(c, 'Reservas').textContent).toBe('18');
     expect(valor(c, 'Rating').textContent).toBe('4.5 / 5.0');
-    expect(tom(valor(c, 'Score de saúde').className)).toBe('bom');
+    expect(tomDoQuadro(valor(c, 'Score de saúde'))).toBe('bom');
     cleanup();
     getAnalyticsStats.mockResolvedValue({ health_score: 55 });
     await abre();
-    expect(tom(valor(cartao('Relatório Semanal'), 'Score de saúde').className)).toBe('aviso');
+    expect(tomDoQuadro(valor(cartao('Relatório Semanal'), 'Score de saúde'))).toBe('aviso');
     cleanup();
+    /* o quadro nao tem tom vermelho: o critico fica em aviso e o medidor diz Crítico */
     getAnalyticsStats.mockResolvedValue({ health_score: 30 });
     await abre();
-    expect(tom(valor(cartao('Relatório Semanal'), 'Score de saúde').className)).toBe('mau');
+    expect(tomDoQuadro(valor(cartao('Relatório Semanal'), 'Score de saúde'))).toBe('aviso');
+    expect(screen.getByText('Crítico')).toBeTruthy();
   });
 
   it('taxa_de_abandono_e_limiares', async () => {
     /* reservas = 18: [visitas, % esperada, tom] */
-    const casos = [[100, '82%', 'mau'], [90, '80%', 'aviso'], [50, '64%', 'aviso'], [45, '60%', 'bom'], [40, '55%', 'bom']];
+    const casos = [[100, '82%', 'aviso'], [90, '80%', 'aviso'], [50, '64%', 'aviso'], [45, '60%', 'bom'], [40, '55%', 'bom']];
     for (const [visitas, texto, cor] of casos) {
       getMarketingStats.mockResolvedValue({ profile_views: visitas });
       await abre();
       const c = cartao('Taxa de Abandono');
       const v = valor(c, 'Taxa de abandono');
       expect(v.textContent).toBe(texto);
-      expect(tom(v.className)).toBe(cor);
+      expect(tomDoQuadro(v)).toBe(cor);
       cleanup();
     }
   });
@@ -509,6 +504,72 @@ describe('Analytics', () => {
     expect(listCustomers).toHaveBeenCalledTimes(2);
   });
 
+  /* ---- estilo Mare ---- */
+  it('mostra_o_sobretitulo_da_area_Gestao_tambem_a_carregar', async () => {
+    render(<MemoryRouter future={FUTURE}><Analytics /></MemoryRouter>);
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+    await screen.findByText('Score de Saúde do Negócio');
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+  });
+
+  it('os_numeros_do_resumo_do_relatorio_e_do_abandono_sao_quadros_MareStat', async () => {
+    await abre();
+    const rotulos = [
+      [resumo(), ['Receita', 'Reservas', 'Novos clientes', 'Rating médio']],
+      [cartao('Relatório Semanal'), ['Score de saúde', 'Receita', 'Reservas', 'Rating']],
+      [cartao('Taxa de Abandono'), ['Visitas ao perfil', 'Reservas completadas', 'Taxa de abandono']],
+    ];
+    for (const [raiz, lista] of rotulos) {
+      for (const r of lista) {
+        const art = within(raiz).getByText(r, { selector: 'p' }).closest('article');
+        expect(art.className).toContain('rounded-[18px]');
+        expect(art.className).toContain('border-mare-card');
+        expect(art.querySelector('p.font-display')).toBeTruthy();
+      }
+    }
+  });
+
+  it('cada_seccao_e_um_cartao_Mare_com_titulo_Sora_de_18px', async () => {
+    await abre();
+    const titulos = ['Score de Saúde do Negócio', 'Componentes do Score', 'Origem de Clientes', 'Distribuição por País',
+      'Funil de Conversão', 'Relatório Semanal', 'Taxa de Abandono', 'Análise de Concorrência'];
+    for (const nome of titulos) {
+      const h = screen.getByText(nome, { selector: 'h3' });
+      expect(h.className).toContain('font-display');
+      expect(h.className).toContain('text-lg');
+      expect(h.className).toContain('font-semibold');
+      expect(h.className).toContain('text-ocean-900');
+      const c = h.closest('section');
+      expect(c.className).toContain('border-mare-card');
+      expect(c.className).toContain('rounded-[18px]');
+      expect(c.className).toContain('p-[22px]');
+    }
+  });
+
+  it('o_grafico_de_paises_segue_a_linguagem_dos_graficos', async () => {
+    await abre();
+    const g = graficos('bar')[0];
+    expect(JSON.parse(g.getAttribute('data-keys'))).toEqual(['count']);
+    /* barras horizontais: a grelha mantem as linhas guia do eixo dos valores (vertical nao e desligado) */
+    expect(g.getAttribute('data-grid-vertical')).not.toBe('false');
+    const cores = JSON.parse(g.getAttribute('data-colors'));
+    expect(cores).toContain('var(--n200)');
+    expect(cores).toContain('var(--n500)');
+    expect(cores).toContain('var(--ocean-500)');
+    expect(cores).toContain('var(--sand-500)');
+  });
+
+  it('os_numeros_das_listas_e_da_tabela_usam_mono_com_algarismos_alinhados', async () => {
+    getAnalyticsStats.mockResolvedValue({ conversion_funnel: { page_views: 1000, booking_started: 400, booking_completed: 100, payment_confirmed: 50 } });
+    await abre();
+    const mono = (el) => { expect(el.className).toContain('font-mono'); expect(el.className).toContain('tabular-nums'); };
+    mono(within(screen.getByText('Portugal').closest('div.flex')).getByText('42.9%'));
+    mono(within(screen.getByText('Reserva iniciada').closest('div.flex.items-center.gap-4')).getByText('40.0%'));
+    mono(within(linhaDe('Buggy Tour')).getByText('€60'));
+    const pop = within(cartao('Taxa de Abandono')).getByText('Passeio').closest('div.flex.items-center');
+    mono(within(pop).getByText('100%'));
+  });
+
   /* ---- design system ---- */
   const SEM_COR_CRUA = (html) => {
     expect(html).not.toMatch(/#[0-9a-fA-F]{3,8}/);
@@ -550,19 +611,9 @@ describe('Analytics', () => {
   it('os_graficos_recebem_cores_var_token_e_nenhum_hexadecimal', async () => {
     listCustomers.mockResolvedValue(Array.from({ length: 8 }, (_, i) => ({ country_code: String.fromCharCode(65 + i) + 'Z' })));
     await abre();
-    const cores = [];
-    document.querySelectorAll('[data-chart]').forEach(n => {
-      ['data-fill', 'data-stroke', 'data-tickfill', 'data-cursorfill'].forEach(a => {
-        if (n.hasAttribute(a)) cores.push(n.getAttribute(a));
-      });
-    });
-    /* 8 barras + 2 eixos + o cursor do tooltip */
-    expect(cores).toHaveLength(11);
+    const cores = coresDosGraficos();
+    expect(cores.length).toBeGreaterThan(0);
     cores.forEach(c => expect(c).toMatch(/^var\(--[a-z0-9-]+\)$/));
-    expect(graficos('Tooltip')[0].getAttribute('data-border')).toBe('1px solid var(--n200)');
-    /* as barras seguem a paleta pela ordem: ocean-700 primeiro */
-    expect(graficos('Cell')[0].getAttribute('data-fill')).toBe('var(--ocean-700)');
-    expect(graficos('Cell')[4].getAttribute('data-fill')).toBe('var(--sand-500)');
   });
 
   it('o_aviso_de_abandono_usa_o_token_de_aviso', async () => {

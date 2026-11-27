@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useT } from '../../i18n';
+import DicaGrafico from './DicaGrafico';
 
 /* Canais das plataformas: nomes de marca, iguais em todas as linguas */
 const MARCAS = {
@@ -15,18 +16,19 @@ function rotuloCanal(source, t) {
   return MARCAS[source] || source;
 }
 
-const COLORS = ['var(--ocean-700)','var(--sand-500)','var(--ocean-400)','var(--success)','var(--warning)','var(--sand-400)','var(--ocean-300)','var(--n400)'];
+/* Fatias em tons de oceano, areia e neutros (a legenda traz o nome de cada canal) */
+const COLORS = ['var(--ocean-500)','var(--sand-500)','var(--ocean-300)','var(--n400)','var(--ocean-700)','var(--sand-400)','var(--ocean-100)','var(--n300)'];
 
 const CustomTooltip = ({ active, payload }) => {
   const t = useT();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white border border-n-200 rounded-sm shadow-md px-3 py-2 text-xs font-body">
+    <DicaGrafico>
       <p className="font-bold text-n-800 mb-1">{d.name}</p>
       <p className="text-n-600">{t('financial.bookingsCount', { n: d.num_reservas })}</p>
-      <p className="text-ocean-700 font-semibold">€{Number(d.receita).toFixed(2)}</p>
-    </div>
+      <p className="font-mono tabular-nums text-ocean-900 font-semibold">€{Number(d.receita).toFixed(2)}</p>
+    </DicaGrafico>
   );
 };
 
@@ -34,7 +36,7 @@ export default function ChannelChart({ data }) {
   const t = useT();
   if (!data?.length) {
     return (
-      <div className="flex items-center justify-center h-48 text-n-400 text-sm font-body">
+      <div className="flex items-center justify-center h-48 text-n-500 text-sm font-body">
         {t('financial.noData')}
       </div>
     );
@@ -73,7 +75,7 @@ export default function ChannelChart({ data }) {
         <Legend
           iconType="circle"
           iconSize={8}
-          formatter={(v) => <span className="text-xs font-body text-n-600">{v}</span>}
+          formatter={(v) => <span className="text-xs font-body text-n-700">{v}</span>}
         />
       </PieChart>
     </ResponsiveContainer>

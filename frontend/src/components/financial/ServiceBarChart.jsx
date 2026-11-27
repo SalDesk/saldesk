@@ -4,9 +4,9 @@ import {
 } from 'recharts';
 import { useT } from '../../i18n';
 import { formatarNumero, useLingua } from '../../utils/formatoLingua';
+import DicaGrafico from './DicaGrafico';
 
 const EUR_CVE = 110;
-const COLORS  = ['var(--ocean-700)','var(--ocean-500)','var(--ocean-400)','var(--ocean-300)','var(--ocean-200)'];
 
 function CustomTooltip({ active, payload, currency }) {
   const t = useT();
@@ -18,14 +18,15 @@ function CustomTooltip({ active, payload, currency }) {
     ? `${formatarNumero(Math.round(v))} CVE`
     : `€${formatarNumero(Math.round(v))}`;
   return (
-    <div className="bg-white border border-n-200 rounded shadow-md px-3 py-2 text-xs font-body">
+    <DicaGrafico>
       <p className="font-semibold text-n-800 mb-1">{d.fullName}</p>
-      <p className="text-ocean-700 font-bold">{fmt}</p>
+      <p className="font-mono tabular-nums text-ocean-900 font-bold">{fmt}</p>
       <p className="text-n-500">{t('financial.bookingsCount', { n: d.num_reservas })}</p>
-    </div>
+    </DicaGrafico>
   );
 }
 
+/* Top de servicos por receita na linguagem dos graficos Mare: barras oceano, o primeiro em areia */
 export default function ServiceBarChart({ data, currency = 'EUR' }) {
   const t = useT();
   const rate = currency === 'CVE' ? EUR_CVE : 1;
@@ -42,7 +43,7 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
 
   if (!top5.length) {
     return (
-      <div className="flex items-center justify-center h-52 text-n-400 text-sm font-body">
+      <div className="flex items-center justify-center h-52 text-n-500 text-sm font-body">
         {t('financial.noServiceData')}
       </div>
     );
@@ -60,10 +61,10 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
         layout="vertical"
         margin={{ top: 4, right: 20, left: 4, bottom: 0 }}
       >
-        <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--n200)" />
+        <CartesianGrid stroke="var(--n200)" horizontal={false} />
         <XAxis
           type="number"
-          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
+          tick={{ fontSize: 12, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
           axisLine={false} tickLine={false}
           tickFormatter={tickFmt}
         />
@@ -71,13 +72,13 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
           type="category"
           dataKey="name"
           width={100}
-          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
+          tick={{ fontSize: 12, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
           axisLine={false} tickLine={false}
         />
         <Tooltip content={<CustomTooltip currency={currency} />} cursor={{ fill: 'var(--ocean-50)' }} />
-        <Bar dataKey="receita" radius={[0, 3, 3, 0]} maxBarSize={22}>
+        <Bar dataKey="receita" radius={[0, 6, 6, 0]} maxBarSize={22}>
           {top5.map((_, i) => (
-            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+            <Cell key={i} fill={i === 0 ? 'var(--sand-500)' : 'var(--ocean-500)'} />
           ))}
         </Bar>
       </BarChart>

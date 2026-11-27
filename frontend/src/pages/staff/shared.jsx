@@ -95,7 +95,7 @@ export function StaffAvatar({ member, size = 40, showStatus = true }) {
         <img src={member.photo_url} alt={member.name}
           className="w-full h-full rounded-full object-cover" />
       ) : (
-        <div className="w-full h-full rounded-full bg-ocean-700 flex items-center justify-center text-white font-display font-bold"
+        <div className="w-full h-full rounded-full bg-ocean-700 flex items-center justify-center text-white font-display font-bold app:bg-ocean-100 app:text-ocean-800"
           style={{ fontSize: Math.round(size * 0.36) }}>
           {initials}
         </div>

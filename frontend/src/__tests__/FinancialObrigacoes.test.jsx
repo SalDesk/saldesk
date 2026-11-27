@@ -189,3 +189,35 @@ describe('Obrigações com o design system', () => {
     expect(html).not.toContain('h-8 px-2'); /* campos escritos a mao */
   });
 });
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Obrigações no estilo Mare', () => {
+  it('cada_bloco_e_um_cartao_Mare_com_titulo_Sora', async () => {
+    await montar();
+    ['INPS — Contribuições mensais', 'IUR — Imposto Único sobre Rendimentos', 'Seguros', 'Subscrição SalDesk'].forEach((titulo) => {
+      const h = screen.getByText(titulo, { selector: 'h3' });
+      expect(h).toHaveClass('font-display', 'text-lg', 'font-semibold', 'text-ocean-900');
+      expect(h.closest('.border-mare-card')).toHaveClass('bg-white', 'border', 'rounded-[18px]', 'p-[22px]');
+    });
+  });
+
+  it('o_seguro_e_uma_caixa_interior_e_os_valores_sao_mono', async () => {
+    await montar();
+    const caixa = screen.getByText('Seguro Frota').closest('div.flex');
+    expect(caixa).toHaveClass('rounded-[14px]', 'border-mare-card', 'bg-mare-head');
+    expect(within(caixa).getByText('€400/ano')).toHaveClass('font-mono', 'tabular-nums');
+    expect(within(caixa).getByText(/Renovação:/)).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText('15% dos salários brutos')).toHaveClass('font-mono', 'tabular-nums');
+  });
+
+  it('o_aviso_de_prazo_e_um_Badge_e_remover_e_IconBtn', async () => {
+    getObligations.mockResolvedValue({ insurances: [{ name: 'A29', renewal_date: '2026-07-09' }] });
+    relogio(new Date(2026, 5, 12, 12, 0, 0));
+    await montar();
+    expect(screen.getByText('Prazo em 3d')).toHaveClass('app:rounded-full', 'font-semibold');
+    const remover = screen.getByRole('button', { name: 'Remover seguro - A29' });
+    expect(remover).toHaveClass('min-h-11', 'min-w-11', 'md:min-h-9', 'rounded-full', 'focus-visible:ring-sand-500');
+    expect(screen.getByText('A29').closest('div.flex')).toHaveClass('rounded-[14px]');
+  });
+});

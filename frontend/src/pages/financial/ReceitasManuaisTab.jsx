@@ -7,17 +7,20 @@ import {
 } from 'lucide-react';
 import { getReceitasManuais, createReceitaManual, updateReceitaManual, deleteReceitaManual } from '../../services/financeiroService';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
 import Table from '../../components/ui/Table';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { MANUAL_REVENUE_CATEGORIES, CAT_COLORS, rotuloCategoriaReceita, fmtDate, fmtMoney } from './shared';
+import { IconBtn, EDIT_HOVER } from '../../components/shared/IconBtn';
+import { MANUAL_REVENUE_CATEGORIES, CAT_COLORS, CARTAO, NUM, rotuloCategoriaReceita, fmtDate, fmtMoney } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { useT } from '../../i18n';
 
 /* ─────────────────── RECEITAS MANUAIS ─────────────────── */
+
+/* Realce do botao de eliminar ao passar o rato (o vermelho vem de tokens) */
+const ELIMINAR_HOVER = 'hover:text-[var(--error)] hover:bg-[var(--error-light)]';
 
 function ReceitaManualModal({ receita, onSave, onClose }) {
   const t = useT();
@@ -117,16 +120,16 @@ function ReceitasManuaisTab({ currency, onChange }) {
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
 
   const columns = [
-    { key: 'data', label: t('financial.columns.date'), render: r => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(r.date)}</span> },
+    { key: 'data', label: t('financial.columns.date'), render: r => <span className={`text-xs ${NUM} text-n-600 whitespace-nowrap`}>{fmtDate(r.date)}</span> },
     { key: 'categoria', label: t('financial.columns.category'), render: r => <span className="font-body font-semibold text-n-800">{rotulo(r.category)}</span> },
-    { key: 'valor', label: t('financial.columns.value'), render: r => <span className="font-display font-bold text-[var(--success)] whitespace-nowrap">+ {fmtMoney(r.amount, currency)}</span> },
-    { key: 'notas', label: t('financial.columns.notes'), render: r => <span className="block max-w-[220px] truncate text-xs font-body text-n-500">{r.notes || '—'}</span> },
+    { key: 'valor', label: t('financial.columns.value'), render: r => <span className={`${NUM} font-bold text-[var(--success)] whitespace-nowrap`}>+ {fmtMoney(r.amount, currency)}</span> },
+    { key: 'notas', label: t('financial.columns.notes'), render: r => <span className="block max-w-[220px] truncate text-xs font-body text-n-600">{r.notes || '—'}</span> },
     {
       key: 'acoes', label: '',
       render: r => (
         <div className="flex gap-0.5">
-          <button aria-label={t('financial.manualRevenue.editAria', { category: rotulo(r.category) })} onClick={() => setModal(r)} className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><Edit2 size={13} strokeWidth={1.75} /></button>
-          <button aria-label={t('financial.manualRevenue.deleteAria', { category: rotulo(r.category) })} onClick={() => handleDelete(r.id)} className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
+          <IconBtn icon={Edit2} label={t('financial.manualRevenue.editAria', { category: rotulo(r.category) })} onClick={() => setModal(r)} hover={EDIT_HOVER} />
+          <IconBtn icon={Trash2} label={t('financial.manualRevenue.deleteAria', { category: rotulo(r.category) })} onClick={() => handleDelete(r.id)} hover={ELIMINAR_HOVER} />
         </div>
       ),
     },
@@ -136,18 +139,18 @@ function ReceitasManuaisTab({ currency, onChange }) {
     <div className="space-y-5">
       {/* Filters + Add */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="w-44">
+        <div className="w-44 max-w-full">
           <Input type="month" aria-label={t('financial.form.month')} value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
         </div>
-        <div className="w-56">
+        <div className="w-56 max-w-full">
           <Select aria-label={t('financial.form.category')} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
             <option value="">{t('financial.form.allCategories')}</option>
             {MANUAL_REVENUE_CATEGORIES.map(c => <option key={c} value={c}>{rotulo(c)}</option>)}
           </Select>
         </div>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs font-mono text-n-500">{t('financial.form.total')} <span className="font-bold text-n-800">{fmtMoney(totalPeriod, currency)}</span></span>
-          <Button icon={Plus} size="sm" onClick={() => setModal({ _new: true })}>{t('financial.manualRevenue.recordTitle')}</Button>
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <span className={`text-xs ${NUM} text-n-600`}>{t('financial.form.total')} <span className={`${NUM} font-bold text-n-800`}>{fmtMoney(totalPeriod, currency)}</span></span>
+          <Button icon={Plus} size="sm" className="min-h-11 md:min-h-0" onClick={() => setModal({ _new: true })}>{t('financial.manualRevenue.recordTitle')}</Button>
         </div>
       </div>
 
@@ -155,13 +158,13 @@ function ReceitasManuaisTab({ currency, onChange }) {
       {byCat.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {byCat.slice(0, 4).map((c, i) => (
-            <Card key={c.cat} padding="px-4 py-3">
+            <div key={c.cat} className={CARTAO}>
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i] }} />
-                <p className="text-xs font-body text-n-500 truncate">{c.name}</p>
+                <p className="text-[13px] font-body font-semibold text-n-600 truncate">{c.name}</p>
               </div>
-              <p className="font-display font-bold text-lg text-n-900">{fmtMoney(c.total, currency)}</p>
-            </Card>
+              <p className={`${NUM} font-bold text-lg text-ocean-900 break-words`}>{fmtMoney(c.total, currency)}</p>
+            </div>
           ))}
         </div>
       )}
@@ -169,11 +172,11 @@ function ReceitasManuaisTab({ currency, onChange }) {
       {/* List */}
       {loading ? <div className="flex justify-center py-12"><LoadingSpinner size={32} /></div> :
        periodRec.length === 0 ? (
-        <Card padding="p-0"><EmptyState icon={Receipt} title={t('financial.manualRevenue.empty')} /></Card>
+        <div className={CARTAO}><EmptyState icon={Receipt} title={t('financial.manualRevenue.empty')} /></div>
       ) : (
-        <Card padding="p-0">
+        <div className={CARTAO}>
           <Table columns={columns} rows={[...periodRec].sort((a, b) => (b.date || '').localeCompare(a.date || ''))} compact />
-        </Card>
+        </div>
       )}
 
       {modal && <ReceitaManualModal receita={modal} onSave={handleSave} onClose={() => setModal(null)} />}

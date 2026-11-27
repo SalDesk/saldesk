@@ -9,7 +9,15 @@ export const TOUR_COSTS_KEY = 'saldesk_tour_costs_v1';
    estados e os canais vem do servidor. Nunca mudam com a lingua: o rotulo mostrado vem das funcoes rotulo*. */
 export const PAYMENT_METHODS = ['Todos', 'paypal', 'sisp', 'cash', 'transfer'];
 export const PAYMENT_STATUS  = ['Todos', 'paid', 'pending', 'partial', 'refunded'];
-export const PS_COLOR  = { paid: 'text-[var(--success)] bg-[var(--success-light)]', pending: 'text-[var(--warning)] bg-[var(--warning-light)]', partial: 'text-[var(--info)] bg-[var(--info-light)]', refunded: 'text-n-500 bg-n-100' };
+/* Variante do Badge de cada estado de pagamento (o rotulo vem de rotuloEstadoPagamento) */
+export const PS_VARIANT = { paid: 'confirmed', pending: 'pending', partial: 'info', refunded: 'default' };
+
+/* Classes do estilo Mare partilhadas pelas paginas do Financeiro: cartao de pagina, caixa interior e titulo de cartao */
+export const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+export const CAIXA = 'bg-mare-head rounded-[14px] border border-mare-card';
+export const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+/* Valores numericos (dinheiro, datas, contagens): mono com algarismos alinhados */
+export const NUM = 'font-mono tabular-nums';
 
 /* Nomes de marcas: iguais em todas as linguas */
 const MARCAS_PAGAMENTO = { paypal: 'PayPal', sisp: 'SISP' };
@@ -97,6 +105,12 @@ export function fmtMoney(v, currency) {
   return `€${formatarNumero(Math.round(n))}`;
 }
 
+/* Como fmtMoney, mas um valor em falta (null, undefined, texto, NaN) mostra o traco */
+export function fmtMoneyOuTraco(v, currency) {
+  const n = v == null ? NaN : Number(v);
+  return Number.isFinite(n) ? fmtMoney(n, currency) : '—';
+}
+
 /* Formatos dos graficos: recebem valores JA na moeda escolhida (o grafico converte os dados antes). */
 export function fmtEixo(v, currency) {
   const n = Math.round(Number(v || 0));
@@ -115,4 +129,17 @@ export function saveCosts(c) { localStorage.setItem(TOUR_COSTS_KEY, JSON.stringi
 export function unitTotalCost(c) {
   if (!c) return 0;
   return COST_FIELDS.reduce((s, f) => s + Number(c[f.key] || 0), 0);
+}
+
+/* Cartao do Financeiro: titulo Sora e, opcionalmente, algo ao lado dele (data, botao) */
+export function CartaoFin({ titulo, lado, className = '', children }) {
+  return (
+    <section className={`${CARTAO} ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h3 className={TITULO}>{titulo}</h3>
+        {lado}
+      </div>
+      {children}
+    </section>
+  );
 }

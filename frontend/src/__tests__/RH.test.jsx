@@ -86,9 +86,9 @@ describe('RH', () => {
     return useToastStore.getState().toasts.map(t => [t.type, t.message]);
   }
 
-  /* o cartao de numeros: o rotulo e o valor vivem no mesmo bloco */
+  /* o quadro de numeros (MareStat): o rotulo e o valor vivem no mesmo <article> */
   function cartao(rotulo) {
-    return screen.getByText(rotulo, { selector: 'p' }).parentElement;
+    return screen.getByText(rotulo, { selector: 'p' }).closest('article');
   }
 
   it('os_tres_cartoes_contam_pendentes_a_expirar_e_activos', async () => {
@@ -199,18 +199,17 @@ describe('RH', () => {
   /* ---- design system ---- */
   it('cartao_de_numeros_com_pendentes_usa_o_token_de_aviso', async () => {
     await abre();
-    const caixa = cartao('Pedidos de férias pendentes').previousElementSibling;
-    expect(caixa.className).toContain('bg-[var(--warning-light)]');
-    expect(caixa.className).toContain('text-[var(--warning)]');
-    /* o cartao dos activos nao e de aviso */
-    expect(cartao('Colaboradores activos').previousElementSibling.className).not.toContain('--warning');
+    const caixa = cartao('Pedidos de férias pendentes').querySelector('[data-mare-stat-tint]');
+    expect(caixa.className).toContain('bg-sand-100');
+    /* o quadro dos activos nao e de aviso */
+    expect(cartao('Colaboradores activos').querySelector('[data-mare-stat-tint]').className).not.toContain('bg-sand-100');
   });
 
   it('cartao_sem_pendentes_nao_usa_o_token_de_aviso', async () => {
     getHrOverview.mockResolvedValue({ pending_leave: [], expiring: [], staff: COLABORADORES });
     await abre();
-    expect(cartao('Pedidos de férias pendentes').previousElementSibling.className).not.toContain('--warning');
-    expect(cartao('Documentos/certificações a expirar').previousElementSibling.className).not.toContain('--warning');
+    expect(cartao('Pedidos de férias pendentes').querySelector('[data-mare-stat-tint]').className).not.toContain('bg-sand-100');
+    expect(cartao('Documentos/certificações a expirar').querySelector('[data-mare-stat-tint]').className).not.toContain('bg-sand-100');
   });
 
   it('nenhuma_classe_amber_nem_hexadecimal_sobra_na_pagina', async () => {
@@ -297,5 +296,59 @@ describe('RH em inglês', () => {
     getHrOverview.mockRejectedValue(new Error('x'));
     await abreEmIngles();
     expect(useToastStore.getState().toasts.map(t => t.message)).toEqual(['Could not load HR']);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('RH no estilo Mare', () => {
+  beforeEach(() => {
+    getHrOverview.mockReset().mockResolvedValue(VISAO);
+    updateLeaveStatus.mockReset().mockResolvedValue({});
+  });
+  afterEach(() => cleanup());
+
+  async function abreMare() {
+    render(
+      <MemoryRouter future={FUTURE} initialEntries={['/rh']}>
+        <Routes><Route path="/rh" element={<RH />} /></Routes>
+      </MemoryRouter>
+    );
+    await screen.findByText('Pedidos de férias pendentes', { selector: 'h3' });
+  }
+  const quadro = (rotulo) => screen.getByText(rotulo, { selector: 'p' }).closest('article');
+
+  it('mostra_o_sobretitulo_da_area_Gestao', async () => {
+    await abreMare();
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+  });
+
+  it('os_tres_numeros_sao_quadros_MareStat_com_os_mesmos_valores', async () => {
+    await abreMare();
+    const esperado = [['Pedidos de férias pendentes', '3'], ['Documentos/certificações a expirar', '3'], ['Colaboradores activos', '4']];
+    for (const [rotulo, valor] of esperado) {
+      const art = quadro(rotulo);
+      expect(art.className).toContain('rounded-[18px]');
+      expect(art.className).toContain('border-mare-card');
+      expect(art.querySelector('p.font-display').textContent).toBe(valor);
+    }
+  });
+
+  it('as_listas_e_os_colaboradores_estao_em_cartoes_de_pagina_Mare', async () => {
+    await abreMare();
+    for (const titulo of ['Pedidos de férias pendentes', 'A expirar em breve', 'Colaboradores']) {
+      const h = screen.getAllByText(titulo, { selector: 'h3' })[0];
+      expect(h.closest('section').className).toContain('rounded-[18px]');
+      expect(h.closest('section').className).toContain('border-mare-card');
+      expect(h.className).toContain('font-display');
+      expect(h.className).toContain('text-ocean-900');
+    }
+  });
+
+  it('os_botoes_de_aprovar_e_rejeitar_tem_44px_no_telemovel', async () => {
+    await abreMare();
+    for (const b of [...screen.getAllByRole('button', { name: 'Aprovar' }), ...screen.getAllByRole('button', { name: 'Rejeitar' })]) {
+      expect(b.className).toContain('min-h-11');
+    }
   });
 });

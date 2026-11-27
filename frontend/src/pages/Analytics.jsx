@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import {
   Activity, TrendingUp, Star,
   Users, Globe, BarChart2, RefreshCw, Mail,
-  ArrowUpRight, ArrowDownRight, Minus,
   MousePointerClick, Building2, Edit2, Check,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import { getAnalyticsStats, getReviewsStats, getMarketingStats } from '../services/analyticsService';
 import { listCustomers } from '../services/customersService';
@@ -14,11 +13,13 @@ import { getResumo, getUnidades } from '../services/financeiroService';
 import { listUnits } from '../services/unitsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Table from '../components/ui/Table';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER } from '../components/shared/IconBtn';
+import DicaGrafico from '../components/financial/DicaGrafico';
 import { useT } from '../i18n';
 import { formatarData, formatarNumero, useLingua } from '../utils/formatoLingua';
 
@@ -51,10 +52,14 @@ function nomePais(codigo, t) {
   return PAISES.includes(codigo) ? t(`analytics.countries.${codigo}`) : codigo;
 }
 
-const CHART_COLORS = [
-  'var(--ocean-700)', 'var(--ocean-500)', 'var(--ocean-400)', 'var(--ocean-300)',
-  'var(--sand-500)', 'var(--sand-300)', 'var(--ocean-200)', 'var(--ocean-100)',
-];
+/* Estilo Mare: cartao de pagina, titulo de cartao e figuras (dinheiro, contagens, percentagens) */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+const NUM = 'font-mono tabular-nums';
+
+/* Grafico e lista de origens: a origem principal em areia, as restantes em oceano */
+function corDaOrigem(i) { return i === 0 ? 'var(--sand-500)' : 'var(--ocean-500)'; }
+const TICK_GRAFICO = { fontSize: 12, fontFamily: 'DM Mono', fill: 'var(--n500)' };
 
 /* ── Health Score computation ── */
 function computeHealthScore(resumo, reviewsStats, stats) {
@@ -113,7 +118,7 @@ function HealthGauge({ score }) {
   if (score == null) {
     return (
       <div className="w-40 h-40 flex items-center justify-center rounded-full border-[12px] border-n-200 mx-auto">
-        <span className="text-xs font-body text-n-400">{t('analytics.noData')}</span>
+        <span className="text-xs font-body text-n-500">{t('analytics.noData')}</span>
       </div>
     );
   }
@@ -158,7 +163,7 @@ function ScoreBar({ label, value, max = 25, color = 'var(--ocean-700)' }) {
     <div>
       <div className="flex justify-between items-center mb-1">
         <span className="text-xs font-body text-n-600">{label}</span>
-        <span className="text-xs font-mono font-semibold text-n-800">{value}<span className="text-n-400">/{max}</span></span>
+        <span className={`text-xs ${NUM} font-semibold text-n-800`}>{value}<span className="text-n-500">/{max}</span></span>
       </div>
       <div className="h-1.5 bg-n-100 rounded-full overflow-hidden">
         <div
@@ -175,59 +180,26 @@ function FunnelRow({ label, value, max, color, pct }) {
   const barPct = max > 0 ? (value / max) * 100 : 0;
   return (
     <div className="flex items-center gap-4">
-      <div className="w-36 shrink-0">
+      <div className="w-28 sm:w-36 shrink-0">
         <p className="text-xs font-body text-n-600 truncate">{label}</p>
       </div>
-      <div className="flex-1 h-6 bg-n-100 rounded-sm overflow-hidden relative">
+      <div className="flex-1 min-w-0 h-6 bg-n-100 rounded-sm overflow-hidden">
         <div
-          className="h-full rounded-sm transition-all duration-500 flex items-center justify-end pr-2"
-          style={{ width: `${barPct}%`, backgroundColor: color, minWidth: barPct > 0 ? '2rem' : 0 }}
-        >
-          {barPct > 12 && (
-            <span className="text-white text-xs font-mono font-semibold">{formatarNumero(value)}</span>
-          )}
-        </div>
-        {barPct <= 12 && (
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-mono font-semibold text-n-700">{formatarNumero(value)}</span>
-        )}
+          className="h-full rounded-sm transition-all duration-500"
+          style={{ width: `${barPct}%`, backgroundColor: color, minWidth: barPct > 0 ? '0.5rem' : 0 }}
+        />
       </div>
+      <span className={`w-14 text-right text-xs ${NUM} font-semibold text-n-800 shrink-0`}>{formatarNumero(value)}</span>
       {pct != null && (
-        <span className="w-12 text-right text-xs font-mono text-n-500 shrink-0">{pct.toFixed(1)}%</span>
+        <span className={`w-12 text-right text-xs ${NUM} text-n-600 shrink-0`}>{pct.toFixed(1)}%</span>
       )}
     </div>
   );
 }
 
-/* ── WeeklyMetric ── */
-function WeeklyMetric({ label, value, delta, icon: Icon }) {
-  const up      = delta > 0;
-  const neutral = delta == null || delta === 0;
-  const DIcon   = neutral ? Minus : up ? ArrowUpRight : ArrowDownRight;
-  const dColor  = neutral ? 'text-n-400' : up ? 'text-[var(--success)]' : 'text-[var(--error)]';
-  return (
-    <Card padding="px-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-          <Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-display font-bold text-lg text-n-900 leading-none">{value}</p>
-          <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
-        </div>
-        {delta != null && (
-          <span className={`flex items-center gap-0.5 text-xs font-body ${dColor}`}>
-            <DIcon size={12} strokeWidth={2} />
-            {!neutral && `${up ? '+' : ''}${delta}%`}
-          </span>
-        )}
-      </div>
-    </Card>
-  );
-}
-
 /* ── Posicao do preco face ao concorrente (limiares 5 e 20) ── */
 function competitionPosition(ownPrice, compPrice, t) {
-  if (!(ownPrice > 0 && compPrice > 0)) return { position: null, label: '—', color: 'text-n-400' };
+  if (!(ownPrice > 0 && compPrice > 0)) return { position: null, label: '—', color: 'text-n-500' };
   const diff = ((ownPrice - compPrice) / compPrice) * 100;
   const n = Math.round(diff);
   if (diff > 20)  return { position: 'high',   label: t('analytics.above', { n }), color: 'text-[var(--error)]' };
@@ -235,6 +207,22 @@ function competitionPosition(ownPrice, compPrice, t) {
   if (diff < -20) return { position: 'low',    label: t('analytics.below', { n }), color: 'text-[var(--success)]' };
   if (diff < -5)  return { position: 'slight', label: t('analytics.below', { n }), color: 'text-ocean-700' };
   return { position: null, label: t('analytics.atAverage'), color: 'text-[var(--success)]' };
+}
+
+/* ── Dica do grafico de origens: pais, clientes e percentagem ── */
+function DicaOrigem({ active, payload }) {
+  const t = useT();
+  useLingua();
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <DicaGrafico>
+      <p className="font-semibold text-n-800 mb-1">{nomePais(d.country_code, t)}</p>
+      <p className="font-mono tabular-nums text-ocean-900 font-bold">
+        {t('analytics.customersTooltip', { n: payload[0].value, pct: d.pct.toFixed(1) })}
+      </p>
+    </DicaGrafico>
+  );
 }
 
 /* ── Main Analytics ── */
@@ -336,7 +324,7 @@ export default function Analytics() {
     {
       key: 'own', label: t('analytics.ownPrice'),
       render: u => (
-        <span className="font-display font-bold text-ocean-700">
+        <span className={`${NUM} font-bold text-ocean-900`}>
           {Number(u.base_price || 0) > 0 ? `€${Number(u.base_price || 0)}` : '—'}
         </span>
       ),
@@ -362,8 +350,8 @@ export default function Analytics() {
           );
         }
         return (
-          <span className="font-mono text-n-700">
-            {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">{t('analytics.notSet')}</span>}
+          <span className={`${NUM} text-n-700`}>
+            {compPrice > 0 ? `€${compPrice}` : <span className="text-n-500 text-xs">{t('analytics.notSet')}</span>}
           </span>
         );
       },
@@ -375,9 +363,9 @@ export default function Analytics() {
         const pos = competitionPosition(Number(u.base_price || 0), Number(c.price || 0), t);
         return (
           <>
-            <span className={`text-xs font-mono font-semibold ${pos.color}`}>{pos.label}</span>
+            <span className={`text-xs ${NUM} font-semibold ${pos.color}`}>{pos.label}</span>
             {pos.position === 'high' && (
-              <p className="text-[10px] font-body text-n-400">{t('analytics.reduceTip')}</p>
+              <p className="text-xs font-body text-n-600">{t('analytics.reduceTip')}</p>
             )}
           </>
         );
@@ -388,33 +376,45 @@ export default function Analytics() {
       render: u => {
         const c = comp[u.id] || {};
         return editComp === u.id ? (
-          <button
-            aria-label={t('analytics.savePrice')}
+          <IconBtn
+            icon={Check}
+            label={t('analytics.savePrice')}
             onClick={() => guardarPreco(u, c)}
-            className="p-1.5 rounded text-[var(--success)] hover:bg-[var(--success-light)] transition-colors"
-          >
-            <Check size={13} strokeWidth={2} />
-          </button>
+            hover="hover:bg-[var(--success-light)]"
+            className="text-[var(--success)]"
+          />
         ) : (
-          <button
-            aria-label={t('analytics.editPrice')}
+          <IconBtn
+            icon={Edit2}
+            label={t('analytics.editPrice')}
             onClick={() => { setEditComp(u.id); setCompDraft(p => ({ ...p, [u.id]: c.price || '' })); }}
-            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
-          >
-            <Edit2 size={13} strokeWidth={1.75} />
-          </button>
+            hover={EDIT_HOVER}
+          />
         );
       },
     },
   ];
 
+  /* Variacao do resumo: sinal e valor em texto (nunca so a cor); sem variacao nao ha pista */
+  function pistaVariacao(delta) {
+    if (delta == null) return undefined;
+    return `${delta > 0 ? '+' : ''}${delta}%`;
+  }
+  function tomVariacao(delta) {
+    if (delta == null || delta === 0) return 'default';
+    return delta > 0 ? 'bom' : 'aviso';
+  }
+  const varReceita  = resumo?.variacao?.receita != null ? Math.round(resumo.variacao.receita) : null;
+  const varReservas = resumo?.variacao?.num_reservas != null ? Math.round(resumo.variacao.num_reservas) : null;
+
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.gestao')}
         title={t('analytics.title')}
         subtitle={t('analytics.subtitle')}
         actions={
-          <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
+          <Button variant="secondary" icon={RefreshCw} size="sm" className="min-h-11 md:min-h-0" onClick={carregar} loading={loading}>
             {t('analytics.refresh')}
           </Button>
         }
@@ -427,118 +427,110 @@ export default function Analytics() {
 
           {/* Score de Saude + componentes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card padding="px-6 py-6">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('analytics.healthScoreTitle')}</h3>
+            <section className={CARTAO}>
+              <h3 className={`${TITULO} mb-5`}>{t('analytics.healthScoreTitle')}</h3>
               <HealthGauge score={score} />
               {score == null && (
-                <p className="text-center text-xs font-body text-n-400 mt-3">
+                <p className="text-center text-xs font-body text-n-500 mt-3">
                   {t('analytics.configureBefore')}<span className="font-mono">/financial/stats</span>{t('analytics.configureAfter')}
                 </p>
               )}
-            </Card>
+            </section>
 
-            <Card className="lg:col-span-2" padding="px-6 py-6">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('analytics.scoreComponents')}</h3>
+            <section className={`${CARTAO} lg:col-span-2`}>
+              <h3 className={`${TITULO} mb-5`}>{t('analytics.scoreComponents')}</h3>
               <div className="space-y-4">
                 {SCORE_COMPONENTS.map(c => (
                   <ScoreBar key={c.label} label={c.label} value={c.value} max={c.max} color={c.color} />
                 ))}
               </div>
-              <div className="mt-4 pt-4 border-t border-n-100">
-                <p className="text-xs font-body text-n-400">
+              <div className="mt-4 pt-4 border-t border-mare-card">
+                <p className="text-xs font-body text-n-500">
                   {t('analytics.scoreNote')}
                   {resumo == null && t('analytics.scoreNoteNoData')}
                 </p>
               </div>
-            </Card>
+            </section>
           </div>
 
           {/* Resumo semanal */}
           <div>
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('analytics.summaryTitle')}</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <WeeklyMetric
+            <h3 className={`${TITULO} mb-3`}>{t('analytics.summaryTitle')}</h3>
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
+              <MareStat
+                icon={TrendingUp}
                 label={t('analytics.revenue')}
                 value={weekly.revenue != null ? fmtMoney(weekly.revenue) : '—'}
-                delta={resumo?.variacao?.receita != null ? Math.round(resumo.variacao.receita) : null}
-                icon={TrendingUp}
+                hint={pistaVariacao(varReceita)}
+                tone={tomVariacao(varReceita)}
               />
-              <WeeklyMetric
+              <MareStat
+                icon={BarChart2}
                 label={t('analytics.bookings')}
                 value={weekly.reservas ?? '—'}
-                delta={resumo?.variacao?.num_reservas != null ? Math.round(resumo.variacao.num_reservas) : null}
-                icon={BarChart2}
+                hint={pistaVariacao(varReservas)}
+                tone={tomVariacao(varReservas)}
               />
-              <WeeklyMetric
-                label={t('analytics.newCustomers')}
-                value={weekly.novos_clientes ?? '—'}
-                icon={Users}
-              />
-              <WeeklyMetric
-                label={t('analytics.avgRating')}
-                value={ratingNum > 0 ? ratingNum.toFixed(1) : '—'}
-                icon={Star}
-              />
+              <MareStat icon={Users} label={t('analytics.newCustomers')} value={weekly.novos_clientes ?? '—'} />
+              <MareStat icon={Star} label={t('analytics.avgRating')} value={ratingNum > 0 ? ratingNum.toFixed(1) : '—'} />
             </div>
           </div>
 
           {/* Origem de clientes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card padding="px-6 py-5">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('analytics.customerOrigin')}</h3>
+            <section className={CARTAO}>
+              <h3 className={`${TITULO} mb-4`}>{t('analytics.customerOrigin')}</h3>
               {origins.length === 0 ? (
                 <EmptyState icon={Globe} title={t('analytics.noOriginData')} />
               ) : (
                 <div className="space-y-2.5">
                   {origins.slice(0, 8).map((o, i) => (
                     <div key={o.country_code} className="flex items-center gap-3">
-                      <span className="text-xs font-mono font-semibold text-n-500 w-6 shrink-0">{o.country_code}</span>
-                      <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
+                      <span className={`text-xs ${NUM} font-semibold text-n-600 w-6 shrink-0`}>{o.country_code}</span>
+                      <div className="flex-1 min-w-0 h-2 bg-n-100 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${o.pct}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                          style={{ width: `${o.pct}%`, backgroundColor: corDaOrigem(i) }}
                         />
                       </div>
-                      <span className="text-xs font-body text-n-600 w-20 text-right shrink-0">
+                      <span className="text-xs font-body text-n-600 w-20 text-right shrink-0 truncate">
                         {nomePais(o.country_code, t)}
                       </span>
-                      <span className="text-xs font-mono text-n-500 w-10 text-right shrink-0">
+                      <span className={`text-xs ${NUM} text-n-600 w-12 text-right shrink-0`}>
                         {o.pct.toFixed(1)}%
                       </span>
                     </div>
                   ))}
                 </div>
               )}
-            </Card>
+            </section>
 
-            <Card padding="px-6 py-5">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('analytics.countryDistribution')}</h3>
+            <section className={CARTAO}>
+              <h3 className={`${TITULO} mb-4`}>{t('analytics.countryDistribution')}</h3>
               {origins.length === 0 ? (
                 <EmptyState icon={BarChart2} title={t('analytics.noDataAvailable')} />
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={origins.slice(0, 8)} layout="vertical" margin={{ left: 4, right: 16, top: 0, bottom: 0 }}>
-                    <XAxis type="number" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
-                    <YAxis type="category" dataKey="country_code" width={28} tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
-                    <Tooltip
-                      cursor={{ fill: 'var(--ocean-50)' }}
-                      contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }}
-                      formatter={(v, _n, p) => [t('analytics.customersTooltip', { n: v, pct: p.payload.pct.toFixed(1) }), p.payload.country_code]}
-                    />
-                    <Bar dataKey="count" radius={[0, 3, 3, 0]}>
+                    {/* barras horizontais: as linhas guia ficam no eixo dos valores */}
+                    <CartesianGrid stroke="var(--n200)" horizontal={false} />
+                    <XAxis type="number" tick={TICK_GRAFICO} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="country_code" width={34} tick={TICK_GRAFICO} tickLine={false} axisLine={false} />
+                    <Tooltip content={<DicaOrigem />} cursor={{ fill: 'var(--ocean-50)' }} />
+                    <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={22}>
                       {origins.slice(0, 8).map((_, i) => (
-                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                        <Cell key={i} fill={corDaOrigem(i)} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
-            </Card>
+            </section>
           </div>
 
           {/* Funil de conversao */}
-          <Card padding="px-6 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('analytics.funnelTitle')}</h3>
+          <section className={CARTAO}>
+            <h3 className={`${TITULO} mb-5`}>{t('analytics.funnelTitle')}</h3>
             {!funnel ? (
               <EmptyState
                 icon={Activity}
@@ -548,9 +540,9 @@ export default function Analytics() {
             ) : (
               <div className="space-y-3 max-w-2xl">
                 {[
-                  { label: t('analytics.funnelSteps.pageViews'),        key: 'page_views',          color: 'var(--ocean-700)' },
+                  { label: t('analytics.funnelSteps.pageViews'),        key: 'page_views',          color: 'var(--ocean-500)' },
                   { label: t('analytics.funnelSteps.bookingStarted'),   key: 'booking_started',     color: 'var(--ocean-500)' },
-                  { label: t('analytics.funnelSteps.bookingCompleted'), key: 'booking_completed',   color: 'var(--ocean-400)' },
+                  { label: t('analytics.funnelSteps.bookingCompleted'), key: 'booking_completed',   color: 'var(--ocean-500)' },
                   { label: t('analytics.funnelSteps.paymentConfirmed'), key: 'payment_confirmed',   color: 'var(--sand-500)' },
                 ].map((step, i, arr) => {
                   const value = funnel[step.key] || 0;
@@ -568,17 +560,17 @@ export default function Analytics() {
                     />
                   );
                 })}
-                <p className="text-xs font-body text-n-400 pt-1">{t('analytics.funnelNote')}</p>
+                <p className="text-xs font-body text-n-500 pt-1">{t('analytics.funnelNote')}</p>
               </div>
             )}
-          </Card>
+          </section>
 
           {/* Relatorio semanal */}
-          <Card padding="px-6 py-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-1">{t('analytics.weeklyReport')}</h3>
-                <p className="text-xs font-body text-n-400">
+          <section className={CARTAO}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className={`${TITULO} mb-1`}>{t('analytics.weeklyReport')}</h3>
+                <p className="text-xs font-body text-n-500">
                   {t('analytics.weeklyReportDescription')}
                 </p>
               </div>
@@ -586,6 +578,7 @@ export default function Analytics() {
                 icon={Mail}
                 variant="secondary"
                 size="sm"
+                className="min-h-11 md:min-h-0"
                 onClick={() => {
                   const subject = encodeURIComponent(t('analytics.email.subject'));
                   const body = encodeURIComponent(
@@ -602,49 +595,39 @@ export default function Analytics() {
               </Button>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { label: t('analytics.healthScoreShort'), value: score != null ? `${score}/100` : '—',                       color: score >= 70 ? 'text-[var(--success)]' : score >= 50 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
-                { label: t('analytics.revenue'),  value: weekly.revenue  != null ? fmtMoney(weekly.revenue) : '—',   color: 'text-ocean-700' },
-                { label: t('analytics.bookings'), value: weekly.reservas != null ? String(weekly.reservas) : '—',    color: 'text-n-900' },
-                { label: t('analytics.rating'),   value: ratingNum > 0 ? `${ratingNum.toFixed(1)} / 5.0` : '—',       color: 'text-sand-500' },
-              ].map(m => (
-                <div key={m.label} className="bg-n-50 rounded-sm px-4 py-3 border border-n-200">
-                  <p className={`font-display font-bold text-lg leading-none ${m.color}`}>{m.value}</p>
-                  <p className="text-xs font-body text-n-500 mt-1">{m.label}</p>
-                </div>
-              ))}
+            <div className="mt-4 grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
+              <MareStat
+                label={t('analytics.healthScoreShort')}
+                value={score != null ? `${score}/100` : '—'}
+                tone={score == null ? 'default' : score >= 70 ? 'bom' : 'aviso'}
+              />
+              <MareStat label={t('analytics.revenue')} value={weekly.revenue != null ? fmtMoney(weekly.revenue) : '—'} />
+              <MareStat label={t('analytics.bookings')} value={weekly.reservas != null ? String(weekly.reservas) : '—'} />
+              <MareStat label={t('analytics.rating')} value={ratingNum > 0 ? `${ratingNum.toFixed(1)} / 5.0` : '—'} />
             </div>
-          </Card>
+          </section>
 
           {/* ── Taxa de Abandono ── */}
-          <Card padding="px-6 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('analytics.abandonmentTitle')}</h3>
+          <section className={CARTAO}>
+            <h3 className={`${TITULO} mb-4`}>{t('analytics.abandonmentTitle')}</h3>
             {(() => {
               const views    = mktg?.profile_views || stats?.profile_views || 0;
               const bookings = resumo?.atual?.num_reservas || 0;
               const abandonment = views > 0 ? Math.round(((views - bookings) / views) * 100) : null;
               return (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    {[
-                      { label: t('analytics.profileVisits'),     value: views     > 0 ? formatarNumero(views)    : '—', color: 'text-n-900'    },
-                      { label: t('analytics.completedBookings'), value: bookings > 0 ? String(bookings)         : '—', color: 'text-ocean-700' },
-                      {
-                        label: t('analytics.abandonmentRate'),
-                        value: abandonment != null ? `${abandonment}%` : '—',
-                        color: abandonment == null ? 'text-n-400' : abandonment > 80 ? 'text-[var(--error)]' : abandonment > 60 ? 'text-[var(--warning)]' : 'text-[var(--success)]',
-                      },
-                    ].map(m => (
-                      <div key={m.label} className="bg-n-50 rounded-sm px-4 py-3 border border-n-200">
-                        <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-                        <p className="text-xs font-body text-n-500 mt-1">{m.label}</p>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-3">
+                    <MareStat label={t('analytics.profileVisits')} value={views > 0 ? formatarNumero(views) : '—'} />
+                    <MareStat label={t('analytics.completedBookings')} value={bookings > 0 ? String(bookings) : '—'} />
+                    <MareStat
+                      label={t('analytics.abandonmentRate')}
+                      value={abandonment != null ? `${abandonment}%` : '—'}
+                      tone={abandonment == null ? 'default' : abandonment > 60 ? 'aviso' : 'bom'}
+                    />
                   </div>
 
                   {abandonment != null && abandonment > 70 && (
-                    <div className="flex items-start gap-2 px-3 py-2.5 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
+                    <div className="flex items-start gap-2 px-3 py-2.5 bg-[var(--warning-light)] border border-[var(--warning)] rounded-[14px]">
                       <MousePointerClick size={14} strokeWidth={1.75} className="text-[var(--warning)] shrink-0 mt-0.5" />
                       <p className="text-xs font-body text-[var(--warning)]">
                         <span className="font-semibold">{t('analytics.highAbandonment', { n: abandonment })}</span>{' '}
@@ -655,29 +638,29 @@ export default function Analytics() {
 
                   {maisReservados.length > 0 && (
                     <div>
-                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">{t('analytics.byTour')}</p>
+                      <p className="text-[13px] font-body font-semibold text-n-600 mb-2">{t('analytics.byTour')}</p>
                       <div className="space-y-2">
                         {maisReservados.map((u) => {
                           const popularity = maxReservas > 0 ? Math.round((Number(u.num_reservas || 0) / maxReservas) * 100) : 0;
                           const needsAttention = maxReservas > 0 && popularity < 50;
                           return (
-                            <div key={u.id} className="flex items-center gap-3">
-                              <span className="text-xs font-body text-n-700 w-40 truncate shrink-0">{u.name}</span>
-                              <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
+                            <div key={u.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="text-xs font-body text-n-700 w-28 sm:w-40 truncate shrink-0">{u.name}</span>
+                              <div className="flex-1 min-w-[60px] h-2 bg-n-100 rounded-full overflow-hidden">
                                 <div className="h-full rounded-full transition-all"
-                                  style={{ width: `${popularity}%`, backgroundColor: needsAttention ? 'var(--error)' : 'var(--ocean-700)' }} />
+                                  style={{ width: `${popularity}%`, backgroundColor: needsAttention ? 'var(--sand-500)' : 'var(--ocean-500)' }} />
                               </div>
-                              <span className={`text-xs font-mono font-semibold w-10 text-right shrink-0 ${needsAttention ? 'text-[var(--error)]' : 'text-ocean-700'}`}>
+                              <span className={`text-xs ${NUM} font-semibold w-10 text-right shrink-0 text-n-800`}>
                                 {popularity}%
                               </span>
                               {needsAttention && (
-                                <span className="text-[10px] font-body text-[var(--error)] shrink-0">{t('analytics.improvePhotos')}</span>
+                                <span className="text-xs font-body text-n-700 shrink-0">{t('analytics.improvePhotos')}</span>
                               )}
                             </div>
                           );
                         })}
                       </div>
-                      <p className="text-[10px] font-mono text-n-400 mt-2">
+                      <p className="text-xs font-body text-n-500 mt-2">
                         {t('analytics.byTourNote')}
                       </p>
                     </div>
@@ -685,18 +668,18 @@ export default function Analytics() {
                 </div>
               );
             })()}
-          </Card>
+          </section>
 
           {/* ── Analise de Concorrencia ── */}
-          <Card padding="px-6 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-display font-semibold text-sm text-n-700">{t('analytics.competitionTitle')}</h3>
-                <p className="text-xs font-body text-n-400 mt-0.5">
+          <section className={CARTAO}>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="min-w-0">
+                <h3 className={TITULO}>{t('analytics.competitionTitle')}</h3>
+                <p className="text-xs font-body text-n-500 mt-0.5">
                   {t('analytics.competitionDescription')}
                 </p>
               </div>
-              <Building2 size={16} strokeWidth={1.75} className="text-n-400 shrink-0" />
+              <Building2 size={16} strokeWidth={1.75} className="text-n-500 shrink-0" aria-hidden="true" />
             </div>
 
             {units.length === 0 ? (
@@ -704,10 +687,10 @@ export default function Analytics() {
             ) : (
               <Table columns={compColumns} rows={units.slice(0, 8)} compact />
             )}
-            <p className="text-[10px] font-mono text-n-400 mt-3">
+            <p className="text-xs font-body text-n-500 mt-3">
               {t('analytics.competitionNote')}
             </p>
-          </Card>
+          </section>
 
         </div>
       )}

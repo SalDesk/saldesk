@@ -3,6 +3,8 @@ import {
   Euro,
   BarChart2,
   TrendingUp,
+  TrendingDown,
+  Minus,
   FileSpreadsheet,
   FileText,
   Receipt,
@@ -16,16 +18,16 @@ import { useT } from '../i18n';
 import PlanGuard from '../components/PlanGuard';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
 import FilterChips from '../components/ui/FilterChips';
-import KpiCard from '../components/financial/KpiCard';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER } from '../components/shared/IconBtn';
 import RevenueChart from '../components/financial/RevenueChart';
 import ChannelChart from '../components/financial/ChannelChart';
 import ServiceBarChart from '../components/financial/ServiceBarChart';
 import TopCustomersList from '../components/financial/TopCustomersList';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
-import { mesAtual, mesAnterior, esteAno, ultimos30, loadCosts, saveCosts, unitTotalCost } from './financial/shared';
+import { mesAtual, mesAnterior, esteAno, ultimos30, loadCosts, saveCosts, unitTotalCost, fmtMoney, fmtMoneyOuTraco, CartaoFin, NUM } from './financial/shared';
 import CostEditModal from './financial/CostEditModal';
 import TransacoesTable from './financial/TransacoesTable';
 import Comparativo from './financial/Comparativo';
@@ -64,6 +66,25 @@ const MOEDAS = [
   { value: 'CVE', label: 'CVE' },
 ];
 const GRANULARIDADES = ['day', 'week', 'month'];
+
+/* Variacao face ao periodo anterior: icone, sinal e valor (nunca so a cor); o delta e em euro, como sempre */
+function variacaoEuro(delta, currency) {
+  if (currency === 'CVE') return `${delta > 0 ? '+' : ''}${fmtMoney(delta, currency)}`;
+  const n = Math.round(Number(delta || 0));
+  return `${n > 0 ? '+' : n < 0 ? '-' : ''}${fmtMoney(Math.abs(n), currency)}`;
+}
+function Variacao({ delta, rotulo, currency }) {
+  if (delta == null) return null;
+  const neutro = delta === 0;
+  const Icone = neutro ? Minus : delta > 0 ? TrendingUp : TrendingDown;
+  const cor = neutro ? 'text-n-600' : delta > 0 ? 'text-[var(--success)]' : 'text-[var(--error)]';
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <span className={`inline-flex items-center gap-1 ${NUM} ${cor}`}><Icone size={12} strokeWidth={2} />{variacaoEuro(delta, currency)}</span>
+      {rotulo && <span className="font-body text-n-600">{rotulo}</span>}
+    </span>
+  );
+}
 
 /* ─────────────────── MAIN ─────────────────── */
 export default function Financial() {
@@ -183,25 +204,26 @@ export default function Financial() {
     <div>
       <PageHeader
         title={t('financial.title')}
+        eyebrow={t('nav.sections.gestao')}
         actions={
           activeSec === 'receitas' ? (
-            <div className="flex gap-2">
-              <Button variant="secondary" icon={FileSpreadsheet} size="sm" loading={exporting === 'excel'} onClick={() => handleExport('excel')}>Excel</Button>
-              <Button variant="secondary" icon={FileText} size="sm" loading={exporting === 'pdf'} onClick={() => handleExport('pdf')}>PDF</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" icon={FileSpreadsheet} size="sm" className="min-h-11 md:min-h-0" loading={exporting === 'excel'} onClick={() => handleExport('excel')}>Excel</Button>
+              <Button variant="secondary" icon={FileText} size="sm" className="min-h-11 md:min-h-0" loading={exporting === 'pdf'} onClick={() => handleExport('pdf')}>PDF</Button>
             </div>
           ) : null
         }
       />
 
       {/* Section tabs (top level) */}
-      <div className="mb-5">
+      <div className="mb-5 max-w-full overflow-x-auto">
         <Tabs
           tabs={SECTIONS.map(({ id, pro }) => {
             const label = t(`financial.sections.${id}`);
             return {
               id,
               label: pro && !canAccess('financeiro-completo')
-                ? <span className="inline-flex items-center gap-1.5">{label}<Lock size={11} strokeWidth={1.75} className="text-n-300 shrink-0" /></span>
+                ? <span className="inline-flex items-center gap-1.5">{label}<Lock size={11} strokeWidth={1.75} className="text-n-500 shrink-0" /></span>
                 : label,
             };
           })}
@@ -223,7 +245,7 @@ export default function Financial() {
           </div>
 
           {/* Receitas sub-tabs */}
-          <div className="mb-5">
+          <div className="mb-5 max-w-full overflow-x-auto">
             <Tabs tabs={RECEITAS_TABS.map(id => ({ id, label: t(`financial.revenueTabs.${id}`) }))} value={activeTab} onChange={setActiveTab} />
           </div>
 
@@ -232,33 +254,33 @@ export default function Financial() {
             <div className="flex justify-center py-24"><LoadingSpinner size={36} /></div>
           ) : activeTab === 'geral' ? (
             <div className="space-y-5">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <KpiCard label={t('financial.overview.totalRevenue')} value={atual.receita} delta={variacao.receita} deltaLabel={t('financial.overview.vsPrevious')} icon={Euro} format="euro" currency={currency} />
-                <KpiCard label={t('financial.overview.direct', { pct: directaPct != null ? `${directaPct}%` : '' })} value={directas} sub={ota > 0 ? t('financial.overview.viaOta', { n: ota }) : undefined} icon={BarChart2} format="number" />
-                <KpiCard label={t('financial.overview.avgTicket')} value={ticketMedio} icon={Receipt} format="euro" currency={currency} />
-                <KpiCard label={t('financial.overview.netMargin', { pct: margemLiq != null && totalCustos > 0 ? ` (${((receitaNum - totalCustos) / receitaNum * 100).toFixed(0)}%)` : '' })} value={margemLiq} delta={crescimento} deltaLabel={t('financial.overview.growth')} icon={TrendingUp} format="euro" currency={currency} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MareStat icon={Euro} label={t('financial.overview.totalRevenue')} value={fmtMoneyOuTraco(atual.receita, currency)} hint={variacao.receita != null ? <Variacao delta={variacao.receita} rotulo={t('financial.overview.vsPrevious')} currency={currency} /> : undefined} />
+                <MareStat icon={BarChart2} label={t('financial.overview.direct', { pct: directaPct != null ? `${directaPct}%` : '' })} value={String(directas)} hint={ota > 0 ? t('financial.overview.viaOta', { n: ota }) : undefined} />
+                <MareStat icon={Receipt} label={t('financial.overview.avgTicket')} value={fmtMoneyOuTraco(ticketMedio, currency)} />
+                <MareStat icon={TrendingUp} label={t('financial.overview.netMargin', { pct: margemLiq != null && totalCustos > 0 ? ` (${((receitaNum - totalCustos) / receitaNum * 100).toFixed(0)}%)` : '' })} value={fmtMoneyOuTraco(margemLiq, currency)} hint={crescimento != null ? <Variacao delta={crescimento} rotulo={t('financial.overview.growth')} currency={currency} /> : undefined} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <Card className="lg:col-span-2" header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.revenueByPeriod')}</h3><span className="text-xs font-mono text-n-400">{periodo.inicio} — {periodo.fim}</span></div>} padding="px-5 pb-5 pt-2">
+                <CartaoFin className="lg:col-span-2" titulo={t('financial.overview.revenueByPeriod')} lado={<span className={`text-xs ${NUM} text-n-600`}>{periodo.inicio} — {periodo.fim}</span>}>
                   <RevenueChart data={receita} granularidade={granularidade} currency={currency} />
-                </Card>
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.byChannel')}</h3>} padding="px-5 pb-5 pt-2">
+                </CartaoFin>
+                <CartaoFin titulo={t('financial.overview.byChannel')}>
                   <ChannelChart data={canais} />
-                </Card>
+                </CartaoFin>
               </div>
               {sazonal.length > 0 && (
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.seasonality', { year: new Date().getFullYear() })}</h3>} padding="px-5 pb-5 pt-2">
+                <CartaoFin titulo={t('financial.overview.seasonality', { year: new Date().getFullYear() })}>
                   <RevenueChart data={sazonal} granularidade="month" currency={currency} />
-                </Card>
+                </CartaoFin>
               )}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.topServices')}</h3>} padding="px-5 pb-5 pt-2"><ServiceBarChart data={unidades} currency={currency} /></Card>
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.topCustomers')}</h3>}><TopCustomersList data={clientes} /></Card>
+                <CartaoFin titulo={t('financial.overview.topServices')}><ServiceBarChart data={unidades} currency={currency} /></CartaoFin>
+                <CartaoFin titulo={t('financial.overview.topCustomers')}><TopCustomersList data={clientes} /></CartaoFin>
               </div>
-              {resumo?.anterior && <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.comparison')}</h3>}><Comparativo resumo={resumo} currency={currency} /></Card>}
-              <Card header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.transactions')}</h3><button aria-label={t('financial.overview.refreshTransactions')} onClick={() => carregarTx(periodo)} className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><RefreshCw size={13} strokeWidth={1.75} /></button></div>}>
+              {resumo?.anterior && <CartaoFin titulo={t('financial.overview.comparison')}><Comparativo resumo={resumo} currency={currency} /></CartaoFin>}
+              <CartaoFin titulo={t('financial.overview.transactions')} lado={<IconBtn icon={RefreshCw} label={t('financial.overview.refreshTransactions')} onClick={() => carregarTx(periodo)} hover={EDIT_HOVER} />}>
                 <TransacoesTable transacoes={transacoes} currency={currency} loading={loadingTx} />
-              </Card>
+              </CartaoFin>
             </div>
           ) : activeTab === 'portour' ? (
             loading ? <div className="flex justify-center py-24"><LoadingSpinner size={36} /></div> :
@@ -281,10 +303,10 @@ export default function Financial() {
 
       {/* CVE/EUR toggle for non-receitas sections */}
       {activeSec !== 'receitas' && (
-        <div className="fixed bottom-5 right-5 flex gap-0.5 bg-ocean-900 rounded-sm p-0.5 shadow-lg">
+        <div className="fixed bottom-5 right-5 flex gap-0.5 bg-white border border-mare-card rounded-full p-1 shadow-md">
           {['EUR', 'CVE'].map(c => (
             <button key={c} onClick={() => setCurrency(c)}
-              className={`px-3 py-1.5 rounded-xs text-xs font-mono font-semibold transition-colors ${currency === c ? 'bg-ocean-700 text-white' : 'text-ocean-300 hover:text-white'}`}>
+              className={`min-h-11 min-w-11 md:min-h-9 px-3 rounded-full text-xs font-mono font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${currency === c ? 'bg-ocean-900 text-white' : 'text-ocean-700 hover:bg-ocean-50'}`}>
               {c}
             </button>
           ))}

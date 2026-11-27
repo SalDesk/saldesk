@@ -8,13 +8,15 @@ import {
 import { getSalaryConfig, setSalaryConfig as persistSalaryConfig, getSalaryPayments, addSalaryPayment } from '../../services/expensesService';
 import { listStaff } from '../../services/staffService';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { fmtMoney, fmtDica } from './shared';
+import MareStat from '../../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER } from '../../components/shared/IconBtn';
+import { CARTAO, CAIXA, NUM, PS_VARIANT, fmtMoney, fmtDica } from './shared';
 import { rotuloCargo } from '../staff/shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { useT } from '../../i18n';
@@ -75,19 +77,19 @@ function SalariosTab({ currency }) {
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   const columns = [
-    { key: 'colaborador', label: t('financial.columns.staff'), render: s => <div><p className="font-body font-semibold text-n-900">{s.name}</p><p className="text-xs font-body text-n-500">{rotuloCargo(s.role, t, lang)}</p></div> },
-    { key: 'base', label: t('financial.payroll.baseSalary'), render: s => { const cfg = getConfig(s.id); return <span className="font-mono text-n-700">{cfg.base ? fmtMoney(cfg.base, currency) : <span className="text-n-300">—</span>}</span>; } },
-    { key: 'subsidios', label: t('financial.payroll.allowances'), render: s => { const cfg = getConfig(s.id); return <span className="text-xs font-body text-n-500">{(cfg.food || cfg.transport) ? `${cfg.food ? t('financial.payroll.meal', { v: fmtMoney(cfg.food, currency) }) : ''} ${cfg.transport ? t('financial.payroll.transport', { v: fmtMoney(cfg.transport, currency) }) : ''}`.trim() : '—'}</span>; } },
-    { key: 'inps', label: t('financial.payroll.employerInps'), render: s => <span className="font-mono text-n-600">{getConfig(s.id).inps_pct || 15}%</span> },
-    { key: 'custo', label: t('financial.payroll.totalCostMonth'), render: s => <span className="font-display font-bold text-[var(--error)]">{fmtMoney(totalCost(getConfig(s.id)), currency)}</span> },
+    { key: 'colaborador', label: t('financial.columns.staff'), render: s => <div><p className="font-body font-semibold text-n-900">{s.name}</p><p className="text-xs font-body text-n-600">{rotuloCargo(s.role, t, lang)}</p></div> },
+    { key: 'base', label: t('financial.payroll.baseSalary'), render: s => { const cfg = getConfig(s.id); return <span className={`${NUM} text-n-700`}>{cfg.base ? fmtMoney(cfg.base, currency) : <span className="text-n-500">—</span>}</span>; } },
+    { key: 'subsidios', label: t('financial.payroll.allowances'), render: s => { const cfg = getConfig(s.id); return <span className={`text-xs ${NUM} text-n-600`}>{(cfg.food || cfg.transport) ? `${cfg.food ? t('financial.payroll.meal', { v: fmtMoney(cfg.food, currency) }) : ''} ${cfg.transport ? t('financial.payroll.transport', { v: fmtMoney(cfg.transport, currency) }) : ''}`.trim() : '—'}</span>; } },
+    { key: 'inps', label: t('financial.payroll.employerInps'), render: s => <span className={`${NUM} text-n-600`}>{getConfig(s.id).inps_pct || 15}%</span> },
+    { key: 'custo', label: t('financial.payroll.totalCostMonth'), render: s => <span className={`${NUM} font-bold text-[var(--error)] whitespace-nowrap`}>{fmtMoney(totalCost(getConfig(s.id)), currency)}</span> },
     {
       key: 'estado', label: t('financial.columns.status'),
       render: s => {
         const paid = payments.some(p => p.staffId === s.id && p.month === curMonth && p.year === curYear);
         return (
-          <span className={`text-xs font-mono px-2 py-0.5 rounded-xs ${paid ? 'bg-[var(--success-light)] text-[var(--success)]' : 'bg-[var(--warning-light)] text-[var(--warning)]'}`}>
+          <Badge variant={PS_VARIANT[paid ? 'paid' : 'pending']}>
             {paid ? t('financial.paymentStatus.paid') : t('financial.paymentStatus.pending')}
-          </span>
+          </Badge>
         );
       },
     },
@@ -99,7 +101,7 @@ function SalariosTab({ currency }) {
         const paid = payments.some(p => p.staffId === s.id && p.month === curMonth && p.year === curYear);
         return (
           <div className="flex items-center gap-1">
-            <button aria-label={t('financial.payroll.editAria', { name: s.name })} onClick={() => setEditModal({ staff: s, cfg })} className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><Edit2 size={13} strokeWidth={1.75} /></button>
+            <IconBtn icon={Edit2} label={t('financial.payroll.editAria', { name: s.name })} onClick={() => setEditModal({ staff: s, cfg })} hover={EDIT_HOVER} />
             {!paid && <Button size="sm" aria-label={t('financial.payroll.payAria', { name: s.name })} onClick={() => setPayModal({ staff: s, amount: cost })}>{t('financial.payroll.pay')}</Button>}
           </div>
         );
@@ -107,22 +109,24 @@ function SalariosTab({ currency }) {
     },
   ];
 
+  const pagosEsteMes = payments.filter(p => p.month === curMonth && p.year === curYear).length;
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card padding="px-4 py-3"><p className="font-display font-bold text-xl text-n-900">{staffList.length}</p><p className="text-xs font-body text-n-500">{t('financial.payroll.activeStaff')}</p></Card>
-        <Card padding="px-4 py-3"><p className="font-display font-bold text-xl text-[var(--error)]">{fmtMoney(totalFolha, currency)}</p><p className="text-xs font-body text-n-500">{t('financial.payroll.totalPayroll')}</p></Card>
-        <Card padding="px-4 py-3"><p className="font-display font-bold text-xl text-[var(--success)]">{payments.filter(p => p.month === curMonth && p.year === curYear).length}</p><p className="text-xs font-body text-n-500">{t('financial.payroll.paidThisMonth')}</p></Card>
-        <Card padding="px-4 py-3"><p className="font-display font-bold text-xl text-[var(--warning)]">{staffList.length - payments.filter(p => p.month === curMonth && p.year === curYear).length}</p><p className="text-xs font-body text-n-500">{t('financial.payroll.unpaidThisMonth')}</p></Card>
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
+        <MareStat label={t('financial.payroll.activeStaff')} value={staffList.length} />
+        <MareStat label={t('financial.payroll.totalPayroll')} value={fmtMoney(totalFolha, currency)} />
+        <MareStat label={t('financial.payroll.paidThisMonth')} value={pagosEsteMes} tone="bom" />
+        <MareStat label={t('financial.payroll.unpaidThisMonth')} value={staffList.length - pagosEsteMes} tone="aviso" />
       </div>
 
       {staffList.length === 0 ? (
-        <Card padding="p-0"><EmptyState icon={Users} title={t('financial.payroll.empty')} /></Card>
+        <div className={CARTAO}><EmptyState icon={Users} title={t('financial.payroll.empty')} /></div>
       ) : (
-        <Card padding="p-0">
+        <div className={CARTAO}>
           <Table columns={columns} rows={staffList} compact />
-        </Card>
+        </div>
       )}
 
       {/* Edit salary modal */}
@@ -136,9 +140,9 @@ function SalariosTab({ currency }) {
       {payModal && (
         <Modal open onClose={() => setPayModal(null)} title={t('financial.payroll.paymentTitle', { name: payModal.staff.name })} size="sm">
           <div className="space-y-4">
-            <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm">
-              <p className="text-xs font-body text-n-500">{t('financial.payroll.calculated')}</p>
-              <p className="font-display font-bold text-lg text-n-800">{fmtMoney(payModal.amount, currency)}</p>
+            <div className={`${CAIXA} px-3 py-2`}>
+              <p className="text-xs font-body text-n-600">{t('financial.payroll.calculated')}</p>
+              <p className={`${NUM} font-bold text-lg text-n-800`}>{fmtMoney(payModal.amount, currency)}</p>
             </div>
             <div className="flex gap-3">
               <Button variant="secondary" onClick={() => setPayModal(null)} className="flex-1">{t('common.cancel')}</Button>
@@ -165,9 +169,9 @@ function SalaryForm({ cfg, onSave, onClose }) {
         <Input label={t('financial.payroll.transportAllowance')} aria-label={t('financial.payroll.transportAllowance')} type="number" min="0" step="1" value={form.transport} onChange={set('transport')} />
       </div>
       <Input label={t('financial.payroll.employerInpsPct')} aria-label={t('financial.payroll.employerInpsPct')} type="number" min="0" max="100" step="0.5" value={form.inps_pct} onChange={set('inps_pct')} hint={t('financial.payroll.inpsHint')} />
-      <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm flex justify-between">
-        <span className="text-xs font-body text-n-500">{t('financial.payroll.totalMonthly')}</span>
-        <span className="font-display font-bold text-sm text-[var(--error)]">{fmtDica(total, 'EUR')}</span>
+      <div className={`${CAIXA} px-3 py-2 flex justify-between gap-3`}>
+        <span className="text-xs font-body text-n-600">{t('financial.payroll.totalMonthly')}</span>
+        <span className={`${NUM} font-bold text-sm text-[var(--error)]`}>{fmtDica(total, 'EUR')}</span>
       </div>
       <div className="flex gap-3"><Button variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button><Button icon={Save} onClick={() => onSave({ base: Number(form.base), food: Number(form.food), transport: Number(form.transport), inps_pct: Number(form.inps_pct) })} className="flex-1">{t('common.save')}</Button></div>
     </div>

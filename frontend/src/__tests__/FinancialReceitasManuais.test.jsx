@@ -239,3 +239,35 @@ describe('Receitas manuais com o design system', () => {
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/text-error/);
   });
 });
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Receitas manuais no estilo Mare', () => {
+  it('resumos_e_lista_estao_em_cartoes_Mare', async () => {
+    await montar();
+    const bolas = [...document.querySelectorAll('div.rounded-full[style]')];
+    expect(bolas.length).toBe(2);
+    bolas.forEach(b => expect(b.closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]'));
+    expect(screen.getByRole('table').closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]');
+    cleanup();
+    fin.getReceitasManuais.mockResolvedValue([]);
+    await montar();
+    expect(screen.getByText('Sem receitas manuais no período seleccionado.').closest('.border-mare-card')).toHaveClass('rounded-[18px]');
+  });
+
+  it('datas_valores_e_total_sao_mono', async () => {
+    await montar();
+    const feira = screen.getByText('Feira').closest('tr');
+    expect(within(feira).getByText(fmtDate(`${MES}-01`))).toHaveClass('font-mono', 'tabular-nums');
+    expect(within(feira).getByText(`+ ${eur(120)}`)).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText(eur(240), { selector: 'span.font-bold' })).toHaveClass('font-mono', 'tabular-nums');
+  });
+
+  it('as_accoes_sao_IconBtn_e_o_botao_registar_tem_altura_de_toque', async () => {
+    await montar();
+    const feira = screen.getByText('Feira').closest('tr');
+    [`Editar receita - Venda ao balcao`, `Eliminar receita - Venda ao balcao`].forEach(nome =>
+      expect(within(feira).getByRole('button', { name: nome })).toHaveClass('min-h-11', 'min-w-11', 'md:min-h-9', 'rounded-full', 'focus-visible:ring-sand-500'));
+    expect(screen.getByText('Registar receita').closest('button')).toHaveClass('min-h-11', 'md:min-h-0');
+  });
+});

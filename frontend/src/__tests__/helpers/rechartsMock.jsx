@@ -13,6 +13,7 @@ function recolher(children, acc) {
   React.Children.forEach(children, (ch) => {
     if (!ch || typeof ch !== 'object' || !ch.props) return;
     olhar(ch.props, acc);
+    notar(ch, acc);
     recolher(ch.props.children, acc);
   });
 }
@@ -27,22 +28,37 @@ function olhar(p, acc) {
   if (p.data && acc.data == null) acc.data = p.data;
 }
 
+/* grelha (vertical) e chaves das series: servem para verificar a linguagem dos graficos */
+function notar(ch, acc) {
+  const nome = ch.type && ch.type.displayName;
+  if (nome === 'CartesianGrid') { acc.gridVertical = ch.props.vertical; acc.gridHorizontal = ch.props.horizontal; }
+  if (ch.props.tick && ch.props.tick.fontSize) acc.tickSizes.push(ch.props.tick.fontSize);
+  if (ch.props.content) acc.customTooltip = true;
+  if (ch.props.contentStyle) acc.styledTooltip = true;
+  if ((nome === 'Bar' || nome === 'Area') && ch.props.dataKey) acc.keys.push(ch.props.dataKey);
+}
+
 function grafico(nome) {
   return function Grafico(props) {
-    const acc = { colors: [], data: null };
+    const acc = { colors: [], data: null, keys: [], gridVertical: undefined, gridHorizontal: undefined, tickSizes: [], customTooltip: false, styledTooltip: false };
     olhar(props, acc);
     recolher(props.children, acc);
-    return <div data-chart={nome} data-colors={JSON.stringify(acc.colors)} data-data={JSON.stringify(acc.data)} />;
+    return <div data-chart={nome} data-colors={JSON.stringify(acc.colors)} data-data={JSON.stringify(acc.data)} data-keys={JSON.stringify(acc.keys)} data-grid-vertical={String(acc.gridVertical)} data-grid-horizontal={String(acc.gridHorizontal)} data-tick-sizes={JSON.stringify(acc.tickSizes)} data-tooltip-custom={String(acc.customTooltip)} data-tooltip-styled={String(acc.styledTooltip)} />;
   };
 }
 
 export function makeRechartsMock() {
   const vazio = () => null;
+  /* componentes com displayName: o grafico le o nome para encontrar a grelha e as series */
+  const nomeado = (nome) => { const f = () => null; f.displayName = nome; return f; };
+  const CartesianGrid = nomeado('CartesianGrid');
+  const Bar = nomeado('Bar');
+  const Area = nomeado('Area');
   return {
     ResponsiveContainer: ({ children }) => <div data-chart="container">{children}</div>,
     PieChart: grafico('pie'), BarChart: grafico('bar'), AreaChart: grafico('area'),
-    Pie: vazio, Cell: vazio, Bar: vazio, Area: vazio,
-    XAxis: vazio, YAxis: vazio, CartesianGrid: vazio, Tooltip: vazio, Legend: vazio,
+    Pie: vazio, Cell: vazio, Bar, Area,
+    XAxis: vazio, YAxis: vazio, CartesianGrid, Tooltip: vazio, Legend: vazio,
   };
 }
 

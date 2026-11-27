@@ -12,6 +12,11 @@ import Toggle from '../../components/ui/Toggle';
 import { useT } from '../../i18n';
 import { useLingua } from '../../utils/formatoLingua';
 
+/* Estilo Mare: caixa interior calma que agrupa uma secao do formulario; botoes de 44 px no telemovel */
+const CAIXA = 'bg-mare-head rounded-[14px] p-4';
+const ETIQUETA = 'text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 block';
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
+
 /* ── StaffForm ── */
 /* As opcoes de cargo, zona e dia gravam sempre o valor da lista (portugues); so o texto mostrado muda com a lingua. */
 function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
@@ -85,24 +90,24 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Photo */}
-      <div className="flex items-center gap-4">
+      <section className={`${CAIXA} flex items-center gap-4`}>
         <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-n-100 border-2 border-n-200 flex items-center justify-center overflow-hidden">
+          <div className="w-16 h-16 rounded-full bg-white border-2 border-mare-card flex items-center justify-center overflow-hidden">
             {photoPreview
               ? <img src={photoPreview} alt="" className="w-full h-full object-cover" />
               : <Camera size={20} strokeWidth={1.75} className="text-n-400" />}
           </div>
           <button type="button" aria-label={t('staff.form.uploadPhoto')} onClick={() => fileRef.current?.click()}
-            className="absolute -bottom-1 -right-1 w-6 h-6 bg-ocean-700 text-white rounded-full flex items-center justify-center hover:bg-ocean-500 transition-colors">
-            <Upload size={10} strokeWidth={2} />
+            className={`absolute -bottom-2 -right-2 w-11 h-11 md:w-8 md:h-8 bg-ocean-700 text-white rounded-full flex items-center justify-center hover:bg-ocean-500 transition-colors ${FOCO}`}>
+            <Upload size={14} strokeWidth={2} />
           </button>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
         </div>
         <div>
-          <p className="text-sm font-display font-semibold text-n-800">{t('staff.form.profilePhoto')}</p>
-          <p className="text-xs font-body text-n-500">{t('staff.form.photoHint')}</p>
+          <p className="text-sm font-display font-semibold text-ocean-900">{t('staff.form.profilePhoto')}</p>
+          <p className="text-xs font-body text-n-600">{t('staff.form.photoHint')}</p>
         </div>
-      </div>
+      </section>
 
       <Input label={t('staff.form.fullName')} aria-label={t('staff.form.fullName')} value={form.name} onChange={set('name')} required placeholder={t('staff.form.namePlaceholder')} />
 
@@ -132,32 +137,34 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
       />
 
       {/* Schedule */}
-      <div>
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 block">
+      <section className={CAIXA}>
+        <label className={ETIQUETA}>
           {t('staff.form.schedule')}
         </label>
         <div className="flex gap-1.5 flex-wrap">
           {DAYS.map(d => (
             <button key={d} type="button" onClick={() => toggleDay(d)}
-              className={`px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors ${schedule.includes(d) ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
+              aria-pressed={schedule.includes(d)}
+              className={`min-h-11 min-w-11 md:min-h-9 md:min-w-0 px-3 rounded-full text-xs font-mono font-medium transition-colors ${FOCO} ${schedule.includes(d) ? 'bg-ocean-700 text-white' : 'bg-white text-n-700 border border-mare-card hover:bg-n-100'}`}>
               {rotuloDia(d, t)}
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Skills */}
-      <div>
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 block">
+      <section className={CAIXA}>
+        <label className={ETIQUETA}>
           {t('staff.form.skills')}
         </label>
         {skills.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {skills.map(s => (
-              <span key={s} className="flex items-center gap-1 px-2 py-0.5 bg-ocean-50 text-ocean-700 rounded text-xs font-body">
-                <Tag size={9} strokeWidth={1.75} />{s}
-                <button type="button" aria-label={t('staff.form.removeSkill', { skill: s })} onClick={() => setSkills(p => p.filter(x => x !== s))}>
-                  <X size={10} strokeWidth={2} />
+              <span key={s} className="flex items-center gap-1 pl-2.5 pr-1 py-0.5 bg-ocean-100 text-ocean-800 rounded-full text-xs font-body">
+                <Tag size={11} strokeWidth={1.75} />{s}
+                <button type="button" aria-label={t('staff.form.removeSkill', { skill: s })} onClick={() => setSkills(p => p.filter(x => x !== s))}
+                  className={`inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-6 md:min-w-6 rounded-full ${FOCO}`}>
+                  <X size={12} strokeWidth={2} />
                 </button>
               </span>
             ))}
@@ -169,12 +176,12 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
           onChange={e => setSkillInput(e.target.value)} onKeyDown={addSkill}
           placeholder={t('staff.form.skillPlaceholder')}
         />
-      </div>
+      </section>
 
       {/* Vendor-specific fields */}
       {form.role === CARGO_VENDEDOR && (
-        <div className="border border-[var(--sand-300)] bg-[var(--sand-50)] rounded-sm p-4 space-y-3">
-          <p className="text-xs font-body font-bold uppercase tracking-wide text-[var(--sand-600)]">
+        <section className="border border-[var(--sand-300)] bg-[var(--sand-50)] rounded-[14px] p-4 space-y-3">
+          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-700">
             {t('staff.form.sellerSettings')}
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -191,7 +198,7 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
           </div>
           {availUnits.length > 0 && (
             <div>
-              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">
+              <label className={ETIQUETA}>
                 {t('staff.form.toursCanSell', {
                   sel: sellerTourIds.length === 0 ? t('staff.form.toursAll') : t('staff.form.toursSelected', { n: sellerTourIds.length }),
                 })}
@@ -200,7 +207,7 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
                 {availUnits.map(u => (
                   <button key={u.id} type="button"
                     onClick={() => setSellerTourIds(p => p.includes(u.id) ? p.filter(x => x !== u.id) : [...p, u.id])}
-                    className={`text-xs px-2.5 py-1 rounded-sm border font-body transition-colors ${
+                    className={`min-h-11 md:min-h-9 text-xs px-3 rounded-full border font-body transition-colors ${FOCO} ${
                       sellerTourIds.includes(u.id)
                         ? 'bg-ocean-700 text-white border-ocean-700'
                         : 'bg-white text-n-600 border-n-200 hover:border-ocean-300'
@@ -209,24 +216,24 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] font-mono text-n-400 mt-1">
+              <p className="text-xs font-body text-n-600 mt-2">
                 {t('staff.form.toursHint')}
               </p>
             </div>
           )}
-        </div>
+        </section>
       )}
 
       {/* Create access account */}
       {!member && (
-        <div className="border border-n-200 rounded-sm p-3 space-y-2">
+        <section className={`${CAIXA} space-y-2`}>
           <Toggle checked={createAccess} onChange={setCreateAccess} label={t('staff.form.createAccess')} />
           {createAccess && (
-            <p className="text-xs font-body text-n-500 bg-n-50 rounded p-2">
+            <p className="text-xs font-body text-n-600 bg-white rounded-[14px] p-3">
               {t('staff.form.createAccessHint')}
             </p>
           )}
-        </div>
+        </section>
       )}
 
       {error && (

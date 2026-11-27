@@ -64,16 +64,16 @@ async function montar(props = {}) {
   return r;
 }
 const cartao = (rotulo) => screen.getByText(rotulo, { selector: 'p' });
-const valor = (rotulo) => norm(cartao(rotulo).previousSibling.textContent);
-/* antes: classes de cor; depois: tokens */
+const valor = (rotulo) => norm(cartao(rotulo).closest('article').querySelector('p.font-display').textContent);
+/* o tom vem da pequena caixa (ou ponto) do MareStat: turquesa = bom, areia = aviso, sem marca = neutro */
 function tom(el) {
-  const c = el.className;
-  if (/1A7A4A|--success/.test(c)) return 'bom';
-  if (/yellow-700|--warning/.test(c)) return 'medio';
-  if (/text-error|--error/.test(c)) return 'mau';
+  const marca = el && el.querySelector('[data-mare-stat-tint]');
+  if (!marca) return 'neutro';
+  if (/turquoise/.test(marca.className)) return 'bom';
+  if (/sand/.test(marca.className)) return 'aviso';
   return 'neutro';
 }
-const tomDe = (rotulo) => tom(cartao(rotulo).previousSibling);
+const tomDe = (rotulo) => tom(cartao(rotulo).closest('article'));
 
 /* ───────────────────────── caracterizacao ───────────────────────── */
 
@@ -102,27 +102,27 @@ describe('Resultado', () => {
     expect(valor('Reservas no período')).toBe('10');
   });
 
-  it('margem_a_verde_a_amarelo_e_a_vermelho_nos_limiares_20_e_0', async () => {
+  it('margem_com_tom_bom_ou_aviso_nos_limiares_20_e_0', async () => {
     await montar({ resumo: { atual: { receita: 750 } } }); /* resultado 150 => 20% exacto */
     expect(valor('Margem')).toBe('20.0%');
     expect(tomDe('Margem')).toBe('bom');
     cleanup();
     await montar({ resumo: { atual: { receita: 700 } } }); /* 100 => 14.3% */
-    expect(tomDe('Margem')).toBe('medio');
+    expect(tomDe('Margem')).toBe('aviso');
     cleanup();
     await montar({ resumo: { atual: { receita: 600 } } }); /* 0 => 0.0% */
     expect(valor('Margem')).toBe('0.0%');
-    expect(tomDe('Margem')).toBe('medio');
+    expect(tomDe('Margem')).toBe('aviso');
     cleanup();
     await montar({ resumo: { atual: { receita: 100 } } }); /* -500 */
-    expect(tomDe('Margem')).toBe('mau');
-    expect(tomDe('Resultado líquido')).toBe('mau');
+    expect(tomDe('Margem')).toBe('aviso');
+    expect(tomDe('Resultado líquido')).toBe('aviso');
     cleanup();
     await montar();
     expect(tomDe('Margem')).toBe('bom');
     expect(tomDe('Resultado líquido')).toBe('bom');
-    expect(tomDe('Despesas operacionais')).toBe('mau');
-    expect(tomDe('Folha salarial')).toBe('mau');
+    expect(tomDe('Despesas operacionais')).toBe('neutro');
+    expect(tomDe('Folha salarial')).toBe('neutro');
   });
 
   it('sem_receita_a_margem_e_zero_e_os_dados_em_falta_dao_travessao', async () => {
@@ -229,21 +229,22 @@ describe('Resultado', () => {
 /* ───────────────────────── design system ───────────────────────── */
 
 describe('Resultado com o design system', () => {
-  it('os_tons_usam_tokens', async () => {
+  it('os_tons_dos_quadros_nao_tingem_o_valor_e_a_decomposicao_usa_tokens', async () => {
     await montar();
-    expect(cartao('Resultado líquido').previousSibling.className).toContain('var(--success)');
-    expect(cartao('Despesas operacionais').previousSibling.className).toContain('var(--error)');
+    expect(cartao('Resultado líquido').closest('article').querySelector('p.font-display').className).not.toMatch(/success|error|warning/);
+    const caixa = screen.getByText('Decomposição do resultado').parentElement;
+    expect(within(caixa).getByText(`− ${eur(400)}`).className).toContain('var(--error)');
+    expect(within(caixa).getByText(`+ ${eur(400)}`).className).toContain('var(--success)');
     cleanup();
     await montar({ resumo: { atual: { receita: 700 } } });
-    expect(cartao('Margem').previousSibling.className).toContain('var(--warning)');
+    expect(tomDe('Margem')).toBe('aviso');
   });
 
   it('as_cores_do_grafico_sao_tokens', async () => {
     await montar();
     const cores = coresDosGraficos();
-    expect(cores).toHaveLength(6); /* grelha, dois eixos, borda do tooltip e duas barras */
-    expect(cores.filter(c => !/^(var\(--|1px solid var\(--)/.test(c))).toEqual([]);
-    expect(cores.some(c => c.startsWith('1px solid var(--'))).toBe(true);
+    expect(cores).toHaveLength(5); /* grelha, dois eixos e duas barras: a dica e a caixa partilhada, sem borda propria */
+    expect(cores.filter(c => !/^var\(--/.test(c))).toEqual([]);
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error', async () => {
@@ -253,5 +254,80 @@ describe('Resultado com o design system', () => {
     expect(html).not.toMatch(/(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border)-(?:green|yellow|blue|red)-\d/);
     expect(html).not.toMatch(/text-error/);
     expect(html).not.toMatch(/text-\[#/);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+const CARTAO_MARE = ['bg-white', 'border', 'border-mare-card', 'rounded-[18px]'];
+/* o valor do quadro MareStat (sem depender da ordem dos elementos) */
+const valorMare = (rotulo) => norm(cartao(rotulo).closest('article').querySelector('p.font-display').textContent);
+
+describe('Resultado no estilo Mare', () => {
+  it('os_seis_quadros_sao_MareStat_com_os_mesmos_valores', async () => {
+    await montar();
+    for (const r of ['Receita bruta', 'Despesas operacionais', 'Folha salarial', 'Resultado líquido', 'Margem', 'Reservas no período']) {
+      expect(cartao(r).closest('article')).toHaveClass(...CARTAO_MARE);
+    }
+    expect(valorMare('Receita bruta')).toBe(eur(1000));
+    expect(valorMare('Despesas operacionais')).toBe(eur(400));
+    expect(valorMare('Folha salarial')).toBe(eur(200));
+    expect(valorMare('Resultado líquido')).toBe(eur(400));
+    expect(valorMare('Margem')).toBe('40.0%');
+    expect(valorMare('Reservas no período')).toBe('10');
+  });
+
+  it('o_tom_do_quadro_acompanha_o_sinal_e_a_margem_sem_tingir_o_valor', async () => {
+    const tinta = (rotulo) => cartao(rotulo).closest('article').querySelector('[data-mare-stat-tint]');
+    await montar();
+    expect(tinta('Resultado líquido').className).toContain('turquoise');
+    expect(tinta('Margem').className).toContain('turquoise');
+    cleanup();
+    await montar({ resumo: { atual: { receita: 700 } } });
+    expect(tinta('Margem').className).toContain('sand');
+    cleanup();
+    await montar({ resumo: { atual: { receita: 100 } } });
+    expect(tinta('Resultado líquido').className).toContain('sand');
+  });
+
+  it('o_grafico_e_a_decomposicao_sao_cartoes_Mare_com_titulo_Sora', async () => {
+    await montar();
+    for (const titulo of ['Receitas vs Despesas — últimos 6 meses', 'Decomposição do resultado']) {
+      const h = screen.getByText(titulo, { selector: 'h3' });
+      expect(h).toHaveClass('font-display', 'text-lg', 'font-semibold', 'text-ocean-900');
+      expect(h.closest('.border-mare-card')).toHaveClass(...CARTAO_MARE, 'p-[22px]');
+    }
+  });
+
+  it('os_valores_da_decomposicao_usam_mono_tabular', async () => {
+    await montar();
+    const caixa = screen.getByText('Decomposição do resultado').parentElement;
+    const v = within(caixa).getByText(`+ ${eur(1000)}`);
+    expect(v).toHaveClass('font-mono', 'tabular-nums');
+  });
+
+  it('o_grafico_segue_a_linguagem_dos_graficos_sem_grelha_vertical_e_com_as_mesmas_series', async () => {
+    await montar();
+    const barras = document.querySelector('[data-chart="bar"]');
+    expect(barras.getAttribute('data-grid-vertical')).toBe('false');
+    expect(JSON.parse(barras.getAttribute('data-keys'))).toEqual(['receita', 'despesas']);
+  });
+
+  it('acertos_finais_ticks_de_12_px_e_dica_partilhada_do_grafico', async () => {
+    await montar();
+    const barras = document.querySelector('[data-chart="bar"]');
+    expect(JSON.parse(barras.getAttribute('data-tick-sizes'))).toEqual([12, 12]);
+    expect(barras.getAttribute('data-tooltip-custom')).toBe('true');
+    expect(barras.getAttribute('data-tooltip-styled')).toBe('false');
+  });
+
+  it('sem_dados_o_grafico_mantem_os_seis_meses_a_zero', async () => {
+    getReceita.mockResolvedValue([]);
+    listExpenses.mockResolvedValue([]);
+    getSalaryPayments.mockResolvedValue([]);
+    await montar();
+    const d = dadosDoGrafico('bar');
+    expect(d).toHaveLength(6);
+    expect(d.every(m => m.receita === 0 && m.despesas === 0)).toBe(true);
   });
 });

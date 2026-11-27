@@ -37,7 +37,7 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
 
   return (
     <div onClick={() => onOpen(task)}
-      className={`bg-white border rounded-md p-3 cursor-pointer hover:shadow-md transition-all ${isOverdue ? 'border-[var(--error)]' : 'border-n-200'}`}>
+      className={`bg-white border rounded-[18px] p-3.5 min-w-0 cursor-pointer hover:shadow-md transition-all ${isOverdue ? 'border-[var(--error)]' : 'border-mare-card'}`}>
       {isOverdue && (
         <div className="flex items-center gap-1 mb-1.5 text-[var(--error)] text-xs font-body">
           <AlertTriangle size={11} strokeWidth={1.75} />
@@ -45,26 +45,26 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
         </div>
       )}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-sm font-display font-semibold text-n-900 line-clamp-2 leading-tight">{title}</p>
+        <p className="min-w-0 break-words text-sm font-display font-semibold text-n-900 line-clamp-2 leading-tight">{title}</p>
         <span className={`shrink-0 text-xs font-mono font-medium px-1.5 py-0.5 rounded ${PRIO_COLORS[prio]}`}>
           {rotuloPrio(prio, t)}
         </span>
       </div>
       {meta?.checklist?.length > 0 && (
-        <p className="text-xs font-body text-n-400 mb-2">
+        <p className="text-xs font-body text-n-600 mb-2">
           <CheckSquare size={10} strokeWidth={1.75} className="inline mr-1" />
           {t('staff.tasks.subtasks', { n: meta.checklist.filter(Boolean).length })}
         </p>
       )}
-      <div className="flex items-center justify-between pt-2 border-t border-n-100">
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-mare-card">
         {staffMember ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <StaffAvatar member={staffMember} size={20} showStatus={false} />
-            <span className="text-xs font-body text-n-500">{staffMember.name.split(' ')[0]}</span>
+            <span className="text-xs font-body text-n-600 truncate">{staffMember.name.split(' ')[0]}</span>
           </div>
         ) : <span />}
         {dueDate && (
-          <span className={`text-xs font-mono ${isOverdue ? 'text-[var(--error)]' : 'text-n-400'}`}>
+          <span className={`shrink-0 text-xs font-mono tabular-nums ${isOverdue ? 'text-[var(--error)]' : 'text-n-600'}`}>
             <Clock size={10} strokeWidth={1.75} className="inline mr-0.5" />
             {formatarData(dueDate, { day: '2-digit', month: 'short', timeZone: 'UTC' }, lang)}
           </span>
@@ -73,7 +73,7 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
       {proxima && (
         <button
           onClick={e => { e.stopPropagation(); onMove(nextStatus[task.status]); }}
-          className="mt-2 w-full flex items-center justify-center gap-1 py-1 rounded text-xs font-body text-ocean-700 bg-ocean-50 hover:bg-ocean-100 transition-colors">
+          className="mt-2 w-full flex items-center justify-center gap-1 min-h-11 md:min-h-8 py-1 rounded-[10px] text-xs font-body text-ocean-700 bg-ocean-50 hover:bg-ocean-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
           <ArrowRight size={11} strokeWidth={1.75} />
           {t('staff.tasks.moveTo', { col: t(proxima.rotulo) })}
         </button>
@@ -163,9 +163,9 @@ function KanbanBoard({ staffList }) {
               {staffList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </Select>
           </div>
-          <span className="text-xs font-body text-n-400">{t('staff.tasks.count', { n: filtered.length })}</span>
+          <span className="text-xs font-body text-n-600">{t('staff.tasks.count', { n: filtered.length })}</span>
         </div>
-        <Button icon={Plus} size="sm" onClick={() => setTaskModal(true)}>{t('staff.tasks.newTask')}</Button>
+        <Button icon={Plus} size="sm" className="min-h-11 md:min-h-0" onClick={() => setTaskModal(true)}>{t('staff.tasks.newTask')}</Button>
       </div>
 
       {/* Overdue alert */}
@@ -173,7 +173,7 @@ function KanbanBoard({ staffList }) {
         const m = tryParseNotes(x.notes_manager);
         return m?.due && new Date(m.due) < new Date() && !['completed','cancelled'].includes(x.status);
       }) && (
-        <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[var(--error-light)] border border-[var(--error)] rounded-sm text-xs font-body text-[var(--error)]">
+        <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[var(--error-light)] border border-[var(--error)] rounded-[14px] text-xs font-body text-[var(--error)]">
           <AlertTriangle size={14} strokeWidth={1.75} />
           {t('staff.tasks.overdueAlert')}
         </div>
@@ -186,10 +186,10 @@ function KanbanBoard({ staffList }) {
             x.status === col.key || (col.key === 'in_progress' && x.status === 'confirmed')
           );
           return (
-            <div key={col.key}>
-              <div className={`flex items-center justify-between px-3 py-2 rounded-t-md border mb-2 ${col.color}`}>
+            <div key={col.key} className="bg-mare-head border border-mare-card rounded-[14px] p-2 min-w-0">
+              <div className={`flex items-center justify-between px-3 py-2 rounded-[10px] border mb-2 ${col.color}`}>
                 <span className="text-xs font-mono font-semibold uppercase tracking-wider">{t(col.rotulo)}</span>
-                <span className="text-xs font-mono font-bold">{colTasks.length}</span>
+                <span className="text-xs font-mono tabular-nums font-bold">{colTasks.length}</span>
               </div>
               <div className="space-y-2">
                 {colTasks.map(task => (
@@ -197,8 +197,8 @@ function KanbanBoard({ staffList }) {
                     onMove={s => moveTask(task, s)} onOpen={setSelected} />
                 ))}
                 {colTasks.length === 0 && (
-                  <div className="border-2 border-dashed border-n-200 rounded-md p-4 text-center">
-                    <p className="text-xs font-body text-n-400">{t('staff.tasks.noTasks')}</p>
+                  <div className="border-2 border-dashed border-mare-card rounded-[14px] bg-white p-4 text-center">
+                    <p className="text-xs font-body text-n-600">{t('staff.tasks.noTasks')}</p>
                   </div>
                 )}
               </div>

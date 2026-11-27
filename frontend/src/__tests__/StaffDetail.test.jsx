@@ -273,8 +273,8 @@ describe('Detalhe do colaborador: Salário', () => {
     expect(valor('Subsídios')).toBe(eur2(80));
     expect(valor('INPS patronal')).toBe('15%');
     expect(valor('Custo total/mês')).toBe(eur2(1230));
-    expect(screen.getByText(`Pago em ${ANO}`).previousSibling.textContent).toBe(eur2(1230));
-    expect(screen.getByText(`Contribuições INPS estimadas em ${ANO}`).previousSibling.textContent).toBe(eur2(184.5));
+    expect(screen.getByText(`Pago em ${ANO}`).closest('article').querySelector('p.font-display').textContent).toBe(eur2(1230));
+    expect(screen.getByText(`Contribuições INPS estimadas em ${ANO}`).closest('article').querySelector('p.font-display').textContent).toBe(eur2(184.5));
     const meses = screen.getAllByText(/^(Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez) \d{4}$/).map(e => e.textContent);
     expect(meses).toEqual([`Mar ${ANO}`, `Dez ${ANO - 1}`]); /* mais recente primeiro; sem o de s2 */
     expect(screen.getByRole('link', { name: /Editar em Financeiro/ })).toHaveAttribute('href', '/financeiro');
@@ -288,7 +288,7 @@ describe('Detalhe do colaborador: Salário', () => {
     abrir('Salário');
     expect(await screen.findByText(/Configuração salarial ainda não definida/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Financeiro → Salários' })).toHaveAttribute('href', '/financeiro');
-    expect(screen.getByText(`Contribuições INPS estimadas em ${ANO}`).previousSibling.textContent).toBe('—');
+    expect(screen.getByText(`Contribuições INPS estimadas em ${ANO}`).closest('article').querySelector('p.font-display').textContent).toBe('—');
     expect(screen.getByText('Sem pagamentos registados.')).toBeInTheDocument();
   });
 
@@ -355,7 +355,7 @@ describe('Detalhe do colaborador com o design system (estrutura, Férias e Salá
     html += container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -588,7 +588,7 @@ describe('Detalhe do colaborador com o design system (Documentos e Certificaçõ
     const semBadge = html.replace(/<span class="inline-flex items-center gap-1 text-xs font-body font-semibold [^"]*">/g, '<span>');
     expect(semBadge).not.toMatch(HEX);
     expect(semBadge).not.toMatch(NOMEADAS);
-    expect(semBadge.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(semBadge.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -682,5 +682,65 @@ describe('Detalhe do colaborador em inglês', () => {
     listLeave.mockRejectedValue(new Error('x'));
     await montar();
     await waitFor(() => expect(toasts()).toContain('error:Could not load leave'));
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+const MARE_CARTAO = ['rounded-[18px]', 'border-mare-card'];
+const MARE_CAIXA = ['rounded-[14px]', 'border-mare-card'];
+
+describe('Detalhe do colaborador no estilo Mare', () => {
+  it('mostra_o_sobretitulo_da_area_Gestao', async () => {
+    await montar();
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+  });
+
+  it('ferias_o_saldo_e_um_cartao_Mare_com_numeros_em_mono_e_os_pedidos_sao_caixas', async () => {
+    await montar();
+    const rotulo = await screen.findByText(`Direito (${ANO})`);
+    const saldo = rotulo.closest('section');
+    MARE_CARTAO.forEach(c => expect(saldo.className).toContain(c));
+    expect(saldo.className).toContain('bg-white');
+    expect(rotulo.nextSibling.className).toContain('font-mono');
+    expect(rotulo.nextSibling.className).toContain('tabular-nums');
+    const pedido = screen.getByText('Natal').closest('div.justify-between').parentElement;
+    MARE_CAIXA.forEach(c => expect(pedido.className).toContain(c));
+    expect(screen.getByText(/2026-12-01/).className).toContain('font-mono');
+  });
+
+  it('ferias_aprovar_e_rejeitar_sao_botoes_de_icone_de_44px_no_telemovel', async () => {
+    await montar();
+    await screen.findByText('Natal');
+    ['Aprovar', 'Rejeitar'].forEach(n => expect(screen.getByRole('button', { name: n }).className).toContain('min-h-11'));
+  });
+
+  it('salario_o_resumo_e_um_cartao_e_pago_e_inps_sao_quadros_de_numero', async () => {
+    await montar();
+    abrir('Salário');
+    await screen.findByText('Histórico de pagamentos');
+    const resumo = screen.getByText('Salário base').closest('section');
+    MARE_CARTAO.forEach(c => expect(resumo.className).toContain(c));
+    expect(screen.getByText('Salário base').nextSibling.className).toContain('font-mono');
+    const pago = screen.getByText(`Pago em ${ANO}`).closest('article');
+    expect(pago.querySelector('p.font-display').textContent).toBe(eur2(1230));
+    const inps = screen.getByText(`Contribuições INPS estimadas em ${ANO}`).closest('article');
+    expect(inps.querySelector('p.font-display').textContent).toBe(eur2(184.5));
+    const mes = screen.getByText(`Mar ${ANO}`);
+    expect(mes.parentElement.parentElement.className).toContain('rounded-[14px]');
+    expect(mes.nextSibling.className).toContain('font-mono');
+  });
+
+  it('documentos_e_certificacoes_listam_em_caixas_Mare_com_botao_de_eliminar_de_44px', async () => {
+    listDocuments.mockResolvedValue([{ id: 'd1', name: 'Contrato 2026', file_url: 'http://x.test/c.pdf', expiry_date: null }]);
+    listCertifications.mockResolvedValue([{ id: 'c1', name: 'PADI Open Water', issuer: 'PADI', expiry_date: null }]);
+    await montar();
+    abrir('Documentos');
+    const doc = (await screen.findByRole('link', { name: 'Contrato 2026' })).closest('div.justify-between').parentElement;
+    MARE_CAIXA.forEach(c => expect(doc.className).toContain(c));
+    expect(screen.getByRole('button', { name: /Eliminar/ }).className).toContain('min-h-11');
+    abrir('Certificações');
+    const cert = (await screen.findByText(/PADI Open Water/)).closest('div.justify-between').parentElement;
+    MARE_CAIXA.forEach(c => expect(cert.className).toContain(c));
   });
 });

@@ -18,6 +18,7 @@ import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { StaffAvatar } from './shared';
+import { IconBtn, EDIT_HOVER } from '../../components/shared/IconBtn';
 import EmptyState from '../../components/ui/EmptyState';
 import { useT } from '../../i18n';
 import { localeDe, useLingua } from '../../utils/formatoLingua';
@@ -39,35 +40,35 @@ function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMe
           <Hash size={10} strokeWidth={1.75} className="text-n-500" />
         </div>
       )}
-      <div className="flex flex-col max-w-[72%]">
+      <div className="flex flex-col min-w-0 max-w-[72%]">
         {/* Reply context */}
         {replyMsg && (
-          <div className={`mb-1 px-2 py-1 rounded-sm border-l-2 border-ocean-500 ${isOwn ? 'bg-ocean-600 text-ocean-200 self-end' : 'bg-n-200 text-n-500'} text-xs font-body`}>
+          <div className={`mb-1 px-2 py-1 rounded-[10px] border-l-2 border-ocean-500 min-w-0 break-words ${isOwn ? 'bg-ocean-600 text-white self-end' : 'bg-mare-head text-n-600'} text-xs font-body`}>
             <span className="font-semibold mr-1">{replySender?.name.split(' ')[0] || t('staff.chat.system')}</span>
             <span className="truncate">{replyMsg.content?.slice(0, 60)}</span>
           </div>
         )}
-        <div className={`px-3 py-2 rounded-lg text-sm font-body relative ${isOwn ? 'bg-ocean-700 text-white rounded-br-sm' : 'bg-n-100 text-n-900 rounded-bl-sm'}`}>
+        <div className={`min-w-0 break-words px-3 py-2 rounded-[14px] text-sm font-body relative ${isOwn ? 'bg-ocean-700 text-white' : 'bg-mare-head border border-mare-card text-n-800'}`}>
           {isPinned && (
-            <Pin size={10} strokeWidth={1.75} className={`absolute top-1.5 ${isOwn ? 'left-2 text-ocean-300' : 'right-2 text-n-400'}`} />
+            <Pin size={10} strokeWidth={1.75} className={`absolute top-1.5 ${isOwn ? 'left-2 text-ocean-100' : 'right-2 text-n-600'}`} />
           )}
           {!isOwn && sender && (
             <p className="text-xs font-mono font-semibold mb-0.5 text-ocean-700">{sender.name.split(' ')[0]}</p>
           )}
-          <p>{msg.content}</p>
-          <p className={`text-xs mt-1 ${isOwn ? 'text-ocean-200' : 'text-n-400'}`}>
+          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+          <p className={`text-xs font-mono tabular-nums mt-1 ${isOwn ? 'text-ocean-100' : 'text-n-600'}`}>
             {new Date(msg.created_at).toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
       </div>
       {/* Action buttons on hover */}
-      <div className={`flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isOwn ? 'order-first' : ''}`}>
+      <div className={`flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity ${isOwn ? 'order-first' : ''}`}>
         <button onClick={() => onReply?.(msg)} title={t('staff.chat.reply')} aria-label={t('staff.chat.reply')}
-          className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+          className="p-1 rounded text-n-600 hover:text-ocean-700 hover:bg-ocean-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
           <CornerUpLeft size={12} strokeWidth={1.75} />
         </button>
         <button onClick={() => onPin?.(msg.id)} title={isPinned ? t('staff.chat.unpin') : t('staff.chat.pin')} aria-label={isPinned ? t('staff.chat.unpin') : t('staff.chat.pin')}
-          className={`p-1 rounded transition-colors ${isPinned ? 'text-ocean-700 bg-ocean-50' : 'text-n-400 hover:text-ocean-700 hover:bg-ocean-50'}`}>
+          className={`p-1 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${isPinned ? 'text-ocean-700 bg-ocean-50' : 'text-n-600 hover:text-ocean-700 hover:bg-ocean-50'}`}>
           <Pin size={12} strokeWidth={1.75} />
         </button>
       </div>
@@ -216,31 +217,27 @@ function ChatTab({ staffList }) {
   const pinnedMsgs = messages.filter(m => pinnedIds.has(m.id));
 
   return (
-    <div className="flex border border-n-200 rounded-md overflow-hidden" style={{ height: 'calc(100vh - 220px)', minHeight: 420 }}>
+    <div className="flex bg-white border border-mare-card rounded-[18px] overflow-hidden" style={{ height: 'calc(100vh - 220px)', minHeight: 420 }}>
       {/* Sidebar */}
-      <div className="w-56 shrink-0 border-r border-n-200 bg-n-50 flex flex-col">
-        <div className="px-3 py-2.5 border-b border-n-200 flex items-center justify-between">
-          <span className="text-xs font-mono uppercase tracking-wider text-n-500">{t('staff.chat.messages')}</span>
+      <div className="w-56 shrink-0 border-r border-mare-card bg-mare-head flex flex-col">
+        <div className="px-3 py-2.5 border-b border-mare-card flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-n-600">{t('staff.chat.messages')}</span>
           <div className="flex items-center gap-0.5">
-            <button onClick={() => setBroadcast(true)} title={t('staff.chat.broadcast')} aria-label={t('staff.chat.broadcast')}
-              className="p-1 rounded text-n-400 hover:text-sand-500 hover:bg-sand-50 transition-colors">
-              <Megaphone size={13} strokeWidth={1.75} />
-            </button>
-            <button onClick={() => setGroupModal(true)} title={t('staff.chat.newGroup')} aria-label={t('staff.chat.newGroup')}
-              className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-              <Plus size={13} strokeWidth={1.75} />
-            </button>
+            <IconBtn icon={Megaphone} label={t('staff.chat.broadcast')} title={t('staff.chat.broadcast')}
+              onClick={() => setBroadcast(true)} hover={EDIT_HOVER} className="text-n-600" />
+            <IconBtn icon={Plus} label={t('staff.chat.newGroup')} title={t('staff.chat.newGroup')}
+              onClick={() => setGroupModal(true)} hover={EDIT_HOVER} className="text-n-600" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           {groups.length > 0 && (
             <>
               <div className="px-3 pt-3 pb-1">
-                <span className="text-xs font-mono text-n-400 uppercase">{t('staff.chat.groups')}</span>
+                <span className="text-xs font-mono text-n-600 uppercase">{t('staff.chat.groups')}</span>
               </div>
               {groups.map(g => (
                 <button key={g.id} onClick={() => setConvo({ type: 'group', id: g.id, name: g.name })}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white transition-colors ${conversation?.id === g.id ? 'bg-white border-r-2 border-ocean-700' : ''}`}>
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 min-h-11 md:min-h-0 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sand-500 ${conversation?.id === g.id ? 'bg-white border-r-2 border-ocean-700' : ''}`}>
                   <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center shrink-0">
                     <Users size={12} strokeWidth={1.75} className="text-ocean-700" />
                   </div>
@@ -251,11 +248,11 @@ function ChatTab({ staffList }) {
           )}
 
           <div className="px-3 pt-3 pb-1">
-            <span className="text-xs font-mono text-n-400 uppercase">{t('staff.chat.direct')}</span>
+            <span className="text-xs font-mono text-n-600 uppercase">{t('staff.chat.direct')}</span>
           </div>
           {staffList.map(s => (
             <button key={s.id} onClick={() => setConvo({ type: 'direct', id: s.id, name: s.name })}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white transition-colors ${conversation?.id === s.id ? 'bg-white border-r-2 border-ocean-700' : ''}`}>
+              className={`w-full flex items-center gap-2.5 px-3 py-2 min-h-11 md:min-h-0 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sand-500 ${conversation?.id === s.id ? 'bg-white border-r-2 border-ocean-700' : ''}`}>
               <StaffAvatar member={s} size={28} showStatus />
               <span className="text-sm font-body text-n-800 truncate">{s.name.split(' ')[0]}</span>
             </button>
@@ -267,11 +264,11 @@ function ChatTab({ staffList }) {
       {conversation ? (
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-n-200 bg-white flex items-center gap-2 shrink-0">
-            <MessageSquare size={15} strokeWidth={1.75} className="text-ocean-700" />
-            <p className="font-display font-semibold text-sm text-n-900 flex-1">{conversation.name}</p>
+          <div className="px-4 py-3 border-b border-mare-card bg-white flex items-center gap-2 shrink-0">
+            <MessageSquare size={15} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
+            <p className="font-display text-lg font-semibold text-ocean-900 flex-1 min-w-0 truncate">{conversation.name}</p>
             {pinnedMsgs.length > 0 && (
-              <span className="flex items-center gap-1 text-xs font-body text-n-500">
+              <span className="flex items-center gap-1 text-xs font-body text-n-600 shrink-0">
                 <Pin size={11} strokeWidth={1.75} />
                 {t('staff.chat.pinnedCount', { n: pinnedMsgs.length })}
               </span>
@@ -285,19 +282,19 @@ function ChatTab({ staffList }) {
                 <div key={m.id} className="flex items-center gap-2 text-xs font-body text-ocean-700">
                   <Pin size={10} strokeWidth={1.75} className="shrink-0" />
                   <span className="truncate">{m.content}</span>
-                  <button onClick={() => handlePin(m.id)} aria-label={t('staff.chat.unpinPinned')} className="ml-auto text-ocean-400 hover:text-ocean-700">
-                    <X size={10} strokeWidth={2} />
-                  </button>
+                  <span className="ml-auto shrink-0">
+                    <IconBtn icon={X} label={t('staff.chat.unpinPinned')} onClick={() => handlePin(m.id)} hover={EDIT_HOVER} className="text-ocean-700" />
+                  </span>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-n-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
             {loadingMsgs
               ? <div className="flex justify-center pt-8"><LoadingSpinner size={24} /></div>
               : messages.length === 0
-                ? <p className="text-xs font-body text-n-400 text-center pt-8">{t('staff.chat.noMessages')}</p>
+                ? <p className="text-xs font-body text-n-600 text-center pt-8">{t('staff.chat.noMessages')}</p>
                 : messages.map(msg => (
                   <MessageBubble key={msg.id} msg={msg}
                     isOwn={msg.sender_id === operator?.id}
@@ -317,14 +314,12 @@ function ChatTab({ staffList }) {
             <div className="flex items-center gap-2 px-3 py-2 bg-ocean-50 border-t border-ocean-100 shrink-0">
               <CornerUpLeft size={12} strokeWidth={1.75} className="text-ocean-600 shrink-0" />
               <span className="text-xs font-body text-ocean-700 truncate flex-1">{replyTo.content?.slice(0, 80)}</span>
-              <button onClick={() => setReplyTo(null)} aria-label={t('staff.chat.cancelReply')} className="text-ocean-400 hover:text-ocean-700">
-                <X size={12} strokeWidth={2} />
-              </button>
+              <IconBtn icon={X} label={t('staff.chat.cancelReply')} onClick={() => setReplyTo(null)} hover={EDIT_HOVER} className="text-ocean-700" />
             </div>
           )}
 
-          <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
-            <div className="flex-1">
+          <form onSubmit={handleSend} className="m-3 px-3 py-2 flex items-center gap-2 bg-mare-head border border-mare-card rounded-[14px] shrink-0">
+            <div className="flex-1 min-w-0">
               <Input ref={inputRef} aria-label={t('staff.chat.writeLabel')} value={input} onChange={e => setInput(e.target.value)}
                 placeholder={t('staff.chat.writePlaceholder')}
               />
@@ -333,7 +328,7 @@ function ChatTab({ staffList }) {
           </form>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-n-50">
+        <div className="flex-1 flex items-center justify-center bg-white">
           <EmptyState icon={MessageSquare} title={t('staff.chat.selectConversation')} />
         </div>
       )}

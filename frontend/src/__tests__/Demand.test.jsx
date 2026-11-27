@@ -22,6 +22,7 @@ vi.mock('recharts', async () => {
       'data-stroke': p.stroke,
       'data-datakey': p.dataKey,
       'data-y': p.y,
+      'data-vertical': p.vertical === undefined ? undefined : String(p.vertical),
       'data-tickfill': p.tick && p.tick.fill,
       'data-labelfill': p.label && p.label.fill,
       'data-data': Array.isArray(p.data) ? JSON.stringify(p.data) : undefined,
@@ -102,7 +103,7 @@ describe('Demand', () => {
   }
 
   function kpi(rotulo) {
-    return screen.getByText(rotulo).previousElementSibling;
+    return screen.getByText(rotulo).closest('article').querySelector('p.font-display');
   }
 
   function grafico(nome) {
@@ -353,13 +354,13 @@ describe('Demand', () => {
     /* grelha, linha da media, barras do ano anterior e as tres cores de epoca */
     expect(grafico('CartesianGrid')[0].getAttribute('data-stroke')).toBe('var(--n200)');
     expect(grafico('ReferenceLine')[0].getAttribute('data-stroke')).toBe('var(--sand-500)');
-    expect(grafico('Bar')[0].getAttribute('data-fill')).toBe('var(--n200)');
-    /* a barra do ano actual tem a cor normal por omissao: e a que a legenda mostra */
-    expect(grafico('Bar')[1].getAttribute('data-fill')).toBe('var(--ocean-400)');
+    expect(grafico('Bar')[0].getAttribute('data-fill')).toBe('var(--n400)');
+    /* a barra do ano actual tem a cor principal por omissao: e a que a legenda mostra */
+    expect(grafico('Bar')[1].getAttribute('data-fill')).toBe('var(--ocean-500)');
     const celulas = grafico('Cell');
-    expect(celulas[6].getAttribute('data-fill')).toBe('var(--success)');
+    expect(celulas[6].getAttribute('data-fill')).toBe('var(--sand-500)');
     expect(celulas[7].getAttribute('data-fill')).toBe('var(--ocean-700)');
-    expect(celulas[0].getAttribute('data-fill')).toBe('var(--ocean-400)');
+    expect(celulas[0].getAttribute('data-fill')).toBe('var(--ocean-500)');
   });
 
   it('a_sugestao_de_epoca_alta_usa_os_tokens_de_sucesso', async () => {
@@ -368,6 +369,98 @@ describe('Demand', () => {
     const alta = screen.getByText(/alta procura — considera/).parentElement;
     expect(alta.className).toContain('bg-[var(--success-light)]');
     expect(alta.className).toContain('border-[var(--success)]');
+  });
+
+  /* ---- estilo Mare ---- */
+  const mono = (el) => { expect(el.className).toContain('font-mono'); expect(el.className).toContain('tabular-nums'); };
+
+  it('mostra_o_sobretitulo_da_area_Gestao_tambem_a_carregar', async () => {
+    render(<MemoryRouter future={FUTURE}><Demand /></MemoryRouter>);
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+    await waitFor(() => expect(screen.queryByText('Receita mensal — comparativo anual')).toBeTruthy());
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+  });
+
+  it('os_quatro_numeros_do_topo_sao_quadros_MareStat_com_os_mesmos_valores', async () => {
+    await abre();
+    const esperado = [[`Receita ${ANO} (acumulado)`, '€620'], ['Var. vs ano anterior', '+3%'], ['Melhor mês', 'Jul'], ['Reservas próximos 30d', '6']];
+    for (const [rotulo, valor] of esperado) {
+      const art = screen.getByText(rotulo, { selector: 'p' }).closest('article');
+      expect(art.className).toContain('rounded-[18px]');
+      expect(art.className).toContain('border-mare-card');
+      expect(art.querySelector('p.font-display').textContent).toBe(valor);
+    }
+  });
+
+  it('a_variacao_negativa_e_a_sem_dados_usam_o_tom_aviso_e_o_neutro', async () => {
+    recebe(ATUAL, [{ periodo: `${ANTERIOR}-01`, receita: 1000 }]);
+    await abre();
+    const tom = () => screen.getByText('Var. vs ano anterior').closest('article').querySelector('[data-mare-stat-tint]').className;
+    expect(tom()).toContain('bg-sand-100');
+    cleanup();
+    recebe(ATUAL, []);
+    await abre();
+    expect(tom()).toContain('bg-ocean-50');
+  });
+
+  it('o_grafico_e_a_epoca_sao_cartoes_Mare_com_titulo_Sora_de_18px', async () => {
+    await abre();
+    for (const nome of ['Receita mensal — comparativo anual', 'Épocas altas', 'Épocas baixas']) {
+      const h = screen.getByText(nome, { selector: 'h3' });
+      expect(h.className).toContain('font-display');
+      expect(h.className).toContain('text-lg');
+      expect(h.className).toContain('text-ocean-900');
+      const c = h.closest('section');
+      expect(c.className).toContain('border-mare-card');
+      expect(c.className).toContain('rounded-[18px]');
+      expect(c.className).toContain('p-[22px]');
+    }
+    mono(screen.getByText(`${ANTERIOR} vs ${ANO}`));
+    mono(screen.getByText('Jul · €200', { exact: false }));
+  });
+
+  it('o_grafico_segue_a_linguagem_dos_graficos_com_as_mesmas_series', async () => {
+    await abre();
+    expect(grafico('Bar').map(b => b.getAttribute('data-datakey'))).toEqual(['prevValue', 'curValue']);
+    expect(grafico('CartesianGrid')[0].getAttribute('data-vertical')).toBe('false');
+    expect(grafico('CartesianGrid')[0].getAttribute('data-stroke')).toBe('var(--n200)');
+    grafico('XAxis').concat(grafico('YAxis')).forEach(e => expect(e.getAttribute('data-tickfill')).toBe('var(--n500)'));
+  });
+
+  it('os_separadores_continuam_a_trocar_o_conteudo_dentro_de_cartoes_Mare', async () => {
+    await abre();
+    fireEvent.click(screen.getByRole('tab', { name: 'Próximos 30 dias' }));
+    for (const nome of ['Reservas confirmadas — próximos 30 dias', 'Dias com mais actividade']) {
+      const c = screen.getByText(nome, { selector: 'h3' }).closest('section');
+      expect(c.className).toContain('border-mare-card');
+      expect(c.className).toContain('rounded-[18px]');
+    }
+    const dia = document.querySelector('[title$="reserva(s)"]');
+    expect(dia.className).toContain('rounded-[10px]');
+    mono(document.querySelector('[title$=": 3 reserva(s)"]').querySelector('span:last-child'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Sugestões' }));
+    const comp = screen.getByText('Comparativo anual', { selector: 'h3' }).closest('section');
+    expect(comp.className).toContain('border-mare-card');
+    mono(within(comp).getByText(`Receita ${ANO}`).nextElementSibling);
+    mono(within(comp).getByText('Variação').nextElementSibling);
+    expect(screen.getAllByRole('tab').map(t => t.getAttribute('aria-selected'))).toEqual(['false', 'false', 'true']);
+  });
+
+  it('as_datas_e_contagens_dos_dias_com_mais_actividade_usam_mono', async () => {
+    await abre();
+    fireEvent.click(screen.getByRole('tab', { name: 'Próximos 30 dias' }));
+    const bloco = screen.getByText('Dias com mais actividade').closest('section');
+    const contagens = [...bloco.querySelectorAll('span.text-ocean-700')];
+    expect(contagens.length).toBeGreaterThan(0);
+    contagens.forEach(mono);
+    [...bloco.querySelectorAll('span.w-28')].forEach(mono);
+  });
+
+  it('acertos_finais_os_quadros_do_topo_passam_a_uma_coluna_abaixo_de_420px', async () => {
+    await abre();
+    const grelha = screen.getByText(`Receita ${ANO} (acumulado)`, { selector: 'p' }).closest('article').parentElement;
+    expect(grelha).toHaveClass('grid-cols-1', 'min-[420px]:grid-cols-2', 'lg:grid-cols-4');
+    expect(grelha).not.toHaveClass('grid-cols-2');
   });
 });
 
@@ -393,7 +486,7 @@ describe('Demand em inglês', () => {
     );
     await screen.findByText('Monthly revenue — year-on-year comparison');
   }
-  const kpi = (rotulo) => screen.getByText(rotulo).previousElementSibling;
+  const kpi = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display');
   const semPortugues = () => {
     expect(portuguesNoEcra()).toEqual([]);
     expect(chavesCruas(['demand', 'staff'])).toEqual([]);

@@ -15,19 +15,24 @@ import {
 } from 'recharts';
 import { listExpenses, addExpenseLocal, updateExpenseLocal, deleteExpenseLocal } from '../../services/expensesService';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import Toggle from '../../components/ui/Toggle';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { EXPENSE_CATEGORIES, CAT_COLORS, rotuloCategoriaDespesa, fmtDate, fmtMoney, fmtDica } from './shared';
+import { IconBtn, EDIT_HOVER } from '../../components/shared/IconBtn';
+import DicaGrafico from '../../components/financial/DicaGrafico';
+import { EXPENSE_CATEGORIES, CAT_COLORS, CARTAO, NUM, CartaoFin, rotuloCategoriaDespesa, fmtDate, fmtMoney, fmtDica } from './shared';
 import { rotuloCargo } from '../staff/shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { useT } from '../../i18n';
 
 /* ─────────────────── DESPESAS ─────────────────── */
+
+/* Realce do botao de eliminar ao passar o rato (o vermelho vem de tokens) */
+const ELIMINAR_HOVER = 'hover:text-[var(--error)] hover:bg-[var(--error-light)]';
 
 function ExpenseModal({ expense, staff, onSave, onClose }) {
   const t = useT();
@@ -143,22 +148,30 @@ function DespesasTab({ currency, staff }) {
 
   const CustomTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
-    return <div className="bg-white border border-n-200 rounded-sm shadow-sm px-3 py-2 text-xs font-body"><p className="font-semibold text-n-700">{payload[0].name}</p><p style={{ color: payload[0].payload.fill }}>{fmtDica(payload[0].value, 'EUR')}</p></div>;
+    return (
+      <DicaGrafico>
+        <p className="font-semibold text-n-800 flex items-center gap-1.5">
+          <span aria-hidden="true" className="inline-block w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: payload[0].payload.fill }} />
+          {payload[0].name}
+        </p>
+        <p className={`${NUM} text-ocean-900`}>{fmtDica(payload[0].value, 'EUR')}</p>
+      </DicaGrafico>
+    );
   };
 
   const columns = [
-    { key: 'data', label: t('financial.columns.date'), render: e => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(e.date)}</span> },
+    { key: 'data', label: t('financial.columns.date'), render: e => <span className={`text-xs ${NUM} text-n-600 whitespace-nowrap`}>{fmtDate(e.date)}</span> },
     { key: 'categoria', label: t('financial.columns.category'), render: e => <span className="font-body font-semibold text-n-800">{rotulo(e.category)}</span> },
-    { key: 'colaborador', label: t('financial.columns.staff'), render: e => <span className="text-xs font-body text-n-500">{e.staff_id ? (staff.find(s => s.id === e.staff_id)?.name || '—') : '—'}</span> },
-    { key: 'valor', label: t('financial.columns.value'), render: e => <span className="font-display font-bold text-[var(--error)] whitespace-nowrap">- {fmtMoney(e.amount, currency)}</span> },
-    { key: 'recorrente', label: t('financial.columns.recurring'), render: e => (e.is_recurring ? <span className="text-xs font-mono text-ocean-700 bg-ocean-50 px-1.5 py-0.5 rounded-xs">{t('financial.columns.recurring')}</span> : '—') },
-    { key: 'notas', label: t('financial.columns.notes'), render: e => <span className="block max-w-[150px] truncate text-xs font-body text-n-500">{e.notes || '—'}</span> },
+    { key: 'colaborador', label: t('financial.columns.staff'), render: e => <span className="text-xs font-body text-n-600">{e.staff_id ? (staff.find(s => s.id === e.staff_id)?.name || '—') : '—'}</span> },
+    { key: 'valor', label: t('financial.columns.value'), render: e => <span className={`${NUM} font-bold text-[var(--error)] whitespace-nowrap`}>- {fmtMoney(e.amount, currency)}</span> },
+    { key: 'recorrente', label: t('financial.columns.recurring'), render: e => (e.is_recurring ? <Badge variant="info">{t('financial.columns.recurring')}</Badge> : '—') },
+    { key: 'notas', label: t('financial.columns.notes'), render: e => <span className="block max-w-[150px] truncate text-xs font-body text-n-600">{e.notes || '—'}</span> },
     {
       key: 'acoes', label: '',
       render: e => (
         <div className="flex gap-0.5">
-          <button aria-label={t('financial.expenses.editAria', { category: rotulo(e.category) })} onClick={() => setModal(e)} className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><Edit2 size={13} strokeWidth={1.75} /></button>
-          <button aria-label={t('financial.expenses.deleteAria', { category: rotulo(e.category) })} onClick={() => handleDelete(e.id)} className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
+          <IconBtn icon={Edit2} label={t('financial.expenses.editAria', { category: rotulo(e.category) })} onClick={() => setModal(e)} hover={EDIT_HOVER} />
+          <IconBtn icon={Trash2} label={t('financial.expenses.deleteAria', { category: rotulo(e.category) })} onClick={() => handleDelete(e.id)} hover={ELIMINAR_HOVER} />
         </div>
       ),
     },
@@ -168,29 +181,29 @@ function DespesasTab({ currency, staff }) {
     <div className="space-y-5">
       {/* Alerts */}
       {missingRecurring.length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
+        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-[14px]">
           <AlertTriangle size={15} strokeWidth={1.75} className="text-[var(--warning)] shrink-0 mt-0.5" />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-body font-semibold text-[var(--warning)]">{t('financial.expenses.missingRecurring')}</p>
-            <p className="text-xs font-body text-[var(--warning)] mt-0.5">{missingRecurring.slice(0, 3).map(r => rotulo(r.category)).join(' · ')}</p>
+            <p className="text-xs font-body text-[var(--warning)] mt-0.5 break-words">{missingRecurring.slice(0, 3).map(r => rotulo(r.category)).join(' · ')}</p>
           </div>
         </div>
       )}
 
       {/* Filters + Add */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="w-44">
+        <div className="w-44 max-w-full">
           <Input type="month" aria-label={t('financial.form.month')} value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
         </div>
-        <div className="w-56">
+        <div className="w-56 max-w-full">
           <Select aria-label={t('financial.form.category')} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
             <option value="">{t('financial.form.allCategories')}</option>
             {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{rotulo(c)}</option>)}
           </Select>
         </div>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs font-mono text-n-500">{t('financial.form.total')} <span className="font-bold text-n-800">{fmtDica(totalPeriod, 'EUR')}</span></span>
-          <Button icon={Plus} size="sm" onClick={() => setModal({ _new: true })}>{t('financial.expenses.recordTitle')}</Button>
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <span className={`text-xs ${NUM} text-n-600`}>{t('financial.form.total')} <span className={`${NUM} font-bold text-n-800`}>{fmtDica(totalPeriod, 'EUR')}</span></span>
+          <Button icon={Plus} size="sm" className="min-h-11 md:min-h-0" onClick={() => setModal({ _new: true })}>{t('financial.expenses.recordTitle')}</Button>
         </div>
       </div>
 
@@ -198,13 +211,13 @@ function DespesasTab({ currency, staff }) {
       {byCat.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {byCat.slice(0, 4).map((c, i) => (
-            <Card key={c.cat} padding="px-4 py-3">
+            <div key={c.cat} className={CARTAO}>
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i] }} />
-                <p className="text-xs font-body text-n-500 truncate">{c.name}</p>
+                <p className="text-[13px] font-body font-semibold text-n-600 truncate">{c.name}</p>
               </div>
-              <p className="font-display font-bold text-lg text-n-900">{fmtDica(c.total, 'EUR')}</p>
-            </Card>
+              <p className={`${NUM} font-bold text-lg text-ocean-900 break-words`}>{fmtDica(c.total, 'EUR')}</p>
+            </div>
           ))}
         </div>
       )}
@@ -212,7 +225,7 @@ function DespesasTab({ currency, staff }) {
       {/* Chart */}
       {chartData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.expenses.byCategory')}</h3>}>
+          <CartaoFin titulo={t('financial.expenses.byCategory')}>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={chartData} dataKey="total" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name.slice(0, 8)} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
@@ -221,30 +234,30 @@ function DespesasTab({ currency, staff }) {
                 <ChartTooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
-          </Card>
-          <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.expenses.details')}</h3>}>
+          </CartaoFin>
+          <CartaoFin titulo={t('financial.expenses.details')}>
             <div className="space-y-2 mt-2">
               {byCat.map((c, i) => (
                 <div key={c.cat} className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
-                  <span className="text-xs font-body text-n-600 flex-1 truncate">{c.name}</span>
-                  <span className="text-xs font-mono font-semibold text-n-800">{fmtDica(c.total, 'EUR')}</span>
-                  <span className="text-xs font-mono text-n-400 w-10 text-right">{totalPeriod > 0 ? ((c.total / totalPeriod) * 100).toFixed(1) : 0}%</span>
+                  <span className="text-xs font-body text-n-700 flex-1 min-w-0 truncate">{c.name}</span>
+                  <span className={`text-xs ${NUM} font-semibold text-n-800`}>{fmtDica(c.total, 'EUR')}</span>
+                  <span className={`text-xs ${NUM} text-n-600 w-12 text-right`}>{totalPeriod > 0 ? ((c.total / totalPeriod) * 100).toFixed(1) : 0}%</span>
                 </div>
               ))}
             </div>
-          </Card>
+          </CartaoFin>
         </div>
       )}
 
       {/* List */}
       {loading ? <div className="flex justify-center py-12"><LoadingSpinner size={32} /></div> :
        periodExp.length === 0 ? (
-        <Card padding="p-0"><EmptyState icon={TrendingDown} title={t('financial.expenses.empty')} /></Card>
+        <div className={CARTAO}><EmptyState icon={TrendingDown} title={t('financial.expenses.empty')} /></div>
       ) : (
-        <Card padding="p-0">
+        <div className={CARTAO}>
           <Table columns={columns} rows={[...periodExp].sort((a, b) => (b.date || '').localeCompare(a.date || ''))} compact />
-        </Card>
+        </div>
       )}
 
       {modal && <ExpenseModal expense={modal} staff={staff} onSave={handleSave} onClose={() => setModal(null)} />}
