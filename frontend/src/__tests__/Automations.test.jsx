@@ -648,3 +648,64 @@ describe('Automações: formulário em português', () => {
     expect(screen.getByLabelText(/^Assunto do email/).placeholder).toBe('Ex: A sua reserva foi confirmada');
   });
 });
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Automações: estilo Mare', () => {
+  it('mostra_o_eyebrow_da_area_Crescimento', async () => {
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('cada_sequencia_e_um_cartao_Mare_que_continua_esbatido_quando_inactiva', async () => {
+    await montar();
+    for (const titulo of TITULOS) {
+      const c = cabecalho(titulo).parentElement;
+      expect(c.className).toContain('bg-white');
+      expect(c.className).toContain('border-mare-card');
+      expect(c.className).toContain('rounded-[18px]');
+    }
+    expect(cabecalho(T_D7).parentElement.className).toContain('opacity-70');
+    expect(cabecalho(T_EMAIL).parentElement.className).not.toContain('opacity-70');
+  });
+
+  it('o_titulo_da_sequencia_e_um_cabecalho_Sora_e_o_aviso_das_variaveis_e_uma_caixa_quieta', async () => {
+    await montar();
+    const h = screen.getByRole('heading', { name: T_EMAIL });
+    expect(h.className).toContain('font-display');
+    expect(h.className).toContain('text-ocean-900');
+    const aviso = screen.getByText('Variáveis disponíveis:').closest('div');
+    expect(aviso.className).toContain('bg-mare-head');
+    expect(aviso.className).toContain('rounded-[14px]');
+  });
+
+  it('os_separadores_continuam_a_alternar_e_o_historico_vazio_fica_num_cartao_Mare', async () => {
+    await montar();
+    fireEvent.click(separador('Histórico de envios'));
+    const vazio = await screen.findByText('Sem histórico de envios.');
+    const cartaoVazio = vazio.closest('section');
+    expect(cartaoVazio.className).toContain('border-mare-card');
+    fireEvent.click(separador('Sequências'));
+    expect(await screen.findByText(T_EMAIL)).toBeInTheDocument();
+  });
+
+  it('o_historico_com_dados_fica_num_cartao_Mare_e_a_data_e_mono', async () => {
+    getLogsAll.mockResolvedValue([{ id: 'l1', created_at: '2026-11-05T10:30:00Z', automation_name: 'X', recipient_name: 'Ana', channel: 'email', status: 'sent' }]);
+    await montar();
+    fireEvent.click(separador('Histórico de envios'));
+    const tabela = await screen.findByRole('table');
+    expect(tabela.closest('section').className).toContain('border-mare-card');
+    expect(within(tabela).getByText('Ana')).toBeInTheDocument();
+  });
+
+  it('os_botoes_de_PT_EN_e_as_variaveis_tem_44px_no_telemovel_e_anel_de_foco', async () => {
+    await montar();
+    abrir(T_EMAIL);
+    fireEvent.click(botao('Editar template'));
+    const v = screen.getByRole('button', { name: /nome_cliente/ });
+    expect(v.className).toContain('min-h-11');
+    expect(v.className).toContain('focus-visible:ring-sand-500');
+    fireEvent.click(screen.getByText('Ver preview').closest('button'));
+    expect(screen.getByRole('button', { name: 'PT' }).className).toContain('min-h-11');
+  });
+});

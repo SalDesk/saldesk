@@ -47,12 +47,12 @@ afterEach(() => {
 
 async function montar() {
   const r = render(<Integrations />);
-  await screen.findByText('Viator', { selector: 'p' });
+  await screen.findByText('Viator', { selector: 'h2' });
   return r;
 }
 /* o primeiro ascendente do nome que contem botoes: o cartao do canal */
 const cartao = (nome) => {
-  let e = screen.getByText(nome, { selector: 'p' });
+  let e = screen.getByText(nome, { selector: 'h2' });
   while (e && !e.querySelector('button')) e = e.parentElement;
   return e;
 };
@@ -77,7 +77,7 @@ describe('Channel Manager: cartões dos canais', () => {
     getLogs.mockReturnValue(new Promise(() => {}));
     const { container } = render(<Integrations />);
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
-    expect(screen.queryByText('Viator', { selector: 'p' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Viator', { selector: 'h2' })).not.toBeInTheDocument();
     expect(screen.queryByText('Logs de integração')).not.toBeInTheDocument();
   });
 
@@ -119,7 +119,7 @@ describe('Channel Manager: cartões dos canais', () => {
     getStatus.mockRejectedValue(new Error('x'));
     render(<Integrations />);
     expect(await screen.findByText('Logs de integração')).toBeInTheDocument();
-    expect(screen.queryByText('Viator', { selector: 'p' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Viator', { selector: 'h2' })).not.toBeInTheDocument();
     expect(screen.getByText('0 evento(s)')).toBeInTheDocument();
     expect(spyErr).toHaveBeenCalled();
     spyErr.mockClear();
@@ -129,7 +129,7 @@ describe('Channel Manager: cartões dos canais', () => {
     await montar();
     fireEvent.click(screen.getByRole('button', { name: 'Actualizar' }));
     await waitFor(() => expect(getStatus).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('Viator', { selector: 'p' })).toBeInTheDocument();
+    expect(await screen.findByText('Viator', { selector: 'h2' })).toBeInTheDocument();
   });
 
   it('sincronizar_chama_syncManual_e_recarrega_apos_2s', async () => {
@@ -157,7 +157,7 @@ describe('Channel Manager: cartões dos canais', () => {
     await waitFor(() => expect(disconnectChannel).toHaveBeenCalledWith('viator'));
     await waitFor(() => expect(getStatus).toHaveBeenCalledTimes(2));
     expect(spyConfirm).not.toHaveBeenCalled();
-    expect(await screen.findByText('Viator', { selector: 'p' })).toBeInTheDocument();
+    expect(await screen.findByText('Viator', { selector: 'h2' })).toBeInTheDocument();
   });
 });
 
@@ -267,16 +267,15 @@ describe('Channel Manager: webhooks e logs', () => {
 describe('Channel Manager: design system', () => {
   it('o_cartao_do_canal_e_Card_e_o_avatar_usa_tokens', async () => {
     await montar();
-    expect(cartao('Viator').closest('[class*="app:rounded-[18px]"]')).not.toBeNull();
-    expect(cartao('GetYourGuide').closest('[class*="app:rounded-[18px]"]')).not.toBeNull();
+    expect(cartao('Viator').closest('[class*="rounded-[18px]"]')).not.toBeNull();
+    expect(cartao('GetYourGuide').closest('[class*="rounded-[18px]"]')).not.toBeNull();
     expect(screen.getByText('V').className).toContain('bg-ocean-700');
     expect(screen.getByText('G').className).toContain('bg-sand-600');
   });
 
-  it('desligar_usa_o_token_de_erro_no_hover', async () => {
+  it('desligar_nao_usa_text_error_no_hover', async () => {
     await montar();
     const b = screen.getByRole('button', { name: 'Desligar' });
-    expect(b.className).toContain('hover:text-[var(--error)]');
     expect(b.className).not.toContain('hover:text-error');
   });
 
@@ -334,7 +333,7 @@ describe('Channel Manager em ingles', () => {
     expect(screen.getByText('Integration logs')).toBeInTheDocument();
     expect(screen.getByText('37 event(s)')).toBeInTheDocument();
     ['Date', 'Channel', 'Event', 'Status', 'OTA ref.', 'Error'].forEach(h => expect(screen.getByText(h, { selector: 'th' })).toBeInTheDocument());
-    expect(norm(screen.getAllByText(/\d/, { selector: 'span.font-mono' })[0].textContent)).toBe(fmtEn('2026-11-05T10:30:00Z'));
+    expect(norm(within(screen.getByRole('table')).getAllByText(/\d/, { selector: 'span.font-mono' })[0].textContent)).toBe(fmtEn('2026-11-05T10:30:00Z'));
     expect(portuguesNoEcra(DADOS)).toEqual([]);
     expect(chavesCruas(['integrationsPage', 'nav', 'common'])).toEqual([]);
   });
@@ -351,5 +350,71 @@ describe('Channel Manager em ingles', () => {
     fireEvent.change(campo('Product IDs (comma-separated)'), { target: { value: 'a, b ,,c' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Connect' }));
     await waitFor(() => expect(connectChannel).toHaveBeenCalledWith('getyourguide', { api_key: 'k1', product_ids: ['a', 'b', 'c'] }));
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Channel Manager: estilo Mare', () => {
+  it('mostra_o_eyebrow_da_area_Crescimento_tambem_em_carga', async () => {
+    getStatus.mockReturnValue(new Promise(() => {}));
+    getLogs.mockReturnValue(new Promise(() => {}));
+    render(<Integrations />);
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+    cleanup();
+    getStatus.mockReset().mockResolvedValue([VIATOR, GYG]);
+    getLogs.mockReset().mockResolvedValue(LOGS);
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('o_cartao_do_canal_e_um_cartao_Mare_com_estado_em_etiqueta_com_texto', async () => {
+    await montar();
+    for (const nome of ['Viator', 'GetYourGuide']) {
+      const c = cartao(nome).closest('article');
+      expect(c).not.toBeNull();
+      expect(c.className).toContain('bg-white');
+      expect(c.className).toContain('border-mare-card');
+      expect(c.className).toContain('rounded-[18px]');
+    }
+    const etiqueta = within(cartao('Viator')).getByText('Ligado').closest('span[class*="rounded"]');
+    expect(etiqueta.className).toContain('app:rounded-full');
+    expect(within(cartao('GetYourGuide')).getByText('Desligado').closest('span[class*="rounded"]').className).toContain('app:rounded-full');
+    expect(screen.getByText('V').className).toContain('bg-ocean-700');
+    expect(screen.getByText('G').className).toContain('bg-sand-600');
+  });
+
+  it('os_botoes_do_cartao_tem_44px_no_telemovel_sem_cores_do_chamador', async () => {
+    await montar();
+    for (const nome of ['Sincronizar', 'Desligar']) {
+      const b = screen.getByRole('button', { name: nome });
+      expect(b.className).toContain('min-h-11');
+      expect(b.className).toContain('md:min-h-0');
+    }
+    expect(screen.getByRole('button', { name: 'Desligar' }).className).not.toContain('hover:text-[var(--error)]');
+    expect(within(cartao('GetYourGuide')).getByRole('button', { name: 'Configurar' }).className).toContain('min-h-11');
+  });
+
+  it('data_do_ultimo_sync_e_a_contagem_de_eventos_usam_figuras_mono', async () => {
+    await montar();
+    const data = within(cartao('Viator')).getByText((_, el) => el.tagName === 'SPAN' && norm(el.textContent) === fmt('2026-11-05T10:30:00Z'));
+    expect(data.className).toContain('font-mono');
+    expect(data.className).toContain('tabular-nums');
+    expect(screen.getByText('37 evento(s)').className).toContain('font-mono');
+  });
+
+  it('webhooks_e_logs_estao_em_cartoes_Mare_com_titulo_de_seccao', async () => {
+    await montar();
+    const titulo = screen.getByRole('heading', { name: 'Logs de integração' });
+    expect(titulo.className).toContain('font-display');
+    expect(titulo.className).toContain('text-ocean-900');
+    const sec = titulo.closest('section');
+    expect(sec.className).toContain('border-mare-card');
+    expect(sec.className).toContain('rounded-[18px]');
+    expect(sec.querySelector('table')).not.toBeNull();
+    const caixa = screen.getByText('URLs de webhook para configurar nas plataformas:').closest('div[class*="bg-mare-head"]');
+    expect(caixa).not.toBeNull();
+    expect(caixa.className).toContain('rounded-[14px]');
+    expect(screen.getByText('https://api.saldesk.cv/api/v1/integrations/webhooks/viator'.replace('https://api.saldesk.cv/api/v1', 'http://localhost:3001/api/v1')).className).toContain('break-all');
   });
 });
