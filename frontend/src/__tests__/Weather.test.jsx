@@ -135,9 +135,10 @@ describe('Weather', () => {
   it('hoje_tem_destaque', async () => {
     const r = await abre();
     const c = cartoes(r);
-    expect(c[0].className).toContain('ring-2');
+    /* classList: a classe do foco (focus-visible:ring-2) existe em todos os dias e nao conta */
+    expect(c[0].classList.contains('ring-2')).toBe(true);
     expect(c[0].textContent).toContain('Hoje');
-    expect(c[1].className).not.toContain('ring-2');
+    expect(c[1].classList.contains('ring-2')).toBe(false);
     expect(c[1].textContent).toContain('Amanhã');
   });
 
@@ -181,7 +182,7 @@ describe('Weather', () => {
   it('detalhe_lista_tours_cliente_pax_e_whatsapp_so_com_telefone', async () => {
     const r = await abre();
     fireEvent.click(cartoes(r)[2]);
-    const detalhe = screen.getByRole('heading', { level: 3 }).closest('div.px-5');
+    const detalhe = screen.getByRole('heading', { level: 3 }).closest('section');
     expect(within(detalhe).getByText('2 tour(s) agendado(s)')).toBeTruthy();
     const linha1 = within(detalhe).getByText('Buggy Tour').closest('div.flex.items-center');
     expect(linha1.textContent).toContain('Ana Ferreira');
@@ -200,7 +201,7 @@ describe('Weather', () => {
   it('detalhe_com_so_telefone_usa_o_telefone', async () => {
     const r = await abre();
     fireEvent.click(cartoes(r)[5]);
-    const detalhe = screen.getByRole('heading', { level: 3 }).closest('div.px-5');
+    const detalhe = screen.getByRole('heading', { level: 3 }).closest('section');
     expect(within(detalhe).getByRole('link', { name: 'WhatsApp' }).getAttribute('href')).toBe('https://wa.me/447700900123');
   });
 
@@ -212,7 +213,7 @@ describe('Weather', () => {
 
   it('resumo_max_hoje_precipitacao_total_dias_sem_mau_tempo_e_conflitos', async () => {
     await abre();
-    const valor = (rotulo) => screen.getByText(rotulo).previousElementSibling.textContent;
+    const valor = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
     expect(valor('Max. hoje')).toBe('30°');
     /* 0 + 0 + 12 + 8.5 + 0 + 0.5 + 3 = 24 */
     expect(valor('Precipitação total 7 dias')).toBe('24 mm');
@@ -224,7 +225,7 @@ describe('Weather', () => {
   it('sem_conflitos_mostra_Sem conflitos meteorológicos', async () => {
     listReservations.mockResolvedValue([]);
     await abre();
-    expect(screen.getByText('Sem conflitos meteorológicos').previousElementSibling.textContent).toBe('0');
+    expect(screen.getByText('Sem conflitos meteorológicos').closest('article').querySelector('p.font-display').textContent).toBe('0');
     expect(screen.queryByText(/Mau tempo previsto para/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Contactar clientes' })).toBeNull();
   });
@@ -329,6 +330,107 @@ describe('Weather', () => {
     expect(msg.className).toContain('font-display');
     expect(screen.getByRole('button', { name: /Tentar novamente/ })).toBeTruthy();
   });
+
+  /* ---- estilo Mare ---- */
+  const mono = (el) => { expect(el.className).toContain('font-mono'); expect(el.className).toContain('tabular-nums'); };
+
+  it('mostra_o_sobretitulo_da_area_Gestao_a_carregar_e_no_erro', async () => {
+    render(<MemoryRouter future={FUTURE}><Weather /></MemoryRouter>);
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+    await screen.findByText('Max. hoje');
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+    cleanup();
+    getWeatherForecast.mockRejectedValue(new Error('x'));
+    render(<MemoryRouter future={FUTURE}><Weather /></MemoryRouter>);
+    await screen.findByText(/Não foi possível carregar a previsão meteorológica/);
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+  });
+
+  it('os_quatro_numeros_do_resumo_sao_quadros_MareStat_com_os_mesmos_valores', async () => {
+    await abre();
+    const esperado = [['Max. hoje', '30°'], ['Precipitação total 7 dias', '24 mm'], ['Dias sem mau tempo', '4'], ['Conflito(s) com tours', '1']];
+    for (const [rotulo, valor] of esperado) {
+      const art = screen.getByText(rotulo, { selector: 'p' }).closest('article');
+      expect(art.className).toContain('rounded-[18px]');
+      expect(art.className).toContain('border-mare-card');
+      expect(art.querySelector('p.font-display').textContent).toBe(valor);
+    }
+  });
+
+  it('o_quadro_dos_conflitos_muda_de_tom_e_de_texto_nao_so_de_cor', async () => {
+    await abre();
+    const com = screen.getByText('Conflito(s) com tours').closest('article');
+    expect(com.querySelector('[data-mare-stat-tint]').className).toContain('bg-sand-100');
+    cleanup();
+    listReservations.mockResolvedValue([]);
+    await abre();
+    const sem = screen.getByText('Sem conflitos meteorológicos').closest('article');
+    expect(sem.querySelector('[data-mare-stat-tint]').className).toContain('bg-turquoise-100');
+  });
+
+  it('os_dias_sao_cartoes_Mare_com_numeros_em_mono', async () => {
+    const r = await abre();
+    const c = cartoes(r);
+    /* dia normal: borda de cartao Mare; dia em conflito: borda de erro (nunca as duas) */
+    expect(c[0].className).toContain('border-mare-card');
+    expect(c[0].className).toContain('rounded-[18px]');
+    expect(c[2].className).not.toContain('border-mare-card');
+    expect(c[2].className).toContain('border-[var(--error)]');
+    c.forEach(b => expect(b.className).toContain('focus-visible:ring-sand-500'));
+    mono(within(c[0]).getByText('30°'));
+    mono(within(c[0]).getByText('22°'));
+    mono(within(c[2]).getByText('12 mm'));
+    mono(within(c[0]).getByText('Hoje'));
+    mono(within(c[2]).getByText('2 tour(s)'));
+  });
+
+  it('o_dia_em_conflito_leva_icone_alem_da_cor_e_o_texto_dos_tours', async () => {
+    const r = await abre();
+    const c = cartoes(r);
+    expect(within(c[2]).getByText('2 tour(s)').querySelector('svg')).toBeTruthy();
+    expect(within(c[5]).getByText('1 tour(s)').querySelector('svg')).toBeNull();
+  });
+
+  it('o_alerta_de_conflito_mantem_os_textos_com_icone_e_o_botao_sem_cores_proprias', async () => {
+    await abre();
+    const alerta = screen.getByText(/Mau tempo previsto para/).parentElement.parentElement;
+    expect(alerta.className).toContain('rounded-[14px]');
+    expect(alerta.querySelector('svg')).toBeTruthy();
+    expect(alerta.textContent).toContain('Chuva');
+    const botao = screen.getByRole('button', { name: 'Contactar clientes' });
+    expect(botao.className).not.toContain('text-[var(--error)]');
+    expect(botao.className).toContain('min-h-11');
+  });
+
+  it('o_detalhe_do_dia_e_um_cartao_Mare_com_titulo_Sora_e_numeros_em_mono', async () => {
+    const r = await abre();
+    fireEvent.click(cartoes(r)[2]);
+    const h = screen.getByRole('heading', { level: 3 });
+    expect(h.className).toContain('font-display');
+    expect(h.className).toContain('text-lg');
+    expect(h.className).toContain('text-ocean-900');
+    const c = h.closest('section');
+    expect(c.className).toContain('border-mare-card');
+    expect(c.className).toContain('rounded-[18px]');
+    expect(c.className).toContain('p-[22px]');
+    mono(screen.getByText('27° / 21°'));
+    mono(screen.getByText('12 mm precipitação'));
+    mono(within(c).getByText('3 pax'));
+    const linha = within(c).getByText('Buggy Tour').closest('div.flex.items-center');
+    expect(linha.className).toContain('rounded-[14px]');
+    /* fora do cartao o dia continua a abrir e a fechar */
+    fireEvent.click(cartoes(r)[2]);
+    expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
+  });
+
+  it('o_estado_de_erro_fica_num_cartao_Mare', async () => {
+    getWeatherForecast.mockRejectedValue(new Error('x'));
+    render(<MemoryRouter future={FUTURE}><Weather /></MemoryRouter>);
+    const msg = await screen.findByText(/Não foi possível carregar a previsão meteorológica/);
+    const c = msg.closest('section');
+    expect(c.className).toContain('border-mare-card');
+    expect(c.className).toContain('rounded-[18px]');
+  });
 });
 
 /* ───────────────────────── Painel em ingles ───────────────────────── */
@@ -382,7 +484,7 @@ describe('Weather em inglês', () => {
     const alerta = screen.getByText(/Bad weather forecast for/).parentElement;
     expect(alerta.textContent).toContain('Rain · 12mm precipitation · 2 tour(s) scheduled with 4 guest(s)');
     expect(screen.getByRole('button', { name: 'Contact customers' })).toBeTruthy();
-    const valor = (rotulo) => screen.getByText(rotulo).previousElementSibling.textContent;
+    const valor = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
     expect(valor('Max. today')).toBe('30°');
     expect(valor('Total precipitation, 7 days')).toBe('24 mm');
     expect(valor('Days without bad weather')).toBe('4');
