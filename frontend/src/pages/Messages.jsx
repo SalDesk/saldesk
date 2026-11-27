@@ -402,7 +402,7 @@ export default function Messages() {
         style={{ height: 'calc(100vh - 168px)', minHeight: 500 }}
       >
         {/* Contacts sidebar: cartao Mare */}
-        <div data-mare-lista className={`flex-col w-full md:w-72 bg-white border border-mare-card rounded-[18px] overflow-hidden shrink-0 ${showChat ? 'hidden md:flex' : 'flex'}`}>
+        <div data-mare-lista className={`flex-col w-full md:w-56 lg:w-72 bg-white border border-mare-card rounded-[18px] overflow-hidden shrink-0 ${showChat ? 'hidden md:flex' : 'flex'}`}>
           <div className="px-3 py-2.5 border-b border-mare-card">
             <div className="relative">
               <Search size={13} strokeWidth={1.75} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-n-500 pointer-events-none" />
@@ -489,7 +489,7 @@ export default function Messages() {
                   )}
                 </div>
                 {selectedContact.type === 'guest' && (
-                  <div className="flex items-center gap-1 shrink-0 ml-auto bg-mare-head border border-mare-card rounded-sm p-0.5">
+                  <div className="flex flex-wrap max-w-full items-center gap-1 ml-auto bg-mare-head border border-mare-card rounded-sm p-0.5">
                     <button
                       type="button"
                       aria-pressed={guestChannel === 'internal'}

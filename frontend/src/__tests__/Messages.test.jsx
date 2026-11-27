@@ -171,7 +171,16 @@ describe('Messages', () => {
       const nome = within(cabecalho).getByText('Maria Cliente').parentElement;
       expect(nome).toHaveClass('flex-1', 'basis-[7rem]', 'min-w-0');
       const pilulas = screen.getByRole('button', { name: /WhatsApp/ }).parentElement;
-      expect(pilulas).toHaveClass('ml-auto', 'shrink-0');
+      expect(pilulas).toHaveClass('ml-auto');
+    });
+
+    it('no tablet a lista é mais estreita e as pílulas do canal podem quebrar linha', async () => {
+      await abre();
+      expect(document.querySelector('[data-mare-lista]')).toHaveClass('w-full', 'md:w-56', 'lg:w-72');
+      await abreConversa('Maria Cliente');
+      const pilulas = screen.getByRole('button', { name: /WhatsApp/ }).parentElement;
+      expect(pilulas).toHaveClass('flex-wrap', 'max-w-full', 'ml-auto');
+      expect(pilulas).not.toHaveClass('shrink-0');
     });
 
     it('o botão Enviar do compositor tem 44 px no telemóvel', async () => {

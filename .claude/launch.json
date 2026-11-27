@@ -4,23 +4,42 @@
     {
       "name": "saldesk-backend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "cwd": "backend",
       "port": 3001
     },
     {
       "name": "saldesk-frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "cwd": "frontend",
       "port": 5173
     },
     {
       "name": "saldesk-website",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "-l", "4173", "."],
+      "runtimeArgs": [
+        "serve",
+        "-l",
+        "4173",
+        "."
+      ],
       "cwd": "website",
       "port": 4173
+    },
+    {
+      "name": "mock-activity",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/RITS DELGADO/AppData/Local/Temp/claude/b8f05c5ef53b33cd/d7eeb103-11df-4fcb-86ce-34bb2ec70516/scratchpad/verif/mock-activity.js"
+      ],
+      "port": 3001
     }
   ]
 }
