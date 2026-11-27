@@ -543,4 +543,28 @@ describe('Grupos: estilo Mare', () => {
     fireEvent.click(chip('Confirmado'));
     expect(empresasPorOrdem()).toEqual(['Hotel Beta']);
   });
+
+  it('as_caixas_dos_modais_sao_caixas_interiores_Mare', async () => {
+    await montar();
+    fireEvent.click(novaCotacao());
+    const dlg = screen.getByRole('dialog');
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: 20'), { target: { value: '20' } });
+    fireEvent.click(within(dlg).getByText(/Kite — €50\/pax/));
+    const estimativa = within(dlg).getByText(/Preço estimado/).closest('div');
+    const caixaPago = () => within(screen.getByRole('dialog')).getByText(/Total pago até agora/).closest('div');
+    for (const caixa of [estimativa]) {
+      expect(caixa.className).toContain('rounded-[14px]');
+      expect(caixa.className).toContain('bg-mare-head');
+      expect(caixa.className).toContain('border-mare-card');
+      expect(caixa.className).not.toContain('rounded-sm');
+    }
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Cancelar' }));
+    abrir('Empresa Alfa');
+    fireEvent.click(within(cartao('Empresa Alfa')).getByText('Registar pagamento'));
+    const pago = caixaPago();
+    expect(pago.className).toContain('rounded-[14px]');
+    expect(pago.className).toContain('bg-mare-head');
+    expect(pago.className).toContain('border-mare-card');
+    expect(pago.className).not.toContain('rounded-sm');
+  });
 });

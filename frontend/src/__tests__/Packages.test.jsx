@@ -423,4 +423,11 @@ describe('Pacotes: estilo Mare', () => {
     expect(screen.getByRole('button', { name: 'Editar Pacote Aventura' }).className).toContain('hover:text-ocean-700');
     expect(screen.getByRole('button', { name: 'Desactivar Pacote Aventura' }).className).toContain('min-h-11');
   });
+
+  it('o_estado_de_um_pacote_inactivo_nao_fica_dentro_de_opacidade_reduzida', async () => {
+    await montar();
+    const selo = within(cartao('Pacote Inactivo')).getByText('Inactivo');
+    expect(selo.closest('.opacity-70')).toBeNull();
+    expect(cartao('Pacote Aventura').querySelector('img').className).not.toContain('opacity-70');
+  });
 });

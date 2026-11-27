@@ -263,13 +263,13 @@ export default function Packages() {
             return (
               <article key={pkg.id} className={CARTAO}>
                 {/* Photo */}
-                <div className={`h-32 bg-n-100 relative overflow-hidden ${pkg.status !== 'activo' ? 'opacity-70' : ''}`}>
+                <div className="h-32 bg-n-100 relative overflow-hidden">
                   {pkg.photo_url ? (
                     <img src={pkg.photo_url} alt={pkg.name_pt}
-                      className="w-full h-full object-cover"
+                      className={`w-full h-full object-cover ${pkg.status !== 'activo' ? 'opacity-70' : ''}`}
                       onError={e => { e.target.style.display = 'none'; }} />
                   ) : (
-                    <div className="flex items-center justify-center h-full">
+                    <div className={`flex items-center justify-center h-full ${pkg.status !== 'activo' ? 'opacity-70' : ''}`}>
                       <ImageIcon size={28} strokeWidth={1.25} className="text-n-300" />
                     </div>
                   )}

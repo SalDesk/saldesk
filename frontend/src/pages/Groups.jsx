@@ -162,8 +162,8 @@ function GroupModal({ group, units, onSave, onClose }) {
         </div>
 
         {groupPrice > 0 && (
-          <div className="px-3 py-2 bg-ocean-50 border border-ocean-100 rounded-sm">
-            <p className="text-xs font-body text-ocean-700">
+          <div className="px-3 py-2 bg-mare-head border border-mare-card rounded-[14px]">
+            <p className="text-xs font-body text-n-700">
               {t('groupsPage.modal.estimated')} <span className={`${NUM} font-bold`}>{eurosInteiros(groupPrice, lang)}</span>
               {' '}{t('groupsPage.modal.estimatedDetail', { guests: form.guests, pct: form.discount_pct || 0 })}
             </p>
@@ -226,7 +226,7 @@ function PaymentModal({ group, onSave, onClose }) {
   return (
     <Modal open onClose={onClose} title={t('groupsPage.payment.title', { company: group.company })} size="sm">
       <div className="space-y-4">
-        <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm">
+        <div className="px-3 py-2 bg-mare-head border border-mare-card rounded-[14px]">
           <p className="text-xs font-body text-n-500">{t('groupsPage.payment.totalPaid')} <span className={`${NUM} font-bold text-n-700`}>{eurosDuasCasas(totalPaid, lang)}</span></p>
         </div>
         <Input label={t('groupsPage.payment.amount')} aria-label={t('groupsPage.payment.amount')} type="number" min="0.01" step="0.01"
