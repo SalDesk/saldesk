@@ -324,3 +324,30 @@ describe('Financeiro em inglês: pessoal, obrigações e resultado', () => {
     semPortugues();
   });
 });
+
+describe('Financeiro em inglês: estilo Mare', () => {
+  it('o_eyebrow_e_os_quadros_de_numeros_aparecem_em_ingles', async () => {
+    montar();
+    await pronta();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Management');
+    for (const r of ['Total revenue', 'Direct 60%', 'Average ticket']) {
+      expect(screen.getByText(r).closest('article')).toHaveClass('bg-white', 'border-mare-card', 'rounded-[18px]');
+    }
+    expect(screen.getByText('Total revenue').closest('article').querySelector('p.font-display')).toHaveTextContent(eurEn(1000));
+    expect(screen.getByText('Transactions', { selector: 'h3' }).closest('.border-mare-card')).toHaveClass('rounded-[18px]', 'p-[22px]');
+    semPortugues();
+  });
+
+  it('caixa_e_previsao_em_ingles_usam_quadros_Mare', async () => {
+    montar();
+    await pronta();
+    abrir('Cash');
+    expect(await screen.findByText('Total received')).toBeInTheDocument();
+    expect(screen.getByText('Total received').closest('article')).toHaveClass('border-mare-card');
+    expect(screen.getByText('Total received').closest('article').querySelector('p.font-display')).toHaveTextContent(eurEn(230));
+    abrir('Forecast');
+    expect(await screen.findByText('Weekly forecast')).toBeInTheDocument();
+    expect(screen.getByText('Weekly forecast', { selector: 'h3' }).closest('.border-mare-card')).toHaveClass('rounded-[18px]');
+    semPortugues();
+  });
+});

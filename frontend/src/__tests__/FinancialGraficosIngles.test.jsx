@@ -5,8 +5,9 @@ import RevenueChart from '../components/financial/RevenueChart';
 import ServiceBarChart from '../components/financial/ServiceBarChart';
 import ChannelChart from '../components/financial/ChannelChart';
 import DespesasTab from '../pages/financial/DespesasTab';
+import ResultadoTab from '../pages/financial/ResultadoTab';
 import Demand from '../pages/Demand';
-import { listExpenses } from '../services/expensesService';
+import { listExpenses, getSalaryPayments } from '../services/expensesService';
 import { getReceita } from '../services/financeiroService';
 import { listReservations } from '../services/reservationsService';
 import useUiStore from '../store/uiStore';
@@ -36,9 +37,9 @@ vi.mock('recharts', async () => {
   };
 });
 vi.mock('../services/expensesService', () => ({
-  listExpenses: vi.fn(), addExpenseLocal: vi.fn(), updateExpenseLocal: vi.fn(), deleteExpenseLocal: vi.fn(),
+  listExpenses: vi.fn(), addExpenseLocal: vi.fn(), updateExpenseLocal: vi.fn(), deleteExpenseLocal: vi.fn(), getSalaryPayments: vi.fn(),
 }));
-vi.mock('../services/financeiroService', () => ({ getReceita: vi.fn() }));
+vi.mock('../services/financeiroService', () => ({ getReceita: vi.fn(), exportExcel: vi.fn(), exportPdf: vi.fn() }));
 vi.mock('../services/reservationsService', () => ({ listReservations: vi.fn() }));
 
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
@@ -48,6 +49,7 @@ beforeEach(() => {
   listExpenses.mockResolvedValue([{ id: 'e1', category: 'Renda', amount: 300, date: `${MES}-01`, is_recurring: false }]);
   getReceita.mockResolvedValue([{ periodo: `${new Date().getFullYear()}-01`, receita: 1234 }]);
   listReservations.mockResolvedValue([]);
+  getSalaryPayments.mockResolvedValue([]);
 });
 afterEach(() => {
   cleanup();
@@ -100,5 +102,16 @@ describe('dicas dos gráficos em inglês', () => {
     useUiStore.setState({ lang: 'en' });
     render(<MemoryRouter future={FUTURE}><Demand /></MemoryRouter>);
     await waitFor(() => expect(screen.getByText('2026: €1,234')).toBeInTheDocument());
+  });
+});
+
+describe('grafico do resultado no estilo Mare em inglês', () => {
+  it('a_dica_e_o_eixo_seguem_a_lingua_e_o_cartao_e_Mare', async () => {
+    useUiStore.setState({ lang: 'en' });
+    render(<ResultadoTab resumo={{ atual: { receita: 1000, num_reservas: 3 } }} currency="EUR" periodo={{ inicio: `${MES}-01`, fim: `${MES}-28` }} />);
+    const titulo = await screen.findByText('Revenue vs expenses — last 6 months', { selector: 'h3' });
+    expect(titulo.closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]', 'p-[22px]');
+    expect(dica()).toBe('€1,234');
+    expect(document.querySelector('[data-eixo]')).not.toBeNull();
   });
 });

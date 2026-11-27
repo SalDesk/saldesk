@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Financial from '../pages/Financial';
 import * as fin from '../services/financeiroService';
@@ -415,5 +415,103 @@ describe('Financeiro: estrutura com o design system', () => {
     for (const nome of ['Receitas', 'Comissões']) {
       expect(screen.getByRole('tab', { name: nome }).querySelector('svg.lucide-lock')).toBeNull();
     }
+  });
+});
+
+/* ───────────────────────── estilo Mare: resumo, previsao, caixa, por tour, transaccoes ───────────────────────── */
+
+const CARTAO_MARE = ['bg-white', 'border', 'border-mare-card', 'rounded-[18px]'];
+const eMono = (el) => el.classList.contains('font-mono') && el.classList.contains('tabular-nums');
+
+describe('Financeiro no estilo Mare', () => {
+  it('o_cabecalho_traz_o_eyebrow_Gestao', async () => {
+    montar();
+    await prontaVisaoGeral();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Gestão');
+  });
+
+  it('as_barras_de_separadores_rolam_dentro_do_seu_contentor', async () => {
+    montar();
+    await prontaVisaoGeral();
+    for (const nome of ['Receitas', 'Visão Geral']) {
+      const faixa = screen.getAllByRole('tab', { name: nome })[0].closest('[role="tablist"]');
+      expect(faixa.parentElement).toHaveClass('overflow-x-auto', 'max-w-full');
+    }
+  });
+
+  it('os_quatro_quadros_de_numeros_sao_MareStat_com_os_mesmos_valores', async () => {
+    montar();
+    await prontaVisaoGeral();
+    const valores = ['Receita total', 'Directas 60%', 'Ticket médio', 'Margem liquida'].map(r => {
+      const q = screen.getByText(r).closest('article');
+      expect(q).toHaveClass(...CARTAO_MARE);
+      return norm(q.querySelector('p.font-display').textContent);
+    });
+    expect(valores).toEqual([eur(1000), '6', eur(100), eur(1000)]);
+    expect(norm(screen.getByText('Receita total').closest('article').textContent)).toContain('vs período ant.');
+    expect(screen.getByText('4 via OTA').closest('article')).toBe(screen.getByText('Directas 60%').closest('article'));
+  });
+
+  it('os_cartoes_da_visao_geral_sao_cartoes_Mare_com_titulo_Sora', async () => {
+    montar();
+    await prontaVisaoGeral();
+    await screen.findByText('Carla Dias');
+    for (const titulo of ['Receita por período', 'Por canal', 'Top 5 serviços por receita', 'Top clientes', 'Comparativo com período anterior', 'Transações']) {
+      const h = screen.getByText(titulo, { selector: 'h3' });
+      expect(h).toHaveClass('font-display', 'text-lg', 'font-semibold', 'text-ocean-900');
+      expect(h.closest('.border-mare-card')).toHaveClass(...CARTAO_MARE, 'p-[22px]');
+    }
+  });
+
+  it('a_tabela_das_transaccoes_fica_num_cartao_Mare_com_dinheiro_e_datas_em_mono', async () => {
+    montar();
+    await prontaVisaoGeral();
+    await screen.findByText('Carla Dias');
+    const tabela = screen.getAllByRole('table').pop();
+    expect(tabela.closest('.border-mare-card')).toHaveClass(...CARTAO_MARE);
+    const linha = within(within(tabela).getByText('Ana Silva').closest('tr'));
+    expect(eMono(linha.getByText(eur(200)))).toBe(true);
+    expect(eMono(linha.getByText(norm(new Date(`${MES}-03T00:00:00Z`).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' }))))).toBe(true);
+  });
+
+  it('o_botao_de_actualizar_transaccoes_cumpre_os_44_px_no_telemovel', async () => {
+    montar();
+    await prontaVisaoGeral();
+    expect(screen.getByRole('button', { name: 'Actualizar transações' })).toHaveClass('min-h-11', 'min-w-11');
+  });
+
+  it('a_serie_de_receita_vazia_mostra_o_texto_de_sempre', async () => {
+    fin.getReceita.mockResolvedValue([]);
+    montar();
+    await screen.findByText('Receita total');
+    await waitFor(() => expect(fin.getTransacoes).toHaveBeenCalled());
+    expect(screen.getAllByText('Sem dados para o período seleccionado').length).toBeGreaterThan(0);
+  });
+
+  it('previsao_caixa_e_por_tour_usam_cartoes_e_quadros_Mare', async () => {
+    montar();
+    await prontaVisaoGeral();
+    abrir('Previsão');
+    await screen.findByText('Previsão semanal');
+    for (const r of ['Receita confirmada (prox. período)', 'Mesmo período — ano anterior', 'Média histórica mensal']) {
+      expect(screen.getByText(r).closest('article')).toHaveClass(...CARTAO_MARE);
+    }
+    expect(screen.getByText('Previsão semanal', { selector: 'h3' }).closest('.border-mare-card')).toHaveClass(...CARTAO_MARE);
+    abrir('Caixa');
+    await screen.findByText('Pagamentos em dinheiro');
+    expect(screen.getByText('Total recebido').closest('article')).toHaveClass(...CARTAO_MARE);
+    abrir('Por Tour');
+    await screen.findByText('Custos operacionais por tour');
+    expect(screen.getByText('Custos operacionais por tour', { selector: 'h3' }).closest('.border-mare-card')).toHaveClass(...CARTAO_MARE);
+    expect(screen.getByText('Receita por tour', { selector: 'h3' }).closest('.border-mare-card')).toHaveClass(...CARTAO_MARE);
+  });
+
+  it('o_alternador_de_moeda_fora_das_receitas_tem_44_px_no_telemovel_e_anel_areia', async () => {
+    montar();
+    await prontaVisaoGeral();
+    abrir('Despesas');
+    await screen.findByText('Registar despesa');
+    const botaoCve = screen.getByRole('button', { name: 'CVE' });
+    expect(botaoCve).toHaveClass('min-h-11', 'focus-visible:ring-sand-500');
   });
 });

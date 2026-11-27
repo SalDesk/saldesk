@@ -606,14 +606,16 @@ describe('Por Tour, Previsão e Caixa com o design system', () => {
     expect(within(screen.getByRole('table')).getAllByRole('columnheader')).toHaveLength(5);
   });
 
-  it('aviso_da_previsao_e_cartoes_da_caixa_usam_tokens', () => {
+  it('aviso_da_previsao_usa_tokens_e_os_quadros_da_caixa_tem_tom', () => {
     render(<PrevisaoTab forecast={FORECAST} currency="EUR" loading={false} />);
     const aviso = screen.getByText(/Previsão abaixo da média/).closest('div');
     expect(aviso.className).toContain('var(--warning-light)');
     cleanup();
     render(<CaixaTab transacoes={TRANSACOES} currency="EUR" loading={false} />);
-    expect(screen.getByText(eur(150), { selector: 'p' }).className).toContain('var(--success)');
-    expect(screen.getByText(eur(80), { selector: 'p' }).className).toContain('var(--warning)');
+    /* o tom agora vive na marca do quadro MareStat (turquesa = confirmado, areia = por confirmar), nunca no valor */
+    const marca = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('[data-mare-stat-tint]').className;
+    expect(marca('Confirmado')).toContain('turquoise');
+    expect(marca('Por confirmar')).toContain('sand');
   });
 
   it('nenhuma_das_quatro_pecas_tem_hexadecimais_cores_nomeadas_ou_text_error', () => {

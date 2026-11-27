@@ -16,9 +16,9 @@ import {
 import { exportExcel, exportPdf, getReceita } from '../../services/financeiroService';
 import { listExpenses, getSalaryPayments } from '../../services/expensesService';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
+import MareStat from '../../components/shared/MareStat';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { EUR_CVE, fmtMoney, fmtEixo, fmtDica } from './shared';
+import { EUR_CVE, CARTAO, TITULO, NUM, fmtMoney, fmtEixo, fmtDica } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { rotuloMes } from '../../utils/rotuloMes';
 import { useT } from '../../i18n';
@@ -99,63 +99,61 @@ function ResultadoTab({ resumo, currency, periodo }) {
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
+  /* Tom do quadro: bom com resultado positivo ou margem a partir de 20%, aviso nos restantes casos de atencao */
+  const tomResultado = resultado >= 0 ? 'bom' : 'aviso';
+  const tomMargem = margem >= 20 ? 'bom' : 'aviso';
+
   return (
     <div className="space-y-5">
       {/* Summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        {[
-          { label: t('financial.result.grossRevenue'),      value: fmtMoney(receita, currency),        color: 'text-ocean-700'  },
-          { label: t('financial.result.operatingExpenses'), value: fmtMoney(totalDespesas, currency),   color: 'text-[var(--error)]' },
-          { label: t('financial.result.payroll'),           value: fmtMoney(totalSal, currency),        color: 'text-[var(--error)]' },
-          { label: t('financial.result.netResult'),         value: fmtMoney(resultado, currency),       color: resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
-          { label: t('financial.result.margin'),            value: `${margem.toFixed(1)}%`,             color: margem >= 20 ? 'text-[var(--success)]' : margem >= 0 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
-          { label: t('financial.result.bookingsInPeriod'),  value: resumo?.atual?.num_reservas ?? '—',   color: 'text-n-900'      },
-        ].map(m => (
-          <Card key={m.label} padding="px-4 py-3">
-            <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-            <p className="text-xs font-body text-n-500 mt-0.5">{m.label}</p>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <MareStat label={t('financial.result.grossRevenue')}      value={fmtMoney(receita, currency)} />
+        <MareStat label={t('financial.result.operatingExpenses')} value={fmtMoney(totalDespesas, currency)} />
+        <MareStat label={t('financial.result.payroll')}           value={fmtMoney(totalSal, currency)} />
+        <MareStat label={t('financial.result.netResult')}         value={fmtMoney(resultado, currency)} tone={tomResultado} />
+        <MareStat label={t('financial.result.margin')}            value={`${margem.toFixed(1)}%`} tone={tomMargem} />
+        <MareStat label={t('financial.result.bookingsInPeriod')}  value={resumo?.atual?.num_reservas ?? '—'} />
       </div>
 
       {/* Receitas vs Despesas chart */}
-      <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.result.chartTitle')}</h3>}>
+      <div className={CARTAO}>
+        <div className="mb-3"><h3 className={TITULO}>{t('financial.result.chartTitle')}</h3></div>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => fmtEixo(v, currency)} />
-            <ChartTooltip contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }} formatter={v => fmtDica(v, currency)} />
-            <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
-            <Bar dataKey="receita"  name={t('financial.result.revenue')}  fill="var(--ocean-700)" radius={[2,2,0,0]} />
-            <Bar dataKey="despesas" name={t('financial.result.expenses')} fill="var(--error)" radius={[2,2,0,0]} />
+            <CartesianGrid stroke="var(--n200)" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 11, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => fmtEixo(v, currency)} />
+            <ChartTooltip contentStyle={{ fontSize: 12, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 12 }} formatter={v => fmtDica(v, currency)} />
+            <Legend wrapperStyle={{ fontSize: 12, fontFamily: 'DM Sans' }} />
+            <Bar dataKey="receita"  name={t('financial.result.revenue')}  fill="var(--ocean-500)" radius={[6,6,0,0]} maxBarSize={28} />
+            <Bar dataKey="despesas" name={t('financial.result.expenses')} fill="var(--sand-500)" radius={[6,6,0,0]} maxBarSize={28} />
           </BarChart>
         </ResponsiveContainer>
-      </Card>
+      </div>
 
       {/* Breakdown */}
-      <Card padding="px-5 py-4">
-        <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('financial.result.breakdown')}</h3>
+      <div className={CARTAO}>
+        <h3 className={`${TITULO} mb-4`}>{t('financial.result.breakdown')}</h3>
         <div className="space-y-2">
           {[
             { label: t('financial.result.grossRevenue'),           value: receita,        sign: '+', color: 'text-ocean-700' },
             { label: t('financial.result.operatingExpensesShort'), value: totalDespesas,  sign: '−', color: 'text-[var(--error)]' },
             { label: t('financial.result.payroll'),                value: totalSal,       sign: '−', color: 'text-[var(--error)]' },
           ].map(r => (
-            <div key={r.label} className="flex items-center justify-between py-2 border-b border-n-100 last:border-0">
+            <div key={r.label} className="flex flex-wrap items-center justify-between gap-x-4 py-2 border-b border-n-100 last:border-0">
               <span className="text-sm font-body text-n-700">{r.label}</span>
-              <span className={`font-display font-bold text-sm ${r.color}`}>{r.sign} {fmtMoney(r.value, currency)}</span>
+              <span className={`${NUM} font-semibold text-sm ${r.color}`}>{r.sign} {fmtMoney(r.value, currency)}</span>
             </div>
           ))}
-          <div className="flex items-center justify-between py-2 pt-3 border-t-2 border-n-300">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 py-2 pt-3 border-t-2 border-n-300">
             <span className="text-sm font-body font-bold text-n-800">{t('financial.result.netResult')}</span>
-            <span className={`font-display font-bold text-base ${resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>{resultado >= 0 ? '+' : '−'} {fmtMoney(Math.abs(resultado), currency)}</span>
+            <span className={`${NUM} font-semibold text-base ${resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>{resultado >= 0 ? '+' : '−'} {fmtMoney(Math.abs(resultado), currency)}</span>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Export */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Button variant="secondary" icon={FileText} loading={exporting} onClick={() => handleExport('pdf')} className="flex-1">
           {t('financial.result.exportPdf')}
         </Button>

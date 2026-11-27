@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Receipt } from 'lucide-react';
 import Table from '../../components/ui/Table';
+import Badge from '../../components/ui/Badge';
 import Input, { Select } from '../../components/ui/Input';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { PAYMENT_METHODS, PAYMENT_STATUS, PS_COLOR, rotuloMetodo, rotuloEstadoPagamento, rotuloCanal, fmtDate, fmtMoney } from './shared';
+import { PAYMENT_METHODS, PAYMENT_STATUS, PS_VARIANT, NUM, rotuloMetodo, rotuloEstadoPagamento, rotuloCanal, fmtDate, fmtMoney } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { useT } from '../../i18n';
 
@@ -25,31 +26,31 @@ function TransacoesTable({ transacoes, currency, loading }) {
     return true;
   });
   const columns = [
-    { key: 'data', label: t('financial.columns.date'), render: tx => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(tx.check_in)}</span> },
+    { key: 'data', label: t('financial.columns.date'), render: tx => <span className={`text-xs ${NUM} text-n-600 whitespace-nowrap`}>{fmtDate(tx.check_in)}</span> },
     { key: 'cliente', label: t('financial.columns.customer'), render: tx => <span className="font-body text-n-800 whitespace-nowrap">{tx.customer_name || '—'}</span> },
     { key: 'servico', label: t('financial.columns.service'), render: tx => <span className="block max-w-[140px] truncate font-body text-n-700">{tx.units?.name || '—'}</span> },
-    { key: 'canal', label: t('financial.columns.channel'), render: tx => <span className="text-xs font-mono text-n-500">{rotuloCanal(tx.source, t)}</span> },
+    { key: 'canal', label: t('financial.columns.channel'), render: tx => <span className="text-xs font-body text-n-600">{rotuloCanal(tx.source, t)}</span> },
     { key: 'metodo', label: t('financial.columns.method'), render: tx => <span className="text-xs font-body text-n-600">{rotuloMetodo(tx.payment_method, t)}</span> },
-    { key: 'montante', label: t('financial.columns.amount'), render: tx => <span className="font-display font-bold text-ocean-700 whitespace-nowrap">{fmtMoney(tx.total_price, currency)}</span> },
-    { key: 'estado', label: t('financial.columns.status'), render: tx => <span className={`text-xs font-mono px-1.5 py-0.5 rounded-xs ${PS_COLOR[tx.payment_status] || 'text-n-500 bg-n-100'}`}>{rotuloEstadoPagamento(tx.payment_status, t)}</span> },
+    { key: 'montante', label: t('financial.columns.amount'), render: tx => <span className={`${NUM} font-semibold text-ocean-900 whitespace-nowrap`}>{fmtMoney(tx.total_price, currency)}</span> },
+    { key: 'estado', label: t('financial.columns.status'), render: tx => <Badge variant={PS_VARIANT[tx.payment_status] || 'default'}>{rotuloEstadoPagamento(tx.payment_status, t)}</Badge> },
   ];
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2 items-center">
-        <div className="w-48">
+        <div className="w-full sm:w-48">
           <Input aria-label={t('financial.transactions.searchAria')} value={search} onChange={e => setSearch(e.target.value)} placeholder={t('financial.transactions.searchPlaceholder')} />
         </div>
-        <div className="w-44">
+        <div className="w-full sm:w-44">
           <Select aria-label={t('financial.transactions.methodAria')} value={filterMethod} onChange={e => setFilterMethod(e.target.value)}>
             {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m === 'Todos' ? t('financial.transactions.allMethods') : rotuloMetodo(m, t)}</option>)}
           </Select>
         </div>
-        <div className="w-44">
+        <div className="w-full sm:w-44">
           <Select aria-label={t('financial.transactions.statusAria')} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             {PAYMENT_STATUS.map(s => <option key={s} value={s}>{s === 'Todos' ? t('financial.transactions.allStatuses') : rotuloEstadoPagamento(s, t)}</option>)}
           </Select>
         </div>
-        <span className="text-xs font-body text-n-400 ml-1">{t('financial.transactions.count', { n: rows.length })}</span>
+        <span className="text-xs font-body text-n-600 tabular-nums sm:ml-1">{t('financial.transactions.count', { n: rows.length })}</span>
       </div>
       {loading ? <div className="flex justify-center py-8"><LoadingSpinner size={24} /></div> :
        rows.length === 0 ? (
