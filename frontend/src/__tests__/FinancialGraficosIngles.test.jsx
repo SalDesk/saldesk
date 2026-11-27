@@ -115,3 +115,25 @@ describe('grafico do resultado no estilo Mare em inglês', () => {
     expect(document.querySelector('[data-eixo]')).not.toBeNull();
   });
 });
+
+describe('dicas dos gráficos no estilo Mare', () => {
+  const eMare = (el) => expect(el.closest('.border-mare-card')).toHaveClass('bg-white', 'border', 'rounded-[14px]');
+
+  it('receita_servicos_canais_e_despesas_mostram_a_dica_numa_caixa_branca_de_14px', async () => {
+    const { unmount } = render(<RevenueChart data={[{ periodo: `${MES}-01`, receita: 1234, num_reservas: 2 }]} granularidade="day" />);
+    eMare(screen.getByText('€1234'));
+    expect(screen.getByText('€1234')).toHaveClass('font-mono', 'tabular-nums');
+    unmount();
+    const b = render(<ServiceBarChart data={[{ name: 'Tour Ilha', receita: 1234, num_reservas: 2 }]} />);
+    eMare(screen.getByText('€1234'));
+    expect(screen.getByText('€1234')).toHaveClass('font-mono', 'tabular-nums');
+    b.unmount();
+    const c = render(<ChannelChart data={[{ source: 'direct', num_reservas: 2, receita: 1234 }]} />);
+    eMare(screen.getByText('€1234.00'));
+    c.unmount();
+    render(<DespesasTab currency="EUR" staff={[]} />);
+    await screen.findByText('Despesas por categoria');
+    eMare(screen.getByText('€1234'));
+    expect(screen.getByText('€1234')).toHaveClass('font-mono', 'tabular-nums');
+  });
+});

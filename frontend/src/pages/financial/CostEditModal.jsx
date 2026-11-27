@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
-import { COST_FIELDS } from './shared';
+import { COST_FIELDS, CAIXA, NUM } from './shared';
 import { useT } from '../../i18n';
 
 /* ─────────────────── RECEITAS TAB COMPONENTS ─────────────────── */
@@ -22,9 +22,9 @@ function CostEditModal({ open, onClose, unitId, unitName, costs, onSave }) {
               className="font-mono" />
           ))}
         </div>
-        <div className="pt-2 border-t border-n-100 flex items-center justify-between">
-          <span className="text-xs font-body text-n-500">{t('financial.costs.total')}</span>
-          <span className="font-display font-bold text-n-800">€{total.toFixed(2)}</span>
+        <div className={`${CAIXA} px-3 py-2 flex items-center justify-between gap-3`}>
+          <span className="text-xs font-body text-n-600">{t('financial.costs.total')}</span>
+          <span className={`${NUM} font-bold text-n-800`}>€{total.toFixed(2)}</span>
         </div>
         <div className="flex gap-3 pt-1">
           <Button variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>

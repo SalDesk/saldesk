@@ -281,3 +281,64 @@ describe('Despesas com o design system', () => {
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/text-error/);
   });
 });
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+const CARTAO_MARE = ['bg-white', 'border', 'border-mare-card', 'rounded-[18px]', 'p-[22px]'];
+
+describe('Despesas no estilo Mare', () => {
+  it('lista_grafico_e_resumos_estao_em_cartoes_Mare_com_titulo_Sora', async () => {
+    await montar();
+    ['Despesas por categoria', 'Detalhes'].forEach((titulo) => {
+      const h = screen.getByText(titulo, { selector: 'h3' });
+      expect(h).toHaveClass('font-display', 'text-lg', 'font-semibold', 'text-ocean-900');
+      expect(h.closest('.border-mare-card')).toHaveClass(...CARTAO_MARE);
+    });
+    expect(screen.getByRole('table').closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]');
+    const bolas = [...document.querySelectorAll('div.rounded-full[style]')];
+    expect(bolas.length).toBeGreaterThan(0);
+    expect(bolas[0].closest('.border-mare-card')).toHaveClass('rounded-[18px]');
+  });
+
+  it('o_vazio_e_o_aviso_ficam_em_caixas_Mare', async () => {
+    await montar();
+    const alerta = screen.getByText('Despesas recorrentes em falta este mês').closest('div').parentElement;
+    expect(alerta).toHaveClass('rounded-[14px]');
+    cleanup();
+    listExpenses.mockResolvedValue([]);
+    await montar();
+    expect(screen.getByText('Sem despesas no período seleccionado.').closest('.border-mare-card')).toHaveClass('rounded-[18px]');
+  });
+
+  it('datas_valores_totais_e_percentagens_sao_mono', async () => {
+    await montar();
+    const renda = screen.getByText('Escritorio').closest('tr');
+    expect(within(renda).getByText(fmtDate(`${MES}-01`))).toHaveClass('font-mono', 'tabular-nums');
+    expect(within(renda).getByText(`- ${eur(300)}`)).toHaveClass('font-mono', 'tabular-nums');
+    const detalhe = screen.getByText('Detalhes', { selector: 'h3' }).closest('section');
+    expect(within(detalhe).getByText('50.0%')).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText(eur(600), { selector: 'span.font-bold' })).toHaveClass('font-mono', 'tabular-nums');
+  });
+
+  it('a_marca_recorrente_e_um_Badge_e_as_accoes_sao_IconBtn_com_os_mesmos_nomes', async () => {
+    await montar();
+    const comb = linhas().find(l => within(l).getAllByRole('cell')[1].textContent === 'Combustivel');
+    expect(within(comb).getByText('Recorrente')).toHaveClass('app:rounded-full', 'font-semibold');
+    const editar = within(comb).getByRole('button', { name: 'Editar despesa - Combustivel' });
+    const apagar = within(comb).getByRole('button', { name: 'Eliminar despesa - Combustivel' });
+    [editar, apagar].forEach(b => expect(b).toHaveClass('min-h-11', 'min-w-11', 'md:min-h-9', 'rounded-full', 'focus-visible:ring-sand-500'));
+  });
+
+  it('o_botao_registar_tem_altura_de_toque_no_telemovel', async () => {
+    await montar();
+    expect(screen.getByText('Registar despesa').closest('button')).toHaveClass('min-h-11', 'md:min-h-0');
+  });
+
+  it('o_grafico_segue_a_linguagem_dos_graficos_com_as_mesmas_chaves', async () => {
+    await montar();
+    const pie = document.querySelector('[data-chart="pie"]');
+    expect(pie).not.toBeNull();
+    expect(dadosDoGrafico('pie')).toEqual([{ name: 'Renda', total: 300 }, { name: 'Salarios', total: 200 }, { name: 'Combustivel', total: 100 }]);
+    expect(coresDosGraficos().every(c => c.startsWith('var(--'))).toBe(true);
+  });
+});

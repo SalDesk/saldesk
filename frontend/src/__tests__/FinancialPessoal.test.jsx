@@ -63,7 +63,7 @@ async function montarComissoes(props = {}) {
   await waitFor(() => expect(screen.queryByText('Vera Mendes') || screen.queryByText('Sem vendedores de praia activos.')).toBeTruthy());
   return r;
 }
-const kpi = (rotulo) => norm(screen.getByText(rotulo).previousSibling.textContent);
+const kpi = (rotulo) => norm(screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent);
 const linha = (nome) => screen.getByText(nome).closest('tr');
 
 /* ───────────────────────── Salarios: caracterizacao ───────────────────────── */
@@ -278,9 +278,11 @@ describe('Salários e Comissões com o design system', () => {
     await montarSalarios();
     expect(within(linha('Rui Lopes')).getByText('Pago').className).toContain('var(--success)');
     expect(within(linha('Vera Mendes')).getByText('Pendente').className).toContain('var(--warning)');
-    expect(screen.getByText('Pagos este mês').previousSibling.className).toContain('var(--success)');
-    expect(screen.getByText('Por pagar este mês').previousSibling.className).toContain('var(--warning)');
-    expect(screen.getByText('Folha salarial total/mês').previousSibling.className).toContain('var(--error)');
+    /* o tom vem da pequena caixa do MareStat: turquesa = pagos, areia = por pagar, sem marca = folha */
+    const marca = (r) => screen.getByText(r).closest('article').querySelector('[data-mare-stat-tint]');
+    expect(marca('Pagos este mês').className).toMatch(/turquoise/);
+    expect(marca('Por pagar este mês').className).toMatch(/sand/);
+    expect(marca('Folha salarial total/mês')).toBeNull();
   });
 
   it('os_vazios_usam_EmptyState', async () => {
@@ -312,5 +314,74 @@ describe('Salários e Comissões com o design system', () => {
     expect(html).not.toMatch(/#[0-9A-Fa-f]{3,8}(?![0-9A-Za-z])/);
     expect(html).not.toMatch(/(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border)-(?:green|yellow|blue|red)-\d/);
     expect(html).not.toMatch(/text-error/);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+const tileDe = (rotulo) => screen.getByText(rotulo).closest('article');
+
+describe('Salários no estilo Mare', () => {
+  it('os_quatro_numeros_sao_MareStat_e_a_lista_esta_num_cartao_Mare', async () => {
+    await montarSalarios();
+    ['Colaboradores activos', 'Folha salarial total/mês', 'Pagos este mês', 'Por pagar este mês'].forEach((r) => {
+      expect(tileDe(r)).toHaveClass('bg-white', 'rounded-[18px]', 'border-mare-card');
+      expect(tileDe(r).querySelector('p.font-display')).not.toBeNull();
+    });
+    expect(tileDe('Colaboradores activos').querySelector('p.font-display')).toHaveTextContent('2');
+    expect(screen.getByRole('table').closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]');
+  });
+
+  it('valores_sao_mono_o_estado_e_Badge_e_as_accoes_respeitam_o_toque', async () => {
+    await montarSalarios();
+    const rui = linha('Rui Lopes');
+    expect(within(rui).getByText(eur(1000))).toHaveClass('font-mono', 'tabular-nums');
+    expect(within(rui).getByText(eur(1230))).toHaveClass('font-mono', 'tabular-nums');
+    expect(within(rui).getByText('15%')).toHaveClass('font-mono', 'tabular-nums');
+    expect(within(rui).getByText('Pendente')).toHaveClass('app:rounded-full', 'font-semibold');
+    expect(within(rui).getByRole('button', { name: 'Editar salário - Rui Lopes' })).toHaveClass('min-h-11', 'min-w-11', 'rounded-full');
+  });
+
+  it('as_caixas_do_formulario_e_do_pagamento_sao_interiores_Mare', async () => {
+    await montarSalarios();
+    fireEvent.click(within(linha('Rui Lopes')).getByRole('button', { name: 'Editar salário - Rui Lopes' }));
+    const total = screen.getByText('Custo total mensal').parentElement;
+    expect(total).toHaveClass('rounded-[14px]', 'border-mare-card', 'bg-mare-head');
+    expect(within(total).getByText(eur(1230))).toHaveClass('font-mono', 'tabular-nums');
+    cleanup();
+    await montarSalarios();
+    fireEvent.click(within(linha('Rui Lopes')).getByRole('button', { name: 'Pagar salário - Rui Lopes' }));
+    const calculado = within(screen.getByRole('dialog')).getByText(eur(1230)).parentElement;
+    expect(calculado).toHaveClass('rounded-[14px]', 'border-mare-card', 'bg-mare-head');
+  });
+});
+
+describe('Comissões no estilo Mare', () => {
+  it('cada_vendedor_e_um_cartao_Mare_e_os_numeros_sao_mono', async () => {
+    await montarComissoes();
+    const cartao = screen.getByText('Vera Mendes').closest('.border-mare-card');
+    expect(cartao).toHaveClass('bg-white', 'rounded-[18px]', 'p-[22px]');
+    const total = within(cartao).getByText(eur(50));
+    expect(total).toHaveClass('font-mono', 'tabular-nums');
+    expect(within(cartao).getAllByText(eur(30))[0]).toHaveClass('font-mono', 'tabular-nums');
+  });
+
+  it('o_estado_e_Badge_o_pagamento_tem_altura_de_toque_e_o_vazio_e_um_cartao', async () => {
+    await montarComissoes();
+    const cartao = screen.getByText('Vera Mendes').closest('.border-mare-card');
+    expect(within(cartao).getAllByText('Pago').find(e => e.className.includes('app:rounded-full'))).toHaveClass('font-semibold');
+    expect(within(cartao).getByRole('button', { name: 'Pagar comissão - Tour Ilha' })).toHaveClass('min-h-11', 'md:min-h-9', 'focus-visible:ring-sand-500');
+    expect(within(cartao).getByRole('button', { name: 'Registar pag.' })).toHaveClass('min-h-11', 'md:min-h-0');
+    cleanup();
+    listStaff.mockResolvedValue([]);
+    await montarComissoes();
+    expect(screen.getByText('Sem vendedores de praia activos.').closest('.border-mare-card')).toHaveClass('rounded-[18px]');
+  });
+
+  it('a_caixa_do_valor_pendente_do_modal_e_interior_Mare', async () => {
+    await montarComissoes();
+    fireEvent.click(screen.getByRole('button', { name: 'Registar pag.' }));
+    const caixa = within(screen.getByRole('dialog')).getByText(eur(20)).closest('div');
+    expect(caixa).toHaveClass('rounded-[14px]');
   });
 });

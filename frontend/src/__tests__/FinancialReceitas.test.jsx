@@ -631,3 +631,59 @@ describe('Por Tour, Previsão e Caixa com o design system', () => {
     expect(html).not.toMatch(/text-error/);
   });
 });
+
+/* ───────────────────────── estilo Mare: custos e graficos ───────────────────────── */
+
+describe('Custos e graficos do Financeiro no estilo Mare', () => {
+  it('a_caixa_do_total_dos_custos_e_interior_Mare_e_o_total_e_mono', () => {
+    render(<CostEditModal open onClose={() => {}} unitId="u1" unitName="Tour Ilha" costs={CUSTOS.u1} onSave={() => {}} />);
+    const total = screen.getByText('€150.00');
+    expect(total).toHaveClass('font-mono', 'tabular-nums');
+    expect(total.parentElement).toHaveClass('rounded-[14px]', 'border', 'border-mare-card', 'bg-mare-head');
+  });
+
+  it('receita_por_periodo_usa_a_linguagem_dos_graficos', () => {
+    const { container } = render(<RevenueChart data={[{ periodo: '2026-11-03', receita: 10, num_reservas: 2 }]} granularidade="day" />);
+    const g = container.querySelector('[data-chart="area"]');
+    expect(JSON.parse(g.getAttribute('data-keys'))).toEqual(['receita']);
+    expect(g.getAttribute('data-grid-vertical')).toBe('false');
+    const cores = JSON.parse(g.getAttribute('data-colors'));
+    expect(cores).toContain('var(--n200)');
+    expect(cores).toContain('var(--ocean-500)');
+    expect(cores).not.toContain('var(--ocean-700)');
+    expect(cores.filter(c => !c.startsWith('var(--'))).toEqual([]);
+  });
+
+  it('top_servicos_usa_a_linguagem_dos_graficos_e_destaca_o_primeiro_em_areia', () => {
+    const { container } = render(<ServiceBarChart data={[{ name: 'A', receita: 10, num_reservas: 1 }, { name: 'B', receita: 20, num_reservas: 1 }]} />);
+    const g = container.querySelector('[data-chart="bar"]');
+    expect(JSON.parse(g.getAttribute('data-keys'))).toEqual(['receita']);
+    expect(g.getAttribute('data-grid-vertical')).toBe('false');
+    const cores = JSON.parse(g.getAttribute('data-colors'));
+    expect(cores).toContain('var(--n200)');
+    expect(cores).toContain('var(--ocean-500)');
+    expect(cores).toContain('var(--sand-500)');
+    expect(cores.filter(c => !c.startsWith('var(--'))).toEqual([]);
+  });
+
+  it('canais_so_usa_tons_de_oceano_areia_e_neutros', () => {
+    const { container } = render(<ChannelChart data={[{ source: 'direct', num_reservas: 2, receita: 1 }, { source: 'airbnb', num_reservas: 1, receita: 1 }]} />);
+    const cores = JSON.parse(container.querySelector('[data-chart="pie"]').getAttribute('data-colors'));
+    expect(cores.length).toBeGreaterThan(0);
+    expect(cores.filter(c => !/^var\(--(ocean|sand|n)-?\d+\)$/.test(c))).toEqual([]);
+  });
+
+  it('top_clientes_mostra_valores_mono_e_barra_oceano_e_vazios_legiveis', () => {
+    const { container } = render(<TopCustomersList data={CLIENTES} />);
+    const barra = container.querySelector('[style*="width"]');
+    expect(barra).toHaveClass('bg-ocean-500');
+    expect(barra.parentElement).toHaveClass('bg-n-100');
+    expect(container.querySelector('.font-mono.tabular-nums')).not.toBeNull();
+    cleanup();
+    render(<TopCustomersList data={[]} />);
+    expect(screen.getByText('Sem dados')).toHaveClass('text-n-500');
+    cleanup();
+    render(<ChannelChart data={[]} />);
+    expect(screen.getByText('Sem dados')).toHaveClass('text-n-500');
+  });
+});
