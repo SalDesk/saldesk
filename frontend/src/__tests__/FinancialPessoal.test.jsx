@@ -356,6 +356,15 @@ describe('Salários no estilo Mare', () => {
   });
 });
 
+describe('Salarios: acertos finais', () => {
+  it('os_quadros_passam_a_uma_coluna_abaixo_de_420px', async () => {
+    await montarSalarios();
+    const grelha = tileDe('Colaboradores activos').parentElement;
+    expect(grelha).toHaveClass('grid-cols-1', 'min-[420px]:grid-cols-2', 'lg:grid-cols-4');
+    expect(grelha).not.toHaveClass('grid-cols-2');
+  });
+});
+
 describe('Comissões no estilo Mare', () => {
   it('cada_vendedor_e_um_cartao_Mare_e_os_numeros_sao_mono', async () => {
     await montarComissoes();

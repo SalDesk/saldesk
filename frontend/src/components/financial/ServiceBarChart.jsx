@@ -61,7 +61,7 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
         layout="vertical"
         margin={{ top: 4, right: 20, left: 4, bottom: 0 }}
       >
-        <CartesianGrid stroke="var(--n200)" vertical={false} />
+        <CartesianGrid stroke="var(--n200)" horizontal={false} />
         <XAxis
           type="number"
           tick={{ fontSize: 12, fontFamily: 'DM Sans', fill: 'var(--n500)' }}

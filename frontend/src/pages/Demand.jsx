@@ -202,7 +202,7 @@ export default function Demand() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <MareStat
           icon={TrendingUp}
           label={t('demand.revenueYtd', { year: yr })}

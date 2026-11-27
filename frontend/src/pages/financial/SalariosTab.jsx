@@ -114,7 +114,7 @@ function SalariosTab({ currency }) {
   return (
     <div className="space-y-5">
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
         <MareStat label={t('financial.payroll.activeStaff')} value={staffList.length} />
         <MareStat label={t('financial.payroll.totalPayroll')} value={fmtMoney(totalFolha, currency)} />
         <MareStat label={t('financial.payroll.paidThisMonth')} value={pagosEsteMes} tone="bom" />

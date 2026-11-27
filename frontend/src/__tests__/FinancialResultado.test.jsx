@@ -243,9 +243,8 @@ describe('Resultado com o design system', () => {
   it('as_cores_do_grafico_sao_tokens', async () => {
     await montar();
     const cores = coresDosGraficos();
-    expect(cores).toHaveLength(6); /* grelha, dois eixos, borda do tooltip e duas barras */
-    expect(cores.filter(c => !/^(var\(--|1px solid var\(--)/.test(c))).toEqual([]);
-    expect(cores.some(c => c.startsWith('1px solid var(--'))).toBe(true);
+    expect(cores).toHaveLength(5); /* grelha, dois eixos e duas barras: a dica e a caixa partilhada, sem borda propria */
+    expect(cores.filter(c => !/^var\(--/.test(c))).toEqual([]);
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error', async () => {
@@ -312,6 +311,14 @@ describe('Resultado no estilo Mare', () => {
     const barras = document.querySelector('[data-chart="bar"]');
     expect(barras.getAttribute('data-grid-vertical')).toBe('false');
     expect(JSON.parse(barras.getAttribute('data-keys'))).toEqual(['receita', 'despesas']);
+  });
+
+  it('acertos_finais_ticks_de_12_px_e_dica_partilhada_do_grafico', async () => {
+    await montar();
+    const barras = document.querySelector('[data-chart="bar"]');
+    expect(JSON.parse(barras.getAttribute('data-tick-sizes'))).toEqual([12, 12]);
+    expect(barras.getAttribute('data-tooltip-custom')).toBe('true');
+    expect(barras.getAttribute('data-tooltip-styled')).toBe('false');
   });
 
   it('sem_dados_o_grafico_mantem_os_seis_meses_a_zero', async () => {

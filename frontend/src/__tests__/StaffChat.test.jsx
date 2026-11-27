@@ -290,6 +290,18 @@ describe('Chat com o design system', () => {
     expect(screen.getByRole('button', { name: 'Cancelar resposta' })).toBeInTheDocument();
   });
 
+  it('acertos_finais_desafixar_e_cancelar_resposta_sao_IconBtn_com_toque_e_foco', async () => {
+    await montar();
+    await abrir('Equipa Campo');
+    await esperaMsg('Ola equipa');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Fixar' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Responder' })[0]);
+    for (const nome of ['Desafixar mensagem fixada', 'Cancelar resposta']) {
+      const b = screen.getByRole('button', { name: nome });
+      expect(b).toHaveClass('min-h-11', 'min-w-11', 'focus-visible:ring-sand-500');
+    }
+  });
+
   it('o_vazio_e_os_campos_dos_modais_tem_o_design_system', async () => {
     await montar();
     expect(screen.getByText('Seleccionar uma conversa')).toHaveClass('font-display');

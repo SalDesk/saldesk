@@ -455,6 +455,13 @@ describe('Demand', () => {
     contagens.forEach(mono);
     [...bloco.querySelectorAll('span.w-28')].forEach(mono);
   });
+
+  it('acertos_finais_os_quadros_do_topo_passam_a_uma_coluna_abaixo_de_420px', async () => {
+    await abre();
+    const grelha = screen.getByText(`Receita ${ANO} (acumulado)`, { selector: 'p' }).closest('article').parentElement;
+    expect(grelha).toHaveClass('grid-cols-1', 'min-[420px]:grid-cols-2', 'lg:grid-cols-4');
+    expect(grelha).not.toHaveClass('grid-cols-2');
+  });
 });
 
 describe('Demand em inglês', () => {

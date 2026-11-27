@@ -71,7 +71,7 @@ function WeatherCard({ day, isToday, tours, onClick }) {
 
       <Icon size={26} strokeWidth={1.5} style={{ color: info.color }} />
 
-      <p className="text-[11px] font-body text-n-600 text-center leading-tight">{rotuloTempo(day.code, t)}</p>
+      <p className="text-[11px] font-body text-n-600 text-center leading-tight break-words hyphens-auto">{rotuloTempo(day.code, t)}</p>
 
       <div className="text-center">
         <p className={`font-bold text-base text-ocean-900 ${NUM}`}>{day.tempMax}°</p>
@@ -91,7 +91,7 @@ function WeatherCard({ day, isToday, tours, onClick }) {
         <div className={`w-full flex items-center justify-center gap-1 text-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${NUM} ${
           hasConflict ? 'bg-[var(--error)] text-white' : 'bg-ocean-100 text-ocean-700'
         }`}>
-          {hasConflict && <AlertTriangle size={10} strokeWidth={2} aria-hidden="true" className="shrink-0" />}
+          {hasConflict && <AlertTriangle size={10} strokeWidth={2} aria-hidden="true" className="hidden sm:inline shrink-0" />}
           {t('weather.toursCount', { n: tours.length })}
         </div>
       )}
@@ -217,7 +217,7 @@ export default function Weather() {
       ) : (
         <div className="space-y-5">
           {/* 7-day grid */}
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+          <div className="grid grid-cols-3 min-[420px]:grid-cols-4 sm:grid-cols-7 gap-2">
             {forecast.map(day => (
               <WeatherCard
                 key={day.date}
@@ -287,7 +287,7 @@ export default function Weather() {
           )}
 
           {/* Summary row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
             <MareStat
               icon={Thermometer}
               label={t('weather.maxToday')}

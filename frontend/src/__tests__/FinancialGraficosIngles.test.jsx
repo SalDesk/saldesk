@@ -111,7 +111,10 @@ describe('grafico do resultado no estilo Mare em inglês', () => {
     render(<ResultadoTab resumo={{ atual: { receita: 1000, num_reservas: 3 } }} currency="EUR" periodo={{ inicio: `${MES}-01`, fim: `${MES}-28` }} />);
     const titulo = await screen.findByText('Revenue vs expenses — last 6 months', { selector: 'h3' });
     expect(titulo.closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]', 'p-[22px]');
-    expect(dica()).toBe('€1,234');
+    /* a dica usa a caixa partilhada do Financeiro (branca, borda do cartao, 14 px) com o valor em mono */
+    const valor = screen.getByText('€1,234');
+    expect(valor).toHaveClass('font-mono', 'tabular-nums');
+    expect(valor.closest('.border-mare-card')).toHaveClass('bg-white', 'border', 'rounded-[14px]');
     expect(document.querySelector('[data-eixo]')).not.toBeNull();
   });
 });

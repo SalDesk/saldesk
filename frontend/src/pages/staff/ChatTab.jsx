@@ -282,9 +282,9 @@ function ChatTab({ staffList }) {
                 <div key={m.id} className="flex items-center gap-2 text-xs font-body text-ocean-700">
                   <Pin size={10} strokeWidth={1.75} className="shrink-0" />
                   <span className="truncate">{m.content}</span>
-                  <button onClick={() => handlePin(m.id)} aria-label={t('staff.chat.unpinPinned')} className="ml-auto text-ocean-400 hover:text-ocean-700">
-                    <X size={10} strokeWidth={2} />
-                  </button>
+                  <span className="ml-auto shrink-0">
+                    <IconBtn icon={X} label={t('staff.chat.unpinPinned')} onClick={() => handlePin(m.id)} hover={EDIT_HOVER} className="text-ocean-700" />
+                  </span>
                 </div>
               ))}
             </div>
@@ -314,9 +314,7 @@ function ChatTab({ staffList }) {
             <div className="flex items-center gap-2 px-3 py-2 bg-ocean-50 border-t border-ocean-100 shrink-0">
               <CornerUpLeft size={12} strokeWidth={1.75} className="text-ocean-600 shrink-0" />
               <span className="text-xs font-body text-ocean-700 truncate flex-1">{replyTo.content?.slice(0, 80)}</span>
-              <button onClick={() => setReplyTo(null)} aria-label={t('staff.chat.cancelReply')} className="text-ocean-400 hover:text-ocean-700">
-                <X size={12} strokeWidth={2} />
-              </button>
+              <IconBtn icon={X} label={t('staff.chat.cancelReply')} onClick={() => setReplyTo(null)} hover={EDIT_HOVER} className="text-ocean-700" />
             </div>
           )}
 

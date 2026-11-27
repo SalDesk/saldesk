@@ -18,12 +18,28 @@ import { listExpenses, getSalaryPayments } from '../../services/expensesService'
 import Button from '../../components/ui/Button';
 import MareStat from '../../components/shared/MareStat';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import DicaGrafico from '../../components/financial/DicaGrafico';
 import { EUR_CVE, CARTAO, CartaoFin, TITULO, NUM, fmtMoney, fmtEixo, fmtDica } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { rotuloMes } from '../../utils/rotuloMes';
 import { useT } from '../../i18n';
 
 /* ─────────────────── RESULTADO ─────────────────── */
+
+/* Dica do grafico: caixa partilhada do Financeiro, uma linha por serie com o nome e o valor em mono */
+function DicaResultado({ active, payload, label, currency }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <DicaGrafico>
+      <p className="font-semibold text-n-800 mb-1">{label}</p>
+      {payload.map(p => (
+        <p key={p.dataKey} className="text-n-600">
+          {p.name}: <span className={`${NUM} font-semibold text-ocean-900`}>{fmtDica(p.value, currency)}</span>
+        </p>
+      ))}
+    </DicaGrafico>
+  );
+}
 
 /* AAAA-MM-DD em hora local */
 function ymd(d) {
@@ -120,9 +136,9 @@ function ResultadoTab({ resumo, currency, periodo }) {
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <CartesianGrid stroke="var(--n200)" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 11, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => fmtEixo(v, currency)} />
-            <ChartTooltip contentStyle={{ fontSize: 12, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 12 }} formatter={v => fmtDica(v, currency)} />
+            <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 12, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => fmtEixo(v, currency)} />
+            <ChartTooltip content={<DicaResultado currency={currency} />} />
             <Legend wrapperStyle={{ fontSize: 12, fontFamily: 'DM Sans' }} />
             <Bar dataKey="receita"  name={t('financial.result.revenue')}  fill="var(--ocean-500)" radius={[6,6,0,0]} maxBarSize={28} />
             <Bar dataKey="despesas" name={t('financial.result.expenses')} fill="var(--sand-500)" radius={[6,6,0,0]} maxBarSize={28} />

@@ -658,7 +658,9 @@ describe('Custos e graficos do Financeiro no estilo Mare', () => {
     const { container } = render(<ServiceBarChart data={[{ name: 'A', receita: 10, num_reservas: 1 }, { name: 'B', receita: 20, num_reservas: 1 }]} />);
     const g = container.querySelector('[data-chart="bar"]');
     expect(JSON.parse(g.getAttribute('data-keys'))).toEqual(['receita']);
-    expect(g.getAttribute('data-grid-vertical')).toBe('false');
+    /* barras horizontais: sem linhas horizontais, as guias verticais do eixo dos valores ficam */
+    expect(g.getAttribute('data-grid-horizontal')).toBe('false');
+    expect(g.getAttribute('data-grid-vertical')).not.toBe('false');
     const cores = JSON.parse(g.getAttribute('data-colors'));
     expect(cores).toContain('var(--n200)');
     expect(cores).toContain('var(--ocean-500)');

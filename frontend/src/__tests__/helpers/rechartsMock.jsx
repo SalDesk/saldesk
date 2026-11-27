@@ -31,16 +31,19 @@ function olhar(p, acc) {
 /* grelha (vertical) e chaves das series: servem para verificar a linguagem dos graficos */
 function notar(ch, acc) {
   const nome = ch.type && ch.type.displayName;
-  if (nome === 'CartesianGrid') acc.gridVertical = ch.props.vertical;
+  if (nome === 'CartesianGrid') { acc.gridVertical = ch.props.vertical; acc.gridHorizontal = ch.props.horizontal; }
+  if (ch.props.tick && ch.props.tick.fontSize) acc.tickSizes.push(ch.props.tick.fontSize);
+  if (ch.props.content) acc.customTooltip = true;
+  if (ch.props.contentStyle) acc.styledTooltip = true;
   if ((nome === 'Bar' || nome === 'Area') && ch.props.dataKey) acc.keys.push(ch.props.dataKey);
 }
 
 function grafico(nome) {
   return function Grafico(props) {
-    const acc = { colors: [], data: null, keys: [], gridVertical: undefined };
+    const acc = { colors: [], data: null, keys: [], gridVertical: undefined, gridHorizontal: undefined, tickSizes: [], customTooltip: false, styledTooltip: false };
     olhar(props, acc);
     recolher(props.children, acc);
-    return <div data-chart={nome} data-colors={JSON.stringify(acc.colors)} data-data={JSON.stringify(acc.data)} data-keys={JSON.stringify(acc.keys)} data-grid-vertical={String(acc.gridVertical)} />;
+    return <div data-chart={nome} data-colors={JSON.stringify(acc.colors)} data-data={JSON.stringify(acc.data)} data-keys={JSON.stringify(acc.keys)} data-grid-vertical={String(acc.gridVertical)} data-grid-horizontal={String(acc.gridHorizontal)} data-tick-sizes={JSON.stringify(acc.tickSizes)} data-tooltip-custom={String(acc.customTooltip)} data-tooltip-styled={String(acc.styledTooltip)} />;
   };
 }
 

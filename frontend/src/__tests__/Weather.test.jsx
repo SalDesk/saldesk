@@ -87,12 +87,12 @@ describe('Weather', () => {
         </Routes>
       </MemoryRouter>
     );
-    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-4 > button').length).toBeGreaterThan(0));
+    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-3 > button').length).toBeGreaterThan(0));
     return r;
   }
 
   function cartoes(r) {
-    return [...r.container.querySelectorAll('.grid.grid-cols-4 > button')];
+    return [...r.container.querySelectorAll('.grid.grid-cols-3 > button')];
   }
 
   function fmt(data) {
@@ -242,7 +242,7 @@ describe('Weather', () => {
     fireEvent.click(screen.getByRole('button', { name: /Tentar novamente/ }));
     await screen.findByText('Max. hoje');
     expect(getWeatherForecast).toHaveBeenCalledTimes(2);
-    expect(r.container.querySelectorAll('.grid.grid-cols-4 > button')).toHaveLength(7);
+    expect(r.container.querySelectorAll('.grid.grid-cols-3 > button')).toHaveLength(7);
   });
 
   it('actualizar_repete_os_pedidos', async () => {
@@ -308,7 +308,7 @@ describe('Weather', () => {
 
   it('a_cor_do_icone_de_cada_dia_e_um_token', async () => {
     const r = await abre();
-    const icones = [...r.container.querySelectorAll('.grid.grid-cols-4 > button svg')].filter(s => s.getAttribute('style'));
+    const icones = [...r.container.querySelectorAll('.grid.grid-cols-3 > button svg')].filter(s => s.getAttribute('style'));
     expect(icones.length).toBe(7);
     icones.forEach(svg => expect(svg.getAttribute('style')).toMatch(/color:\s*var\(--/));
   });
@@ -431,6 +431,25 @@ describe('Weather', () => {
     expect(c.className).toContain('border-mare-card');
     expect(c.className).toContain('rounded-[18px]');
   });
+
+  it('acertos_finais_a_grelha_cabe_a_375px_e_o_texto_e_a_pilula_nao_transbordam', async () => {
+    const r = await abre();
+    const grelha = r.container.querySelector('.grid.grid-cols-3');
+    expect(grelha).toHaveClass('min-[420px]:grid-cols-4', 'sm:grid-cols-7');
+    expect(grelha).not.toHaveClass('grid-cols-4');
+    const cs = cartoes(r);
+    cs.forEach(c => expect(c.querySelector('p.leading-tight')).toHaveClass('break-words', 'hyphens-auto', 'text-center'));
+    const icones = cs.flatMap(c => [...c.querySelectorAll('div.rounded-full svg')]);
+    expect(icones.length).toBeGreaterThan(0);
+    icones.forEach(i => expect(i.getAttribute('class')).toMatch(/hidden sm:inline/));
+  });
+
+  it('acertos_finais_os_quadros_do_resumo_passam_a_uma_coluna_abaixo_de_420px', async () => {
+    await abre();
+    const grelha = screen.getByText('Max. hoje', { selector: 'p' }).closest('article').parentElement;
+    expect(grelha).toHaveClass('grid-cols-1', 'min-[420px]:grid-cols-2', 'lg:grid-cols-4');
+    expect(grelha).not.toHaveClass('grid-cols-2');
+  });
 });
 
 /* ───────────────────────── Painel em ingles ───────────────────────── */
@@ -458,7 +477,7 @@ describe('Weather em inglês', () => {
         </Routes>
       </MemoryRouter>
     );
-    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-4 > button').length).toBeGreaterThan(0));
+    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-3 > button').length).toBeGreaterThan(0));
     return r;
   }
 
@@ -470,7 +489,7 @@ describe('Weather em inglês', () => {
     const r = await abreEmIngles();
     expect(screen.getByRole('heading', { name: 'Weather — Sal' })).toBeTruthy();
     expect(screen.getByText('7-day forecast · Open-Meteo')).toBeTruthy();
-    const c = [...r.container.querySelectorAll('.grid.grid-cols-4 > button')];
+    const c = [...r.container.querySelectorAll('.grid.grid-cols-3 > button')];
     expect(c[0].textContent).toContain('Today');
     expect(c[0].textContent).toContain(curtaEn(dia(0)));
     expect(c[0].textContent).toContain('Clear sky');
@@ -497,7 +516,7 @@ describe('Weather em inglês', () => {
 
   it('detalhe_do_dia_em_ingles', async () => {
     const r = await abreEmIngles();
-    const c = [...r.container.querySelectorAll('.grid.grid-cols-4 > button')];
+    const c = [...r.container.querySelectorAll('.grid.grid-cols-3 > button')];
     fireEvent.click(c[2]);
     expect(screen.getByRole('heading', { level: 3 }).textContent).toBe(fmtEn(dia(2)));
     expect(screen.getByText('12 mm precipitation')).toBeTruthy();
@@ -536,9 +555,10 @@ describe('Weather: o dia da semana em português continua igual', () => {
         <Weather />
       </MemoryRouter>
     );
-    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-4 > button').length).toBe(7));
-    const c = [...r.container.querySelectorAll('.grid.grid-cols-4 > button')];
+    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-3 > button').length).toBe(7));
+    const c = [...r.container.querySelectorAll('.grid.grid-cols-3 > button')];
     expect(c[2].textContent).toContain(new Date(dia(2) + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' }));
     expect(c[2].textContent).toContain(new Date(dia(2) + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' }));
   });
+
 });

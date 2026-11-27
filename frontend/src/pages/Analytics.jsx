@@ -599,7 +599,7 @@ export default function Analytics() {
               <MareStat
                 label={t('analytics.healthScoreShort')}
                 value={score != null ? `${score}/100` : '—'}
-                tone={score >= 70 ? 'bom' : 'aviso'}
+                tone={score == null ? 'default' : score >= 70 ? 'bom' : 'aviso'}
               />
               <MareStat label={t('analytics.revenue')} value={weekly.revenue != null ? fmtMoney(weekly.revenue) : '—'} />
               <MareStat label={t('analytics.bookings')} value={weekly.reservas != null ? String(weekly.reservas) : '—'} />
