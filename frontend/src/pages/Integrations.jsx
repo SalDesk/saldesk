@@ -109,13 +109,15 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
             >
               {t('integrationsPage.sync')}
             </Button>
-            <Button
-              size="sm" variant="ghost" icon={Link2Off}
+            {/* botao proprio: a acao e destrutiva, por isso o realce ao passar o rato e vermelho (o Button ghost realca em azul) */}
+            <button
+              type="button"
               onClick={() => onDisconnect(channel.channel)}
-              className="min-h-11 md:min-h-0"
+              className="inline-flex items-center justify-center gap-1.5 min-h-11 md:min-h-0 md:h-9 px-3.5 rounded-full border border-transparent bg-transparent text-ocean-700 text-[13px] font-body font-medium transition-colors hover:text-[var(--error)] hover:bg-[var(--error-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"
             >
+              <Link2Off size={14} strokeWidth={1.75} />
               {t('integrationsPage.disconnect')}
-            </Button>
+            </button>
           </>
         ) : (
           <Button size="sm" icon={Link2} onClick={() => onConnect(channel.channel)} className="flex-1 min-h-11 md:min-h-0">

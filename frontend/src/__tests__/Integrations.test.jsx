@@ -273,9 +273,12 @@ describe('Channel Manager: design system', () => {
     expect(screen.getByText('G').className).toContain('bg-sand-600');
   });
 
-  it('desligar_nao_usa_text_error_no_hover', async () => {
+  it('desligar_usa_o_token_de_erro_no_hover_sem_azul_concorrente', async () => {
     await montar();
     const b = screen.getByRole('button', { name: 'Desligar' });
+    expect(b.className).toContain('hover:text-[var(--error)]');
+    expect(b.className).toContain('hover:bg-[var(--error-light)]');
+    expect(b.className).not.toContain('hover:bg-ocean-50');
     expect(b.className).not.toContain('hover:text-error');
   });
 
@@ -384,14 +387,14 @@ describe('Channel Manager: estilo Mare', () => {
     expect(screen.getByText('G').className).toContain('bg-sand-600');
   });
 
-  it('os_botoes_do_cartao_tem_44px_no_telemovel_sem_cores_do_chamador', async () => {
+  it('os_botoes_do_cartao_tem_44px_no_telemovel', async () => {
     await montar();
     for (const nome of ['Sincronizar', 'Desligar']) {
       const b = screen.getByRole('button', { name: nome });
       expect(b.className).toContain('min-h-11');
       expect(b.className).toContain('md:min-h-0');
     }
-    expect(screen.getByRole('button', { name: 'Desligar' }).className).not.toContain('hover:text-[var(--error)]');
+    expect(screen.getByRole('button', { name: 'Desligar' }).className).toContain('hover:text-[var(--error)]');
     expect(within(cartao('GetYourGuide')).getByRole('button', { name: 'Configurar' }).className).toContain('min-h-11');
   });
 
