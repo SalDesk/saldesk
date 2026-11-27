@@ -276,7 +276,7 @@ const CLIENTES = [
 const linha = (nome) => screen.getByText(nome).closest('tr');
 const nomesPorOrdem = () => screen.getAllByRole('row').slice(1).map(r => r.querySelector('td').textContent);
 const chip = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
-const cartaoNivel = (rotulo) => screen.getAllByText(rotulo).find(e => e.tagName === 'P').previousSibling.textContent;
+const cartaoNivel = (rotulo) => screen.getAllByText(rotulo).find(e => e.tagName === 'P').closest('article').querySelector('p.font-display').textContent;
 const visitas = (tr) => tr.querySelectorAll('td')[2].textContent;
 async function abrirClientes(lista = CLIENTES) {
   listCustomers.mockResolvedValue(lista);
@@ -759,5 +759,96 @@ describe('Fidelidade: painel em ingles', () => {
     fireEvent.change(screen.getByLabelText('Number of points'), { target: { value: '5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save adjustment' }));
     expect(await screen.findByText('Could not update the points.')).toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Fidelidade: estilo Mare', () => {
+  const eMare = (el) => {
+    expect(el).not.toBeNull();
+    expect(el.className).toContain('bg-white');
+    expect(el.className).toContain('border-mare-card');
+    expect(el.className).toContain('rounded-[18px]');
+  };
+
+  it('mostra_o_eyebrow_da_area_Crescimento_tambem_em_carga', async () => {
+    getLoyaltyConfig.mockReturnValue(new Promise(() => {}));
+    render(<Loyalty />);
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+    cleanup();
+    getLoyaltyConfig.mockReset().mockResolvedValue({});
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('o_estado_do_programa_e_a_configuracao_estao_em_cartoes_Mare_com_titulo_de_seccao', async () => {
+    await montar();
+    eMare(screen.getByText('Programa inactivo').closest('section'));
+    expect(interruptor().className).toContain('min-h-11');
+    expect(interruptor().className).toContain('focus-visible:ring-sand-500');
+    for (const nome of ['Regra de acumulação', 'Níveis e recompensas']) {
+      const titulo = screen.getByRole('heading', { name: nome });
+      expect(titulo.className).toContain('font-display');
+      expect(titulo.className).toContain('text-ocean-900');
+      eMare(titulo.closest('section'));
+    }
+  });
+
+  it('o_cartao_do_nivel_e_uma_caixa_Mare_e_o_intervalo_usa_figuras_mono', async () => {
+    await montar();
+    const intervalo = screen.getByText('0–100 pts · 5% desconto');
+    expect(intervalo.className).toContain('font-mono');
+    expect(intervalo.className).toContain('tabular-nums');
+    const caixa = intervalo.closest('div[class*="rounded-[14px]"]');
+    expect(caixa).not.toBeNull();
+    expect(caixa.className).toContain('border-mare-card');
+    expect(cabecalhoNivel('0–100 pts · 5% desconto').className).toContain('focus-visible:ring-sand-500');
+  });
+
+  it('os_totais_sao_MareStat_com_os_mesmos_valores', async () => {
+    await abrirClientes();
+    for (const [rotulo, valor] of [['Total clientes', '4'], ['Bronze', '2'], ['Prata', '1'], ['Ouro', '1']]) {
+      const artigo = screen.getAllByText(rotulo).find(e => e.tagName === 'P').closest('article');
+      expect(artigo).not.toBeNull();
+      expect(artigo.className).toContain('border-mare-card');
+      expect(artigo.querySelector('p.font-display')).toHaveTextContent(valor);
+    }
+  });
+
+  it('a_tabela_de_clientes_esta_num_cartao_Mare_com_pontos_mono_e_accao_de_44px', async () => {
+    await abrirClientes();
+    eMare(screen.getByRole('table').closest('section'));
+    const pontos = within(linha('Ana Silva')).getByText((_, el) => el.tagName === 'SPAN' && norm(el.textContent) === norm(`${(1500).toLocaleString('pt-PT')} pts`));
+    expect(pontos.className).toContain('font-mono');
+    expect(pontos.className).toContain('tabular-nums');
+    const editar = screen.getByRole('button', { name: 'Ajustar pontos Ana Silva' });
+    expect(editar.className).toContain('min-h-11');
+    expect(editar.className).toContain('hover:text-ocean-700');
+    expect(within(linha('Ana Silva')).getByText('Ouro').className).toContain('inline-flex');
+  });
+
+  it('o_vazio_dos_clientes_continua_dentro_do_cartao_Mare', async () => {
+    listCustomers.mockResolvedValue([]);
+    await montar();
+    fireEvent.click(separador('Clientes'));
+    const vazio = await screen.findByText('Sem clientes encontrados.');
+    eMare(vazio.closest('section'));
+  });
+
+  it('o_voucher_resgatado_e_o_historico_usam_figuras_mono_e_o_codigo_quebra', async () => {
+    const codigo = 'FID-' + 'A1B2C3D4'.repeat(4) + 'XY';
+    redeemCustomerPoints.mockResolvedValue({ voucher: { code: codigo, value: 5, expires_at: '2027-01-15T00:00:00Z' }, loyalty_points: 0 });
+    getCustomerLoyaltyHistory.mockResolvedValue([{ id: 'h1', type: 'earn', points: 50, reason: 'Reserva', created_at: '2026-11-01T12:00:00Z' }]);
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
+    const cod = await screen.findByText(codigo);
+    expect(cod.className).toContain('font-mono');
+    expect(cod.className).toContain('break-all');
+    expect(screen.getByText('Pontos actuais').nextSibling.className).toContain('font-mono');
+    expect(screen.getByTitle('Copiar código').className).toContain('min-h-11');
+    expect((await screen.findByText('+50')).className).toContain('tabular-nums');
   });
 });

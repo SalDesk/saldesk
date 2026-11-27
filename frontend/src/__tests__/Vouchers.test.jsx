@@ -60,7 +60,7 @@ async function montar(primeiro = 'VERAO20') {
 }
 const linha = (codigo) => screen.getByText(codigo, { selector: 'span' }).closest('tr');
 const codigosPorOrdem = () => screen.getAllByRole('row').slice(1).map(r => within(r).getAllByRole('cell')[0].textContent.replace('Copiar', '').replace('Copiado', ''));
-const kpi = (rotulo) => screen.getByText(rotulo).previousSibling.textContent;
+const kpi = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
 const chip = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
 const novoVoucher = () => screen.getAllByText('Novo voucher').find(e => e.closest('button')).closest('button');
 
@@ -111,8 +111,8 @@ describe('Vouchers: lista', () => {
     await montar();
     expect(kpi('Total vouchers')).toBe('5');
     expect(kpi('Total utilizações')).toBe('8');
-    expect(screen.getAllByText('Activos').find(e => e.tagName === 'P').previousSibling.textContent).toBe('2');
-    expect(screen.getAllByText('Expirados').find(e => e.tagName === 'P').previousSibling.textContent).toBe('1');
+    expect(screen.getAllByText('Activos').find(e => e.tagName === 'P').closest('article').querySelector('p.font-display').textContent).toBe('2');
+    expect(screen.getAllByText('Expirados').find(e => e.tagName === 'P').closest('article').querySelector('p.font-display').textContent).toBe('1');
   });
 
   it('ordena_por_created_at_decrescente_e_sem_created_at_nao_ordena', async () => {
@@ -383,7 +383,7 @@ describe('Vouchers com o design system', () => {
     html += container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/text-error ml-0[.]5/g, '').replace(/hover:text-error/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -502,5 +502,90 @@ describe('Vouchers: painel em ingles', () => {
     expect(dlg).toHaveTextContent('20% off');
     expect(within(dlg).getAllByRole('button', { name: 'Close' }).length).toBeGreaterThan(0);
     expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Vouchers: estilo Mare', () => {
+  const eMare = (el) => {
+    expect(el).not.toBeNull();
+    expect(el.className).toContain('bg-white');
+    expect(el.className).toContain('border-mare-card');
+    expect(el.className).toContain('rounded-[18px]');
+  };
+  const CODIGO_LONGO = 'PROMO' + 'ABCDEFGH'.repeat(4) + 'XYZ';
+
+  it('mostra_o_eyebrow_da_area_Crescimento', async () => {
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('os_totais_sao_MareStat_com_os_mesmos_valores', async () => {
+    await montar();
+    for (const [rotulo, valor] of [['Total vouchers', '5'], ['Activos', '2'], ['Expirados', '1'], ['Total utilizações', '8']]) {
+      const artigo = screen.getAllByText(rotulo).find(e => e.tagName === 'P').closest('article');
+      expect(artigo).not.toBeNull();
+      expect(artigo.className).toContain('border-mare-card');
+      expect(artigo.querySelector('p.font-display')).toHaveTextContent(valor);
+    }
+  });
+
+  it('a_lista_esta_num_cartao_Mare_e_os_vazios_tambem', async () => {
+    await montar();
+    eMare(screen.getByRole('table').closest('section'));
+    cleanup();
+    listVouchers.mockResolvedValue([]);
+    render(<Vouchers />);
+    eMare((await screen.findByText('Sem vouchers')).closest('section'));
+  });
+
+  it('o_estado_e_Badge_com_texto_ao_lado', async () => {
+    await montar();
+    const sel = within(within(linha('VERAO20')).getAllByRole('cell')[6]).getByText('Activo');
+    expect(sel.className).toContain('inline-flex');
+    expect(sel.className).toContain('var(--success)');
+  });
+
+  it('o_codigo_longo_e_mono_e_quebra_dentro_da_caixa', async () => {
+    listVouchers.mockResolvedValue([{ ...VOUCHERS[0], id: 'vl', code: CODIGO_LONGO }]);
+    await montar(CODIGO_LONGO);
+    const cod = screen.getByText(CODIGO_LONGO, { selector: 'span' });
+    expect(cod.className).toContain('font-mono');
+    expect(cod.className).toContain('tabular-nums');
+    expect(cod.className).toContain('break-all');
+    expect(cod.parentElement.className).toContain('flex-wrap');
+    fireEvent.click(screen.getByRole('button', { name: `Partilhar ${CODIGO_LONGO}` }));
+    const dlg = within(screen.getByRole('dialog'));
+    const noModal = dlg.getAllByText(CODIGO_LONGO).find(e => e.tagName === 'P');
+    expect(noModal.className).toContain('font-mono');
+    expect(noModal.className).toContain('break-all');
+  });
+
+  it('desconto_validade_e_usos_usam_figuras_mono', async () => {
+    await montar();
+    const celulas = within(linha('VERAO20')).getAllByRole('cell');
+    expect(within(celulas[1]).getByText('20%').className).toContain('font-mono');
+    expect(within(celulas[4]).getByText('3/10').className).toContain('tabular-nums');
+    expect(celulas[3].querySelector('div').className).toContain('tabular-nums');
+  });
+
+  it('os_botoes_de_icone_tem_44px_e_o_eliminar_mantem_o_realce_vermelho', async () => {
+    await montar();
+    for (const n of ['Partilhar VERAO20', 'Editar VERAO20', 'Desactivar VERAO20', 'Eliminar VERAO20']) {
+      const b = screen.getByRole('button', { name: n });
+      expect(b.className).toContain('min-h-11');
+      expect(b.className).toContain('focus-visible:ring-sand-500');
+    }
+    expect(screen.getByRole('button', { name: 'Eliminar VERAO20' }).className).toContain('hover:text-error');
+    expect(screen.getByRole('button', { name: 'Editar VERAO20' }).className).toContain('hover:text-ocean-700');
+    expect(screen.getByRole('button', { name: 'Eliminar VERAO20' }).title).toBe('Eliminar');
+  });
+
+  it('o_botao_copiar_tem_alvo_de_toque_e_foco_visivel', async () => {
+    await montar();
+    const b = within(linha('VERAO20')).getByRole('button', { name: /Copiar/ });
+    expect(b.className).toContain('min-h-11');
+    expect(b.className).toContain('focus-visible:ring-sand-500');
   });
 });
