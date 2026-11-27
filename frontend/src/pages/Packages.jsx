@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
 import {
-  Package, Plus, Pencil, Trash2, Eye, EyeOff,
+  Package, Plus, Pencil, Trash2, Eye, EyeOff, CalendarCheck, Euro,
   Image as ImageIcon,
 } from 'lucide-react';
 import { listUnits } from '../services/unitsService';
 import { listPackages, createPackage, updatePackage, deletePackage } from '../services/packagesService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import { useT } from '../i18n';
 import { formatarData, formatarNumero, useLingua } from '../utils/formatoLingua';
 import { euroPreco } from '../utils/formatoVendedor';
 import { eurosInteiros } from './reservations/shared';
+
+/* ── Estilo Mare: cartao de pagina, titulo de cartao e figuras (precos, datas, contagens) ── */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card min-w-0 overflow-hidden';
+const TITULO = 'font-display text-[18px] font-semibold text-ocean-900';
+const NUM = 'font-mono tabular-nums';
 
 /* estados gravados do pacote (activo, inactivo, esgotado); o rotulo vem de packagesPage.status */
 const STATUS_VARIANT = {
@@ -126,7 +132,7 @@ function PackageModal({ pkg, units, onSave, onClose }) {
           )}
           {originalPrice > 0 && (
             <p className="text-xs font-body text-n-400 mt-1.5">
-              {t('packagesPage.modal.sumTours')} <span className="font-semibold text-n-700">{euroPreco(originalPrice, lang)}</span>
+              {t('packagesPage.modal.sumTours')} <span className={`${NUM} font-semibold text-n-700`}>{euroPreco(originalPrice, lang)}</span>
             </p>
           )}
         </div>
@@ -208,7 +214,7 @@ export default function Packages() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={t('packagesPage.title')} subtitle={t('packagesPage.subtitle')} />
+        <PageHeader eyebrow={t('nav.sections.crescimento')} title={t('packagesPage.title')} subtitle={t('packagesPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -217,6 +223,7 @@ export default function Packages() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.crescimento')}
         title={t('packagesPage.title')}
         subtitle={t('packagesPage.subtitle')}
         actions={
@@ -225,37 +232,25 @@ export default function Packages() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        {[
-          { label: t('packagesPage.kpi.active'),   value: activeCount,                            color: 'text-n-900'     },
-          { label: t('packagesPage.kpi.bookings'), value: totalBookings,                          color: 'text-ocean-700' },
-          { label: t('packagesPage.kpi.revenue'),  value: `€${formatarNumero(Math.round(totalRevenue), {}, lang)}`, color: 'text-[var(--success)]' },
-        ].map(m => (
-          <Card key={m.label} padding="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Package size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
-              <div>
-                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-                <p className="text-xs font-body text-n-500">{m.label}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <MareStat label={t('packagesPage.kpi.active')} value={activeCount} icon={Package} />
+        <MareStat label={t('packagesPage.kpi.bookings')} value={totalBookings} icon={CalendarCheck} />
+        <MareStat label={t('packagesPage.kpi.revenue')} value={`€${formatarNumero(Math.round(totalRevenue), {}, lang)}`} icon={Euro} />
       </div>
 
       {/* Note about public visibility */}
-      <div className="mb-4 px-4 py-2.5 bg-[var(--info-light)] border border-[var(--info)] rounded-sm">
-        <p className="text-xs font-body text-[var(--info)]">
-          {t('packagesPage.publicNote')} <span className="font-mono">/public/:slug/packages</span>.
+      <div className="mb-5 px-4 py-3 bg-mare-head border border-mare-card rounded-[14px]">
+        <p className="text-sm font-body text-n-700 break-words">
+          {t('packagesPage.publicNote')} <span className="font-mono break-all">/public/:slug/packages</span>.
         </p>
       </div>
 
       {packages.length === 0 ? (
-        <Card padding="p-0">
+        <section className={CARTAO}>
           <EmptyState icon={Package} title={t('packagesPage.empty.title')}
             description={t('packagesPage.empty.description')}
             action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('packagesPage.empty.create')}</Button>} />
-        </Card>
+        </section>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {packages.map(pkg => {
@@ -266,9 +261,9 @@ export default function Packages() {
             const isFull = pkg.limit > 0 && pkg.bookings_count >= pkg.limit;
 
             return (
-              <Card key={pkg.id} padding="p-0" className={`overflow-hidden ${pkg.status !== 'activo' ? 'opacity-70' : ''}`}>
+              <article key={pkg.id} className={CARTAO}>
                 {/* Photo */}
-                <div className="h-32 bg-n-100 relative overflow-hidden">
+                <div className={`h-32 bg-n-100 relative overflow-hidden ${pkg.status !== 'activo' ? 'opacity-70' : ''}`}>
                   {pkg.photo_url ? (
                     <img src={pkg.photo_url} alt={pkg.name_pt}
                       className="w-full h-full object-cover"
@@ -283,36 +278,36 @@ export default function Packages() {
                   </Badge>
                 </div>
 
-                <div className="p-4 space-y-3">
+                <div className="p-[22px] space-y-3">
                   <div>
-                    <p className="font-display font-semibold text-sm text-n-900">{pkg.name_pt}</p>
+                    <p className={`${TITULO} break-words`}>{pkg.name_pt}</p>
                     {pkg.description_pt && (
-                      <p className="text-xs font-body text-n-500 mt-0.5 line-clamp-2">{pkg.description_pt}</p>
+                      <p className="text-sm font-body text-n-600 mt-1 line-clamp-2 break-words">{pkg.description_pt}</p>
                     )}
                   </div>
 
                   {/* Tours */}
                   <div className="flex flex-wrap gap-1">
                     {tours.slice(0, 3).map(tour => (
-                      <span key={tour.id} className="text-[10px] font-body bg-ocean-50 text-ocean-700 px-1.5 py-0.5 rounded-xs">
+                      <span key={tour.id} className="text-xs font-body bg-ocean-50 text-ocean-700 px-2.5 py-0.5 rounded-full break-words">
                         {tour.name}
                       </span>
                     ))}
                     {tours.length > 3 && (
-                      <span className="text-[10px] font-mono text-n-400">+{tours.length - 3}</span>
+                      <span className={`text-xs ${NUM} text-n-500`}>+{tours.length - 3}</span>
                     )}
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-end gap-3">
+                  <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
                     <div>
-                      <p className="font-display font-bold text-lg text-ocean-700">{euroPreco(pkg.price, lang)}</p>
+                      <p className={`${NUM} font-bold text-xl text-ocean-900`}>{euroPreco(pkg.price, lang)}</p>
                       {pkg.original_price > 0 && (
-                        <p className="text-[10px] font-body text-n-400 line-through">{euroPreco(pkg.original_price, lang)}</p>
+                        <p className={`text-xs ${NUM} text-n-500 line-through`}>{euroPreco(pkg.original_price, lang)}</p>
                       )}
                     </div>
                     {savings > 0 && (
-                      <span className="text-xs font-body font-semibold text-[var(--success)] bg-[var(--success-light)] px-1.5 py-0.5 rounded-xs">
+                      <span className={`text-xs ${NUM} font-semibold text-[var(--success)] bg-[var(--success-light)] px-2.5 py-0.5 rounded-full`}>
                         {t('packagesPage.card.saves', { amount: eurosInteiros(savings, lang) })}
                       </span>
                     )}
@@ -320,42 +315,34 @@ export default function Packages() {
 
                   {/* Validity */}
                   {(pkg.valid_from || pkg.valid_to) && (
-                    <p className="text-[10px] font-mono text-n-400">
+                    <p className={`text-xs ${NUM} text-n-500`}>
                       {fmtDate(pkg.valid_from, lang)} — {fmtDate(pkg.valid_to, lang)}
                     </p>
                   )}
 
                   {/* Stats */}
-                  <div className="flex items-center gap-3 pt-1 border-t border-n-100">
-                    <span className="text-xs font-mono text-n-500">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 border-t border-mare-card">
+                    <span className={`text-xs ${NUM} text-n-600`}>
                       {t('packagesPage.card.bookings', { n: pkg.bookings_count || 0 })}
                     </span>
                     {pkg.limit > 0 && (
-                      <span className="text-xs font-mono text-n-400">
+                      <span className={`text-xs ${NUM} text-n-600`}>
                         {t('packagesPage.card.remaining', { n: Math.max(0, pkg.limit - (pkg.bookings_count || 0)) })}
                       </span>
                     )}
                     <div className="ml-auto flex gap-1">
-                      <button onClick={() => handleToggleStatus(pkg)}
-                        aria-label={t(pkg.status === 'activo' ? 'packagesPage.card.deactivateAria' : 'packagesPage.card.activateAria', { name: pkg.name_pt })}
-                        className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
-                        title={t(pkg.status === 'activo' ? 'packagesPage.card.deactivate' : 'packagesPage.card.activate')}>
-                        {pkg.status === 'activo' ? <EyeOff size={13} strokeWidth={1.75} /> : <Eye size={13} strokeWidth={1.75} />}
-                      </button>
-                      <button onClick={() => setModal(pkg)}
-                        aria-label={t('packagesPage.card.editAria', { name: pkg.name_pt })}
-                        className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                        <Pencil size={13} strokeWidth={1.75} />
-                      </button>
-                      <button onClick={() => handleDelete(pkg.id)}
-                        aria-label={t('packagesPage.card.deleteAria', { name: pkg.name_pt })}
-                        className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
-                        <Trash2 size={13} strokeWidth={1.75} />
-                      </button>
+                      <IconBtn icon={pkg.status === 'activo' ? EyeOff : Eye}
+                        label={t(pkg.status === 'activo' ? 'packagesPage.card.deactivateAria' : 'packagesPage.card.activateAria', { name: pkg.name_pt })}
+                        title={t(pkg.status === 'activo' ? 'packagesPage.card.deactivate' : 'packagesPage.card.activate')}
+                        onClick={() => handleToggleStatus(pkg)} hover={EDIT_HOVER} />
+                      <IconBtn icon={Pencil} label={t('packagesPage.card.editAria', { name: pkg.name_pt })}
+                        onClick={() => setModal(pkg)} hover={EDIT_HOVER} />
+                      <IconBtn icon={Trash2} label={t('packagesPage.card.deleteAria', { name: pkg.name_pt })}
+                        onClick={() => handleDelete(pkg.id)} hover={DELETE_HOVER} />
                     </div>
                   </div>
                 </div>
-              </Card>
+              </article>
             );
           })}
         </div>

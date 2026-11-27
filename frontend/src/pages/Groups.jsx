@@ -7,18 +7,25 @@ import { listUnits } from '../services/unitsService';
 import { listGroups, createGroup, updateGroup, deleteGroup, createGroupPayment } from '../services/groupsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Badge from '../components/ui/Badge';
 import FilterChips from '../components/ui/FilterChips';
 import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import { useT } from '../i18n';
 import { formatarData, useLingua } from '../utils/formatoLingua';
 import { euroPreco } from '../utils/formatoVendedor';
 import { eurosDuasCasas } from '../utils/formatoEuros';
 import { eurosInteiros } from './reservations/shared';
+
+/* ── Estilo Mare: cartao de pagina, titulo de cartao, caixa interior e figuras ── */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card min-w-0 overflow-hidden';
+const TITULO = 'font-display text-[18px] font-semibold text-ocean-900';
+const CAIXA = 'bg-mare-head rounded-[14px] p-3 min-w-0';
+const NUM = 'font-mono tabular-nums';
 
 /* tipos de evento e estados gravados; os rotulos vem de groupsPage.eventTypes e groupsPage.statuses */
 const EVENT_TYPES = ['team_building', 'incentivo', 'turismo', 'casamento', 'outro'];
@@ -157,7 +164,7 @@ function GroupModal({ group, units, onSave, onClose }) {
         {groupPrice > 0 && (
           <div className="px-3 py-2 bg-ocean-50 border border-ocean-100 rounded-sm">
             <p className="text-xs font-body text-ocean-700">
-              {t('groupsPage.modal.estimated')} <span className="font-bold">{eurosInteiros(groupPrice, lang)}</span>
+              {t('groupsPage.modal.estimated')} <span className={`${NUM} font-bold`}>{eurosInteiros(groupPrice, lang)}</span>
               {' '}{t('groupsPage.modal.estimatedDetail', { guests: form.guests, pct: form.discount_pct || 0 })}
             </p>
           </div>
@@ -220,7 +227,7 @@ function PaymentModal({ group, onSave, onClose }) {
     <Modal open onClose={onClose} title={t('groupsPage.payment.title', { company: group.company })} size="sm">
       <div className="space-y-4">
         <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm">
-          <p className="text-xs font-body text-n-500">{t('groupsPage.payment.totalPaid')} <span className="font-bold text-n-700">{eurosDuasCasas(totalPaid, lang)}</span></p>
+          <p className="text-xs font-body text-n-500">{t('groupsPage.payment.totalPaid')} <span className={`${NUM} font-bold text-n-700`}>{eurosDuasCasas(totalPaid, lang)}</span></p>
         </div>
         <Input label={t('groupsPage.payment.amount')} aria-label={t('groupsPage.payment.amount')} type="number" min="0.01" step="0.01"
           value={amount} onChange={e => setAmount(e.target.value)} required />
@@ -252,34 +259,34 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
   }[group.status];
 
   return (
-    <Card padding="p-0" className="overflow-hidden">
-      <div className="px-4 py-3 flex items-start gap-3 cursor-pointer" onClick={() => setOpen(p => !p)}
+    <article className={CARTAO}>
+      <div className="px-[22px] py-4 flex items-start gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-inset" onClick={() => setOpen(p => !p)}
         role="button" tabIndex={0} aria-expanded={open}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(p => !p); } }}>
-        <Building2 size={16} strokeWidth={1.75} className="text-n-400 shrink-0 mt-0.5" />
+        <Building2 size={18} strokeWidth={1.75} className="text-n-500 shrink-0 mt-1" />
         <div className="flex-1 min-w-0">
-          <p className="font-display font-semibold text-sm text-n-900 truncate">{group.company}</p>
-          <p className="text-xs font-body text-n-500 mt-0.5">
+          <p className={`${TITULO} truncate`}>{group.company}</p>
+          <p className="text-xs font-body text-n-500 mt-0.5 break-words">
             {EVENT_TYPES.includes(group.event_type) ? rotuloTipoEvento(group.event_type, t) : '—'}
-            {' · '}{t('groupsPage.card.guestsCount', { n: group.guests ?? '' })}
-            {group.date ? ` · ${fmtDate(group.date, lang)}` : ''}
+            {' · '}<span className={NUM}>{t('groupsPage.card.guestsCount', { n: group.guests ?? '' })}</span>
+            {group.date ? <>{' · '}<span className={NUM}>{fmtDate(group.date, lang)}</span></> : null}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Badge variant={sc.variant}>{t(`groupsPage.statuses.${sc.value}`)}</Badge>
-          {open ? <ChevronUp size={14} strokeWidth={1.75} className="text-n-400" /> : <ChevronDown size={14} strokeWidth={1.75} className="text-n-400" />}
+          {open ? <ChevronUp size={14} strokeWidth={1.75} className="text-n-500" /> : <ChevronDown size={14} strokeWidth={1.75} className="text-n-500" />}
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-n-100 px-4 py-4 space-y-4 bg-n-50">
+        <div className="border-t border-mare-card px-[22px] py-5 space-y-4">
           {/* Tours */}
           {tours.length > 0 && (
             <div>
-              <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">{t('groupsPage.card.requestedTours')}</p>
+              <p className="text-xs font-body font-semibold uppercase tracking-wide text-n-600 mb-2">{t('groupsPage.card.requestedTours')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {tours.map(tour => (
-                  <span key={tour.id} className="text-xs bg-white border border-n-200 px-2 py-1 rounded-sm font-body text-n-700">
+                  <span key={tour.id} className="text-xs bg-white border border-mare-card px-2.5 py-1 rounded-full font-body text-n-700 break-words">
                     {tour.base_price > 0 ? t('groupsPage.modal.tourPrice', { name: tour.name, price: euroPreco(tour.base_price, lang) }) : tour.name}
                   </span>
                 ))}
@@ -295,33 +302,33 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
               { label: t('groupsPage.card.finalPayment'), value: t('groupsPage.card.daysBefore', { n: group.days_before || 7 }) },
               { label: t('groupsPage.card.proposalUntil'), value: fmtDate(group.proposal_expires, lang) },
             ].map(m => (
-              <div key={m.label}>
-                <p className="text-[10px] font-mono text-n-400 uppercase tracking-wide">{m.label}</p>
-                <p className="text-xs font-body text-n-700 font-semibold">{m.value}</p>
+              <div key={m.label} className={CAIXA}>
+                <p className="text-xs font-body text-n-600">{m.label}</p>
+                <p className={`${NUM} text-sm text-n-800 font-semibold break-words`}>{m.value}</p>
               </div>
             ))}
           </div>
 
           {/* Notes */}
           {group.notes && (
-            <div>
-              <p className="text-[10px] font-mono text-n-400 uppercase tracking-wide mb-1">{t('groupsPage.card.notes')}</p>
-              <p className="text-xs font-body text-n-600">{group.notes}</p>
+            <div className={CAIXA}>
+              <p className="text-xs font-body text-n-600 mb-1">{t('groupsPage.card.notes')}</p>
+              <p className="text-sm font-body text-n-700 break-words">{group.notes}</p>
             </div>
           )}
 
           {/* Payments */}
           {(group.payments || []).length > 0 && (
-            <div>
-              <p className="text-[10px] font-mono text-n-400 uppercase tracking-wide mb-2">{t('groupsPage.card.paymentsReceived')}</p>
+            <div className={CAIXA}>
+              <p className="text-xs font-body text-n-600 mb-2">{t('groupsPage.card.paymentsReceived')}</p>
               <div className="space-y-1">
                 {group.payments.map((p, i) => (
-                  <div key={i} className="flex justify-between text-xs">
-                    <span className="font-body text-n-500">{fmtDate(p.date, lang)} · {p.note}</span>
+                  <div key={i} className="flex flex-wrap justify-between gap-x-3 text-xs">
+                    <span className="font-body text-n-600 min-w-0 break-words"><span className={NUM}>{fmtDate(p.date, lang)}</span> · {p.note}</span>
                     <span className="font-mono font-semibold text-[var(--success)]">{eurosDuasCasas(p.amount, lang)}</span>
                   </div>
                 ))}
-                <div className="flex justify-between text-xs pt-1 border-t border-n-200 mt-1">
+                <div className="flex flex-wrap justify-between gap-x-3 text-xs pt-1 border-t border-mare-card mt-1">
                   <span className="font-body font-semibold text-n-700">{t('groupsPage.card.totalPaid')}</span>
                   <span className="font-mono font-semibold text-n-800">{eurosDuasCasas(totalPaid, lang)}</span>
                 </div>
@@ -330,33 +337,29 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
           )}
 
           {/* Actions */}
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             {nextStatus && (
-              <Button size="sm" variant="secondary" icon={Check}
+              <Button size="sm" variant="secondary" icon={Check} className="min-h-11 md:min-h-0"
                 onClick={() => onStatusChange(group.id, nextStatus)}>
                 {t('groupsPage.card.advance', { status: t(`groupsPage.statuses.${nextStatus}`) })}
               </Button>
             )}
-            <Button size="sm" variant="secondary" icon={Euro}
+            <Button size="sm" variant="secondary" icon={Euro} className="min-h-11 md:min-h-0"
               onClick={() => onPayment(group)}>
               {t('groupsPage.card.recordPayment')}
             </Button>
-            <Button size="sm" variant="secondary" icon={FileText}
+            <Button size="sm" variant="secondary" icon={FileText} className="min-h-11 md:min-h-0"
               onClick={() => window.print()}>
               {t('groupsPage.card.printProposal')}
             </Button>
-            <button onClick={() => onEdit(group)} aria-label={t('groupsPage.card.editAria', { name: group.company })}
-              className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-              <Pencil size={13} strokeWidth={1.75} />
-            </button>
-            <button onClick={() => onDelete(group.id)} aria-label={t('groupsPage.card.deleteAria', { name: group.company })}
-              className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
-              <Trash2 size={13} strokeWidth={1.75} />
-            </button>
+            <IconBtn icon={Pencil} label={t('groupsPage.card.editAria', { name: group.company })}
+              onClick={() => onEdit(group)} hover={EDIT_HOVER} />
+            <IconBtn icon={Trash2} label={t('groupsPage.card.deleteAria', { name: group.company })}
+              onClick={() => onDelete(group.id)} hover={DELETE_HOVER} />
           </div>
         </div>
       )}
-    </Card>
+    </article>
   );
 }
 
@@ -415,7 +418,7 @@ export default function Groups() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={t('groupsPage.title')} subtitle={t('groupsPage.subtitle')} />
+        <PageHeader eyebrow={t('nav.sections.crescimento')} title={t('groupsPage.title')} subtitle={t('groupsPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -424,33 +427,22 @@ export default function Groups() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.crescimento')}
         title={t('groupsPage.title')}
         subtitle={t('groupsPage.subtitle')}
         actions={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('groupsPage.newQuote')}</Button>}
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        {[
-          { label: t('groupsPage.kpi.total'),      value: kpis.total,       color: 'text-n-900'     },
-          { label: t('groupsPage.kpi.confirmed'),  value: kpis.confirmados, color: 'text-[var(--success)]' },
-          { label: t('groupsPage.kpi.guests'),     value: kpis.pax,         color: 'text-ocean-700' },
-        ].map(m => (
-          <Card key={m.label} padding="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Users2 size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
-              <div>
-                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-                <p className="text-xs font-body text-n-500">{m.label}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <MareStat label={t('groupsPage.kpi.total')} value={kpis.total} icon={Users2} />
+        <MareStat label={t('groupsPage.kpi.confirmed')} value={kpis.confirmados} icon={Check} />
+        <MareStat label={t('groupsPage.kpi.guests')} value={kpis.pax} icon={Building2} />
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-[160px] max-w-xs">
           <Input aria-label={t('groupsPage.searchAria')} value={search} onChange={e => setSearch(e.target.value)}
             placeholder={t('groupsPage.searchPlaceholder')} />
         </div>
@@ -462,13 +454,13 @@ export default function Groups() {
       </div>
 
       {sorted.length === 0 ? (
-        <Card padding="p-0">
+        <section className={CARTAO}>
           <EmptyState icon={Users2} title={t('groupsPage.empty.title')}
             description={groups.length === 0
               ? t('groupsPage.empty.first')
               : t('groupsPage.empty.filtered')}
             action={groups.length === 0 ? <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('groupsPage.newQuote')}</Button> : undefined} />
-        </Card>
+        </section>
       ) : (
         <div className="space-y-3">
           {sorted.map(g => (

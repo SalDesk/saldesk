@@ -50,11 +50,11 @@ async function montar(primeiro = 'Empresa Alfa') {
   await screen.findByText(primeiro);
   return r;
 }
-const cartao = (nome) => screen.getByText(nome, { selector: 'p' }).closest('div.overflow-hidden');
+const cartao = (nome) => screen.getByText(nome, { selector: 'p' }).closest('article.overflow-hidden');
 const abrir = (nome) => fireEvent.click(screen.getByText(nome, { selector: 'p' }).closest('div.cursor-pointer'));
 const chip = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
 const novaCotacao = () => screen.getAllByText('Nova cotação').find(e => e.closest('button')).closest('button');
-const kpi = (rotulo) => screen.getByText(rotulo).previousSibling.textContent;
+const kpi = (rotulo) => screen.getAllByText(rotulo).find(e => e.tagName === 'P' && e.closest('article')?.querySelector('p.font-display')).closest('article').querySelector('p.font-display').textContent;
 const empresasPorOrdem = () => [...document.querySelectorAll('p.truncate')].map(p => p.textContent);
 
 /* ───────────────────────── caracterizacao ───────────────────────── */
@@ -332,7 +332,7 @@ describe('Grupos com o design system', () => {
     const html = container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -351,7 +351,7 @@ describe('Grupos: painel em ingles', () => {
     await montar();
     expect(screen.getByText('Group bookings and corporate events')).toBeInTheDocument();
     expect(kpi('Total quotes')).toBe('6');
-    expect(screen.getAllByText('Confirmed').find(e => e.previousSibling?.className?.includes('text-xl')).previousSibling.textContent).toBe('1');
+    expect(kpi('Confirmed')).toBe('1');
     expect(kpi('Confirmed guests')).toBe('80');
     expect(cartao('Empresa Alfa')).toHaveTextContent('Team building · 20 guests');
     expect(cartao('Empresa Alfa')).toHaveTextContent('Request');
@@ -466,5 +466,81 @@ describe('Grupos: painel em ingles', () => {
     fireEvent.change(dlg.getByLabelText('Number of guests'), { target: { value: '3' } });
     fireEvent.click(dlg.getByRole('button', { name: 'Create quote' }));
     expect(await screen.findByText('Could not save the quote.')).toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Grupos: estilo Mare', () => {
+  const eMare = (el) => {
+    expect(el).not.toBeNull();
+    expect(el.className).toContain('bg-white');
+    expect(el.className).toContain('border-mare-card');
+    expect(el.className).toContain('rounded-[18px]');
+  };
+
+  it('mostra_o_eyebrow_da_area_Crescimento_tambem_a_carregar', async () => {
+    listGroups.mockReturnValue(new Promise(() => {}));
+    render(<Groups />);
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+    cleanup();
+    listGroups.mockResolvedValue(GRUPOS);
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('os_totais_sao_MareStat_com_os_mesmos_valores', async () => {
+    await montar();
+    for (const [rotulo, valor] of [['Total cotações', '6'], ['Confirmados', '1'], ['Pax confirmados', '80']]) {
+      const artigo = screen.getAllByText(rotulo).find(e => e.tagName === 'P' && e.closest('article')?.querySelector('p.font-display')).closest('article');
+      expect(artigo.className).toContain('border-mare-card');
+      expect(artigo.querySelector('p.font-display')).toHaveTextContent(valor);
+    }
+    expect(screen.getByText('Total cotações').closest('div.grid').className).toContain('min-[420px]:grid-cols-2');
+  });
+
+  it('os_cartoes_das_cotacoes_sao_Mare_e_as_caixas_interiores_tambem', async () => {
+    await montar();
+    eMare(cartao('Empresa Alfa'));
+    abrir('Empresa Alfa');
+    const c = cartao('Empresa Alfa');
+    const caixa = within(c).getByText('Desconto').closest('div');
+    expect(caixa.className).toContain('rounded-[14px]');
+    expect(caixa.className).toContain('bg-mare-head');
+    expect(within(c).getByText('Pagamentos recebidos').closest('div').className).toContain('rounded-[14px]');
+  });
+
+  it('data_percentagens_e_montantes_usam_font_mono', async () => {
+    await montar();
+    abrir('Empresa Alfa');
+    const c = cartao('Empresa Alfa');
+    expect(within(c).getByText(fmtDate(dia(20))).className).toContain('font-mono');
+    expect(within(c).getByText('15%').className).toContain('font-mono');
+    within(c).getAllByText('€300.00').forEach(e => expect(e.className).toContain('font-mono'));
+    expect(within(c).getByText(fmtDate('2026-11-01')).className).toContain('font-mono');
+  });
+
+  it('os_botoes_de_icone_sao_IconBtn_e_o_apagar_mantem_o_vermelho_ao_passar_o_rato', async () => {
+    await montar();
+    abrir('Empresa Alfa');
+    const apagar = screen.getByRole('button', { name: 'Eliminar Empresa Alfa' });
+    expect(apagar.className).toContain('min-h-11');
+    expect(apagar.className).toContain('hover:text-error');
+    expect(screen.getByRole('button', { name: 'Editar Empresa Alfa' }).className).toContain('hover:text-ocean-700');
+  });
+
+  it('o_cabecalho_do_cartao_tem_foco_visivel_e_o_vazio_e_um_cartao_Mare', async () => {
+    await montar();
+    expect(screen.getByRole('button', { name: /^Empresa Alfa/ }).className).toContain('focus-visible:ring-sand-500');
+    cleanup();
+    listGroups.mockResolvedValue([]);
+    render(<Groups />);
+    eMare((await screen.findByText('Sem cotações')).closest('section'));
+  });
+
+  it('o_filtro_por_estado_continua_a_filtrar', async () => {
+    await montar();
+    fireEvent.click(chip('Confirmado'));
+    expect(empresasPorOrdem()).toEqual(['Hotel Beta']);
   });
 });
