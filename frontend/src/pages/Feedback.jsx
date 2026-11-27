@@ -7,7 +7,7 @@ import api from '../services/api';
 import { listReservations } from '../services/reservationsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import MareStat from '../components/shared/MareStat';
 import Tabs from '../components/ui/Tabs';
 import Table from '../components/ui/Table';
 import EmptyState from '../components/ui/EmptyState';
@@ -49,7 +49,7 @@ function StarRating({ value }) {
         <Star key={i} size={12} strokeWidth={1.75}
           className={i <= n ? 'text-sand-500 fill-sand-400' : 'text-n-300'} />
       ))}
-      <span className="text-xs font-mono text-n-600 ml-1">{formatarNota(value)}</span>
+      <span className="text-xs font-mono tabular-nums text-n-600 ml-1">{formatarNota(value)}</span>
     </div>
   );
 }
@@ -178,7 +178,7 @@ export default function Feedback() {
     {
       key: 'checkout',
       label: t('feedbackPage.cols.checkout'),
-      render: (r) => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(r.check_out)}</span>,
+      render: (r) => <span className="text-xs font-mono tabular-nums text-n-500 whitespace-nowrap">{fmtDate(r.check_out)}</span>,
     },
     {
       key: 'dias',
@@ -188,7 +188,7 @@ export default function Feedback() {
           ? Math.floor((Date.now() - new Date(r.check_out + 'T00:00:00Z').getTime()) / (1000 * 60 * 60 * 24))
           : null;
         return days != null ? (
-          <span className={`text-xs font-mono font-semibold ${days > 7 ? 'text-[var(--error)]' : days > 3 ? 'text-[var(--warning)]' : 'text-n-600'}`}>
+          <span className={`text-xs font-mono tabular-nums font-semibold ${days > 7 ? 'text-[var(--error)]' : days > 3 ? 'text-[var(--warning)]' : 'text-n-600'}`}>
             {days}d
           </span>
         ) : '—';
@@ -219,6 +219,7 @@ export default function Feedback() {
       <PageHeader
         title={t('feedbackPage.title')}
         subtitle={t('feedbackPage.subtitle')}
+        eyebrow={t('nav.sections.clientes')}
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm"
             onClick={() => { setLoading(true); window.location.reload(); }}>
@@ -230,20 +231,12 @@ export default function Feedback() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
-          { label: t('feedbackPage.kpi.toursDone'),  value: totalCompleted,               icon: CheckCircle2, color: 'text-n-900'     },
-          { label: t('feedbackPage.kpi.reviewsReceived'), value: totalReviews,              icon: Star,         color: 'text-sand-500'  },
-          { label: t('feedbackPage.kpi.responseRate'),  value: `${globalRate}%`,             icon: TrendingUp,   color: 'text-ocean-700' },
-          { label: t('feedbackPage.kpi.average'),       value: globalAvg > 0 ? formatarNota(globalAvg) + ' / 5' : '—', icon: BarChart2, color: 'text-[var(--success)]' },
+          { label: t('feedbackPage.kpi.toursDone'),  value: totalCompleted,               icon: CheckCircle2 },
+          { label: t('feedbackPage.kpi.reviewsReceived'), value: totalReviews,              icon: Star         },
+          { label: t('feedbackPage.kpi.responseRate'),  value: `${globalRate}%`,             icon: TrendingUp   },
+          { label: t('feedbackPage.kpi.average'),       value: globalAvg > 0 ? formatarNota(globalAvg) + ' / 5' : '—', icon: BarChart2 },
         ].map(m => (
-          <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-              <m.icon size={16} strokeWidth={1.75} className="text-ocean-700" />
-            </div>
-            <div>
-              <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-              <p className="text-xs font-body text-n-500">{m.label}</p>
-            </div>
-          </div>
+          <MareStat key={m.label} label={m.label} value={m.value} icon={m.icon} />
         ))}
       </div>
 
@@ -257,29 +250,29 @@ export default function Feedback() {
       ) : activeTab === 'tours' ? (
         <div className="space-y-3">
           {tourStats.length === 0 ? (
-            <Card padding="p-0">
+            <div className="bg-white rounded-[18px] border border-mare-card">
               <EmptyState icon={BarChart2} title={t('feedbackPage.noTours')} />
-            </Card>
+            </div>
           ) : tourStats.map(tour => (
-            <Card key={tour.unit_id} padding="px-5 py-4">
+            <div key={tour.unit_id} className="bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0">
               <div className="flex items-start gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="font-display font-semibold text-sm text-n-900 truncate">{tour.unit_name || t('feedbackPage.unnamedService')}</p>
+                  <p className="font-display font-semibold text-[18px] text-ocean-900 truncate">{tour.unit_name || t('feedbackPage.unnamedService')}</p>
                   <div className="flex flex-wrap items-center gap-4 mt-2">
                     <span className="text-xs font-body text-n-500">
-                      <span className="font-semibold text-n-700">{tour.total}</span> {t('feedbackPage.toursDoneSuffix')}
+                      <span className="font-mono tabular-nums font-semibold text-n-700">{tour.total}</span> {t('feedbackPage.toursDoneSuffix')}
                     </span>
                     <span className="text-xs font-body text-n-500">
-                      <span className="font-semibold text-n-700">{tour.received}</span> {t('feedbackPage.reviewsSuffix')}
+                      <span className="font-mono tabular-nums font-semibold text-n-700">{tour.received}</span> {t('feedbackPage.reviewsSuffix')}
                     </span>
                     {tour.received > 0 && <StarRating value={tour.avgRating} />}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className={`font-display font-bold text-2xl ${tour.rate >= 50 ? 'text-[var(--success)]' : tour.rate >= 25 ? 'text-[var(--warning)]' : 'text-[var(--error)]'}`}>
+                  <p className={`font-mono tabular-nums font-bold text-2xl ${tour.rate >= 50 ? 'text-[var(--success)]' : tour.rate >= 25 ? 'text-[var(--warning)]' : 'text-[var(--error)]'}`}>
                     {tour.rate}%
                   </p>
-                  <p className="text-xs font-body text-n-400">{t('feedbackPage.rateSuffix')}</p>
+                  <p className="text-xs font-body text-n-500">{t('feedbackPage.rateSuffix')}</p>
                 </div>
               </div>
               {/* Rate bar */}
@@ -287,34 +280,34 @@ export default function Feedback() {
                 <div className={`h-full rounded-full transition-all duration-500 ${tour.rate >= 50 ? 'bg-[var(--success)]' : tour.rate >= 25 ? 'bg-[var(--warning)]' : 'bg-[var(--error)]'}`}
                   style={{ width: `${tour.rate}%` }} />
               </div>
-            </Card>
+            </div>
           ))}
         </div>
 
       ) : activeTab === 'pending' ? (
         <div className="space-y-3">
           {pendingReview.length === 0 ? (
-            <Card padding="p-0">
+            <div className="bg-white rounded-[18px] border border-mare-card">
               <EmptyState icon={CheckCircle2} title={t('feedbackPage.allRequested')} />
-            </Card>
+            </div>
           ) : (
             <>
               <p className="text-xs font-body text-n-500">
                 {t('feedbackPage.pendingNote', { count: pendingReview.length })}
               </p>
-              <Card padding="p-0">
+              <div className="bg-white rounded-[18px] border border-mare-card overflow-hidden">
                 <Table columns={pendingColumns} rows={pendingReview.slice(0, 50)} />
                 {pendingReview.length > 50 && (
-                  <p className="text-xs font-body text-n-400 text-center py-3">{t('feedbackPage.showing', { shown: 50, total: pendingReview.length })}</p>
+                  <p className="text-xs font-body text-n-500 text-center py-3">{t('feedbackPage.showing', { shown: 50, total: pendingReview.length })}</p>
                 )}
-              </Card>
+              </div>
             </>
           )}
         </div>
 
       ) : activeTab === 'template' ? (
         <div className="space-y-5">
-          <Card padding="px-5 py-5">
+          <div className="bg-white rounded-[18px] border border-mare-card p-[22px]">
             <Toggle
               checked={automatico}
               onChange={handleAutomatico}
@@ -322,9 +315,9 @@ export default function Feedback() {
               hint={t('feedbackPage.autoHint')}
             />
             {autoErro && <p className="text-xs font-body text-red-600 mt-2" role="alert">{t('feedbackPage.autoError')}</p>}
-          </Card>
-          <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('feedbackPage.templateTitle')}</h3>
+          </div>
+          <div className="bg-white rounded-[18px] border border-mare-card p-[22px]">
+            <h3 className="font-display font-semibold text-lg text-ocean-900 mb-4">{t('feedbackPage.templateTitle')}</h3>
 
             {/* Variables */}
             <div className="mb-4">
@@ -334,7 +327,7 @@ export default function Feedback() {
                   <button key={v.key} type="button"
                     onClick={() => setTemplate(p => ({ ...p, body_pt: p.body_pt + v.key }))}
                     title={t(`feedbackPage.vars.${v.id}`)}
-                    className="text-xs font-mono px-2 py-0.5 rounded-xs bg-ocean-50 text-ocean-700 border border-ocean-100 hover:bg-ocean-100 transition-colors">
+                    className="inline-flex items-center min-h-11 md:min-h-0 text-xs font-mono px-2 py-0.5 rounded-xs bg-ocean-50 text-ocean-700 border border-ocean-100 hover:bg-ocean-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
                     {v.key}
                   </button>
                 ))}
@@ -362,12 +355,12 @@ export default function Feedback() {
                 <div className="flex gap-1 mb-3">
                   {['pt', 'en'].map(l => (
                     <button key={l} onClick={() => setPreviewLang(l)}
-                      className={`text-xs px-2.5 py-1 rounded-xs font-mono transition-colors ${previewLang === l ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
+                      className={`inline-flex items-center min-h-11 md:min-h-0 text-xs px-2.5 py-1 rounded-xs font-mono transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${previewLang === l ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
                       {l.toUpperCase()}
                     </button>
                   ))}
                 </div>
-                <div className="border border-n-200 rounded-md overflow-hidden">
+                <div className="border border-mare-card rounded-[14px] overflow-hidden">
                   <div className="bg-ocean-900 px-4 py-2.5">
                     <p className="text-white text-[11px] font-display font-semibold">SalDesk Tours</p>
                     <p className="text-ocean-300 text-[11px] font-mono mt-0.5">
@@ -382,13 +375,13 @@ export default function Feedback() {
                         .replace('{link_avaliacao}', 'https://saldesk.cv/review/...')}
                     </pre>
                   </div>
-                  <div className="bg-n-50 px-4 py-2 border-t border-n-100">
-                    <p className="text-[10px] font-mono text-n-400">{t('feedbackPage.sampleNote')}</p>
+                  <div className="bg-mare-head px-4 py-2 border-t border-mare-card">
+                    <p className="text-[10px] font-mono text-n-500">{t('feedbackPage.sampleNote')}</p>
                   </div>
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       ) : null}
     </div>

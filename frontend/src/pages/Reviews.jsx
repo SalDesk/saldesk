@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Star, MessageCircle, Send, Search } from 'lucide-react';
 import api from '../services/api';
 import PageHeader from '../components/layout/PageHeader';
-import Card from '../components/ui/Card';
+import MareStat from '../components/shared/MareStat';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -57,7 +57,7 @@ function StarBreakdown({ distribution, total }) {
               <div className="h-full bg-sand-500 rounded-full transition-all"
                 style={{ width: `${pct}%` }} />
             </div>
-            <span className="text-xs font-mono text-n-500 w-8 text-right">{count}</span>
+            <span className="text-xs font-mono tabular-nums text-n-500 w-8 text-right">{count}</span>
           </div>
         );
       })}
@@ -73,13 +73,13 @@ function ReviewCard({ review, onReply }) {
   const country  = review.customers?.country_code;
 
   return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm p-4 sm:p-5">
+    <div className="bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           {/* Header row */}
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <StarRow rating={review.rating} />
-            <span className="text-xs font-mono text-n-400">{fmtDate(review.created_at)}</span>
+            <span className="text-xs font-mono tabular-nums text-n-500">{fmtDate(review.created_at)}</span>
             {review.is_public
               ? <Badge variant="confirmed">{t('reviewsPage.badgePublic')}</Badge>
               : <Badge variant="default">{t('reviewsPage.badgePrivate')}</Badge>}
@@ -92,9 +92,9 @@ function ReviewCard({ review, onReply }) {
 
           {/* Comment */}
           {review.comment ? (
-            <p className="text-sm font-body text-n-800 leading-relaxed mb-2">{review.comment}</p>
+            <p className="text-sm font-body text-n-800 leading-relaxed mb-2 break-words">{review.comment}</p>
           ) : (
-            <p className="text-sm font-body text-n-400 italic mb-2">{t('reviewsPage.noComment')}</p>
+            <p className="text-sm font-body text-n-500 italic mb-2">{t('reviewsPage.noComment')}</p>
           )}
 
           {/* Customer */}
@@ -105,11 +105,11 @@ function ReviewCard({ review, onReply }) {
 
           {/* Existing reply */}
           {review.reply_text && (
-            <div className="mt-3 bg-ocean-50 border border-ocean-100 rounded px-3 py-2.5">
+            <div className="mt-3 bg-mare-head border border-mare-card rounded-[14px] px-3.5 py-3">
               <p className="text-xs font-body font-bold text-ocean-700 mb-1">{t('reviewsPage.operatorReply')}</p>
-              <p className="text-sm font-body text-n-700 leading-relaxed">{review.reply_text}</p>
+              <p className="text-sm font-body text-n-700 leading-relaxed break-words">{review.reply_text}</p>
               {review.replied_at && (
-                <p className="text-xs font-mono text-ocean-400 mt-1">{fmtDate(review.replied_at)}</p>
+                <p className="text-xs font-mono tabular-nums text-n-500 mt-1">{fmtDate(review.replied_at)}</p>
               )}
             </div>
           )}
@@ -208,35 +208,36 @@ export default function Reviews() {
       <PageHeader
         title={t('reviewsPage.title')}
         subtitle={t('reviewsPage.subtitle', { total: reviews.length, pending: pendingReply })}
+        eyebrow={t('nav.sections.clientes')}
       />
 
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {/* Average */}
-          <Card>
+          <div className="bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0">
             <div className="flex items-center gap-5">
               <div className="text-center shrink-0">
-                <p className="font-display font-bold text-4xl text-ocean-700 leading-none">
+                <p className="font-mono tabular-nums font-bold text-4xl text-ocean-900 leading-none">
                   {formatarNota(stats.average || 0)}
                 </p>
                 <StarRow rating={Math.round(stats.average || 0)} size={16} />
-                <p className="text-xs font-body text-n-400 mt-1">{t('reviewsPage.totalReviews', { count: stats.total })}</p>
+                <p className="text-xs font-body text-n-500 mt-1">{t('reviewsPage.totalReviews', { count: stats.total })}</p>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <StarBreakdown distribution={stats.distribution} total={stats.total} />
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Quick stats */}
-          <Card>
+          <div className="bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-body text-n-600">{t('reviewsPage.answered')}</span>
-                <span className="font-display font-bold text-n-900">
+                <span className="font-mono tabular-nums font-bold text-n-900">
                   {reviews.filter(r => r.reply_text).length}
-                  <span className="text-xs font-body text-n-400 ml-1">/ {reviews.length}</span>
+                  <span className="text-xs font-body text-n-500 ml-1">/ {reviews.length}</span>
                 </span>
               </div>
               <div className="h-1.5 bg-n-100 rounded-full overflow-hidden">
@@ -245,34 +246,37 @@ export default function Reviews() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-body text-n-600">{t('reviewsPage.public')}</span>
-                <span className="font-display font-bold text-n-900">
+                <span className="font-mono tabular-nums font-bold text-n-900">
                   {reviews.filter(r => r.is_public).length}
                 </span>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Pending */}
-          <Card>
-            <div className="flex flex-col items-center justify-center h-full py-2 text-center gap-2">
-              {pendingReply > 0 ? (
-                <>
-                  <p className="font-display font-bold text-3xl text-sand-500">{pendingReply}</p>
-                  <p className="text-sm font-body text-n-600">{t('reviewsPage.unanswered')}</p>
-                  <button
-                    onClick={() => { setFilterReply('pending'); setPage(1); }}
-                    className="text-xs font-body text-ocean-700 hover:underline mt-1">
-                    {t('reviewsPage.seeNow')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Star size={28} strokeWidth={1.25} className="text-sand-500 fill-sand-500" />
-                  <p className="text-sm font-body text-n-600">{t('reviewsPage.allAnswered')}</p>
-                </>
-              )}
+          {pendingReply > 0 ? (
+            <MareStat
+              label={t('reviewsPage.unanswered')}
+              value={pendingReply}
+              tone="aviso"
+              icon={Star}
+              hint={
+                <button
+                  type="button"
+                  onClick={() => { setFilterReply('pending'); setPage(1); }}
+                  className="inline-flex items-center min-h-11 md:min-h-0 text-xs font-body font-semibold text-ocean-700 hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
+                  {t('reviewsPage.seeNow')}
+                </button>
+              }
+            />
+          ) : (
+            <div className="bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0">
+              <div className="flex flex-col items-center justify-center h-full py-2 text-center gap-2">
+                <Star size={28} strokeWidth={1.25} className="text-sand-500 fill-sand-500" />
+                <p className="text-sm font-body text-n-600">{t('reviewsPage.allAnswered')}</p>
+              </div>
             </div>
-          </Card>
+          )}
         </div>
       )}
 
@@ -319,12 +323,12 @@ export default function Reviews() {
           </Select>
         </div>
 
-        <span className="text-xs font-body text-n-400 ml-auto">{t('reviewsPage.results', { count: filtered.length })}</span>
+        <span className="text-xs font-body text-n-500 ml-auto">{t('reviewsPage.results', { count: filtered.length })}</span>
       </div>
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="bg-white border border-n-200 rounded-md">
+        <div className="bg-white border border-mare-card rounded-[18px]">
           <EmptyState
             icon={Star}
             title={t('reviewsPage.empty')}
@@ -362,10 +366,10 @@ export default function Reviews() {
         }>
         <div className="space-y-4">
           {/* Original review */}
-          <div className="bg-n-50 border border-n-200 rounded p-3 space-y-1.5">
+          <div className="bg-mare-head border border-mare-card rounded-[14px] p-3.5 space-y-1.5">
             <div className="flex items-center gap-2">
               <StarRow rating={replyModal?.rating || 5} size={13} />
-              <span className="text-xs font-mono text-n-400">{fmtDate(replyModal?.created_at)}</span>
+              <span className="text-xs font-mono tabular-nums text-n-500">{fmtDate(replyModal?.created_at)}</span>
             </div>
             <p className="text-sm font-body text-n-700">{replyModal?.comment}</p>
             {replyModal?.reservations?.units?.name && (

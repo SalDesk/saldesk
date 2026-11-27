@@ -253,6 +253,62 @@ describe('Reviews', () => {
     expect(screen.queryByRole('button', { name: 'Limpar filtros' })).not.toBeInTheDocument();
     expect(screen.getByText('Todas respondidas')).toBeInTheDocument();
   });
+
+  describe('estilo Mare', () => {
+    it('o cabeçalho traz o eyebrow Clientes', async () => {
+      await abre();
+      expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
+    });
+
+    it('o quadro de pendentes é um MareStat com o mesmo valor e o botão "Ver agora"', async () => {
+      await abre();
+      const quadro = screen.getByText('sem resposta').closest('article');
+      expect(quadro).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      expect(quadro.querySelector('p.font-display').textContent).toBe('1');
+      expect(within(quadro).getByRole('button', { name: 'Ver agora' })).toBeInTheDocument();
+    });
+
+    it('a média com a distribuição e as respondidas ficam em cartões Mare', async () => {
+      await abre();
+      const media = screen.getByText('4.2').closest('.border-mare-card');
+      expect(media).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      expect(media.querySelector('.bg-sand-500')).not.toBeNull();
+      const rotulo = screen.getAllByText('Respondidas').find(e => e.tagName === 'SPAN');
+      expect(rotulo.closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]');
+    });
+
+    it('cada avaliação é um cartão Mare, com datas em font-mono', async () => {
+      await abre();
+      const cartao = screen.getByText('Excelente passeio').closest('.border-mare-card');
+      expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      const data = [...cartao.querySelectorAll('span')].find(s => /2026/.test(s.textContent));
+      expect(data).toHaveClass('font-mono', 'tabular-nums');
+      const resposta = screen.getByText('Obrigado pela visita').closest('.rounded-\\[14px\\]');
+      expect(resposta).toHaveClass('bg-mare-head', 'border-mare-card');
+      expect(within(resposta).getByText(/2026/)).toHaveClass('font-mono', 'tabular-nums');
+    });
+
+    it('a etiqueta pública/privada continua a ser Badge e o número da média usa font-mono', async () => {
+      await abre();
+      expect(screen.getAllByText('Pública')[0].closest('span')).toHaveClass('inline-flex', 'font-semibold');
+      expect(screen.getByText('4.2')).toHaveClass('font-mono', 'tabular-nums');
+    });
+
+    it('sem avaliações todas as barras da distribuição ficam a 0%', async () => {
+      servicos({ reviews: [], stats: { average: 0, total: 0, distribution: [] } });
+      await abre('0 no total · 0 sem resposta');
+      const barras = [...document.querySelectorAll('div.h-full.bg-sand-500')];
+      expect(barras).toHaveLength(5);
+      barras.forEach(b => expect(b.style.width).toBe('0%'));
+    });
+
+    it('o vazio fica num cartão Mare', async () => {
+      servicos({ reviews: [], stats: { average: 0, total: 0, distribution: [] } });
+      await abre('0 no total · 0 sem resposta');
+      const vazio = screen.getByText('Nenhuma avaliação encontrada').closest('.border-mare-card');
+      expect(vazio).toHaveClass('bg-white', 'rounded-[18px]');
+    });
+  });
 });
 
 /* ───────────────────────── painel em ingles ───────────────────────── */
