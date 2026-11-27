@@ -130,6 +130,11 @@ describe('Customers', () => {
     expect(listCustomers.mock.calls.length).toBe(pedidos);
   });
 
+  it('o botão de pesquisar só com ícone tem nome acessível', async () => {
+    await abre();
+    expect(screen.getByRole('button', { name: 'Pesquisar' })).toHaveAttribute('type', 'submit');
+  });
+
   it('a pesquisa envia search e o filtro de pais envia country_code', async () => {
     await abre();
     expect(listCustomers).toHaveBeenLastCalledWith({});

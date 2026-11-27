@@ -119,7 +119,7 @@ function ReviewCard({ review, onReply }) {
         {!review.reply_text && review.is_public && (
           <Button variant="ghost" size="sm" icon={MessageCircle}
             onClick={() => onReply(review)}
-            className="shrink-0">
+            className="shrink-0 min-h-11 md:min-h-0">
             {t('reviewsPage.reply')}
           </Button>
         )}
@@ -256,7 +256,7 @@ export default function Reviews() {
           {/* Pending */}
           {pendingReply > 0 ? (
             <MareStat
-              label={t('reviewsPage.unanswered')}
+              label={t('reviewsPage.filterPending')}
               value={pendingReply}
               tone="aviso"
               icon={Star}
@@ -333,7 +333,7 @@ export default function Reviews() {
             icon={Star}
             title={t('reviewsPage.empty')}
             action={(filterStar > 0 || filterUnit || filterReply !== 'all' || search) && (
-              <Button variant="ghost" size="sm"
+              <Button variant="ghost" size="sm" className="min-h-11 md:min-h-0"
                 onClick={() => { setFilterStar(0); setFilterUnit(''); setFilterReply('all'); setSearch(''); setPage(1); }}>
                 {t('reviewsPage.clearFilters')}
               </Button>

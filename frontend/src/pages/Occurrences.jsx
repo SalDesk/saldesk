@@ -34,10 +34,10 @@ const TYPES = [
   { value: 'outro',      Icon: MoreHorizontal, cls: 'text-n-500'            },
 ];
 
-/* variant e a variante do ui/Badge: baixa neutra, media areia, alta aviso, critica vermelha */
+/* variant e a variante do ui/Badge: baixa neutra, media oceano, alta areia, critica vermelha */
 const SEVERITIES = [
   { value: 'baixa',   variant: 'default'   },
-  { value: 'media',   variant: 'pending'   },
+  { value: 'media',   variant: 'info'      },
   { value: 'alta',    variant: 'warning'   },
   { value: 'critica', variant: 'cancelled' },
 ];

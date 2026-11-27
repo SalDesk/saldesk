@@ -380,7 +380,7 @@ export default function Customers() {
           <div className="flex-1">
             <Input placeholder={`${t('common.search')}...`} value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <Button type="submit" icon={Search} variant="secondary" size="md" />
+          <Button type="submit" icon={Search} variant="secondary" size="md" aria-label={t('common.search')} />
         </form>
         {countries.length > 0 && (
           <FilterChips

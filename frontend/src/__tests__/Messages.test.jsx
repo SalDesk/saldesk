@@ -161,6 +161,43 @@ describe('Messages', () => {
       fireEvent.click(voltar);
       expect(conversa).toHaveClass('hidden');
     });
+
+    it('o cabeçalho da conversa com cliente quebra linha e o nome tem um mínimo', async () => {
+      await abre();
+      await abreConversa('Maria Cliente');
+      const conversa = document.querySelector('[data-mare-conversa]');
+      const cabecalho = conversa.firstElementChild;
+      expect(cabecalho).toHaveClass('flex-wrap');
+      const nome = within(cabecalho).getByText('Maria Cliente').parentElement;
+      expect(nome).toHaveClass('flex-1', 'basis-[7rem]', 'min-w-0');
+      const pilulas = screen.getByRole('button', { name: /WhatsApp/ }).parentElement;
+      expect(pilulas).toHaveClass('ml-auto', 'shrink-0');
+    });
+
+    it('o botão Enviar do compositor tem 44 px no telemóvel', async () => {
+      await abre();
+      await abreConversa('Rui');
+      expect(botaoEnviar()).toHaveClass('min-h-11', 'md:min-h-0');
+    });
+
+    it('o X do anexo é um botão com nome e remove o anexo', async () => {
+      await abre();
+      await abreConversa('Rui');
+      fireEvent.change(document.querySelector('input[type="file"]'), { target: { files: [new File(['x'], 'foto.png', { type: 'image/png' })] } });
+      const remover = screen.getByRole('button', { name: 'Remover anexo' });
+      expect(remover).toHaveClass('min-h-11', 'min-w-11');
+      fireEvent.click(remover);
+      expect(screen.queryByText('foto.png')).not.toBeInTheDocument();
+    });
+
+    it('o cargo no modal de novo grupo usa texto com contraste suficiente', async () => {
+      await abre();
+      fireEvent.click(screen.getByRole('button', { name: 'Novo grupo' }));
+      const dialogo = await screen.findByRole('dialog');
+      const cargo = within(dialogo).getByText(/Guia/, { selector: 'span span' });
+      expect(cargo).toHaveClass('text-n-500');
+      expect(cargo).not.toHaveClass('text-n-400');
+    });
   });
 
   it('lista colaboradores e conversas (grupos e clientes) por actividade mais recente', async () => {

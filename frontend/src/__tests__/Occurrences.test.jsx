@@ -359,6 +359,19 @@ describe('Occurrences no estilo Mare', () => {
     }
   });
 
+  it('a escala de severidade e neutra, oceano, areia, vermelho', async () => {
+    await abreMare();
+    const cores = {};
+    for (const nome of ['Baixa', 'Média', 'Alta', 'Crítica']) {
+      const selo = screen.getAllByText(nome).find(e => e.tagName === 'SPAN' && e.className.includes('app:rounded-full'));
+      cores[nome] = selo ? selo.className : null;
+    }
+    expect(cores['Baixa']).toContain('app:bg-n-100');
+    expect(cores['Média']).toContain('app:bg-ocean-100');
+    expect(cores['Alta']).toContain('app:bg-sand-100');
+    expect(cores['Crítica']).toContain('app:bg-[var(--error-light)]');
+  });
+
   it('a tabela fica num cartao Mare, com a data em font-mono', async () => {
     await abreMare();
     const cartao = screen.getByRole('table').closest('.border-mare-card');

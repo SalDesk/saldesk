@@ -14,7 +14,7 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
-import { IconBtn, EDIT_HOVER } from '../components/shared/IconBtn';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import EmptyState from '../components/ui/EmptyState';
 import { ehDoOperador } from '../utils/mensagens';
@@ -467,7 +467,7 @@ export default function Messages() {
           ) : (
             <>
               {/* Chat header */}
-              <div className="px-4 py-3 border-b border-mare-card flex items-center gap-3">
+              <div className="px-4 py-3 border-b border-mare-card flex flex-wrap items-center gap-3">
                 <IconBtn
                   icon={ArrowLeft}
                   label={t('messagesPage.backToList')}
@@ -480,7 +480,7 @@ export default function Messages() {
                   online={selectedContact.type === 'staff' && onlineUsers.has(selectedContact.id)}
                   size={32}
                 />
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-[7rem]">
                   <p className="font-display font-semibold text-sm text-n-900 truncate">{selectedContact.label}</p>
                   {typingContacts.has(selectedContact.id) ? (
                     <p className="text-xs font-body text-ocean-600 italic">{t('messagesPage.typing')}</p>
@@ -489,7 +489,7 @@ export default function Messages() {
                   )}
                 </div>
                 {selectedContact.type === 'guest' && (
-                  <div className="flex items-center gap-1 shrink-0 bg-mare-head border border-mare-card rounded-sm p-0.5">
+                  <div className="flex items-center gap-1 shrink-0 ml-auto bg-mare-head border border-mare-card rounded-sm p-0.5">
                     <button
                       type="button"
                       aria-pressed={guestChannel === 'internal'}
@@ -573,9 +573,7 @@ export default function Messages() {
                     <div className="flex items-center gap-1.5 bg-ocean-50 border border-ocean-200 rounded-xs px-2 py-1 text-xs font-body text-ocean-700">
                       <Paperclip size={12} strokeWidth={1.75} />
                       <span className="max-w-[180px] truncate">{attachment.name}</span>
-                      <button onClick={() => setAttachment(null)} className="hover:text-error">
-                        <X size={12} strokeWidth={2} />
-                      </button>
+                      <IconBtn icon={X} label={t('messagesPage.removeAttachment')} onClick={() => setAttachment(null)} hover={DELETE_HOVER} className="text-ocean-700" />
                     </div>
                   </div>
                 )}
@@ -619,6 +617,7 @@ export default function Messages() {
                       (selectedContact.type === 'guest' && guestChannel !== 'internal' && !selectedContact[guestChannel === 'email' ? 'email' : 'phone'])
                     }
                     size="sm"
+                    className="min-h-11 md:min-h-0"
                   >
                     {t('messagesPage.send')}
                   </Button>
@@ -669,7 +668,7 @@ export default function Messages() {
                     />
                     <span className="text-sm font-body text-n-700">
                       {s.name}
-                      <span className="text-n-400"> · {rotuloCargo(s.role, t, lang)}</span>
+                      <span className="text-n-500"> · {rotuloCargo(s.role, t, lang)}</span>
                     </span>
                   </label>
                 ))}

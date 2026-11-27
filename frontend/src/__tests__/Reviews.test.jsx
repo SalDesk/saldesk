@@ -97,7 +97,7 @@ describe('Reviews', () => {
     const rotulo = (texto) => screen.getAllByText(texto).find(e => e.tagName === 'SPAN');
     expect(rotulo('Respondidas').nextElementSibling.textContent).toBe('1/ 12');
     expect(rotulo('Públicas').nextElementSibling.textContent).toBe('3');
-    expect(screen.getByText('sem resposta')).toBeInTheDocument();
+    expect(screen.getAllByText('Sem resposta').some(e => e.closest('article'))).toBe(true);
     expect(screen.getByText('9')).toBeInTheDocument();
   });
 
@@ -260,9 +260,19 @@ describe('Reviews', () => {
       expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
     });
 
+    it('o botão Responder e o Limpar filtros têm 44 px no telemóvel', async () => {
+      await abre();
+      for (const b of screen.getAllByRole('button', { name: 'Responder' })) {
+        expect(b).toHaveClass('min-h-11', 'md:min-h-0', 'shrink-0');
+      }
+      fireEvent.change(screen.getByPlaceholderText(/Pesquisar/), { target: { value: 'zzzzzz' } });
+      expect(await screen.findByRole('button', { name: 'Limpar filtros' })).toHaveClass('min-h-11', 'md:min-h-0');
+    });
+
     it('o quadro de pendentes é um MareStat com o mesmo valor e o botão "Ver agora"', async () => {
       await abre();
-      const quadro = screen.getByText('sem resposta').closest('article');
+      const quadro = screen.getAllByText('Sem resposta').map(e => e.closest('article')).find(Boolean);
+      expect(quadro).toBeTruthy();
       expect(quadro).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
       expect(quadro.querySelector('p.font-display').textContent).toBe('1');
       expect(within(quadro).getByRole('button', { name: 'Ver agora' })).toBeInTheDocument();

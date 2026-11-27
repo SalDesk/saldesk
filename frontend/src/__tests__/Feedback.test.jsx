@@ -306,6 +306,11 @@ describe('Feedback', () => {
       expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
     });
 
+    it('o botão Actualizar tem 44 px no telemóvel', async () => {
+      await abre();
+      expect(screen.getByRole('button', { name: 'Actualizar' })).toHaveClass('min-h-11', 'md:min-h-0');
+    });
+
     it('os KPIs são MareStat com os mesmos valores', async () => {
       await abre();
       ['Tours realizados', 'Avaliações recebidas', 'Taxa de resposta', 'Média geral'].forEach(r => {

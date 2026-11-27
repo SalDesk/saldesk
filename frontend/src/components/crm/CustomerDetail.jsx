@@ -178,8 +178,8 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
 
             {/* Quick actions */}
             <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-mare-card shrink-0">
-              <Button variant="secondary" size="sm" icon={Mail} onClick={() => setSection('comms')}>{t('customers.email')}</Button>
-              <Button variant="secondary" size="sm" icon={MessageCircle} onClick={handleWhatsApp}>WhatsApp</Button>
+              <Button variant="secondary" size="sm" icon={Mail} className="min-h-11 md:min-h-0" onClick={() => setSection('comms')}>{t('customers.email')}</Button>
+              <Button variant="secondary" size="sm" icon={MessageCircle} className="min-h-11 md:min-h-0" onClick={handleWhatsApp}>WhatsApp</Button>
             </div>
 
             {/* Section tabs */}
@@ -223,7 +223,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                       {(customer.tags || []).filter(t => !SEGMENT_TAGS.includes(t)).map(tag => (
                         <span key={tag} className="flex items-center gap-1 pl-3 pr-1 min-h-8 bg-sand-100 border border-sand-200 text-n-800 rounded-full text-xs font-body font-medium">
                           <Tag size={9} strokeWidth={1.75} />{rotuloEtiqueta(tag, t, lang)}
-                          <button onClick={() => toggleTag(tag)} disabled={savingTags} className="ml-0.5 inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-6 md:min-w-6 rounded-full hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"><X size={9} strokeWidth={2} /></button>
+                          <button onClick={() => toggleTag(tag)} disabled={savingTags} aria-label={t('customerDetail.removeTag', { tag: rotuloEtiqueta(tag, t, lang) })} className="ml-0.5 inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-6 md:min-w-6 rounded-full hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"><X size={9} strokeWidth={2} /></button>
                         </span>
                       ))}
                     </div>
@@ -251,8 +251,8 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                       <div className="space-y-2">
                         <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
                         <div className="flex gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => setEditNotes(false)} className="flex-1">{t('common.cancel')}</Button>
-                          <Button size="sm" loading={saving} onClick={saveNotes} className="flex-1">{t('common.save')}</Button>
+                          <Button size="sm" variant="secondary" onClick={() => setEditNotes(false)} className="flex-1 min-h-11 md:min-h-0">{t('common.cancel')}</Button>
+                          <Button size="sm" loading={saving} onClick={saveNotes} className="flex-1 min-h-11 md:min-h-0">{t('common.save')}</Button>
                         </div>
                       </div>
                     ) : (
@@ -302,7 +302,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                   <section className="rounded-[14px] border border-mare-card bg-mare-head p-4">
                     <h3 className="text-xs font-body font-bold uppercase tracking-wide text-ocean-900 mb-3">{t('customerDetail.sendEmailTitle')}</h3>
                     {emailSent ? (
-                      <div className="flex items-center gap-2 px-3 py-2.5 bg-[var(--success-light)] border border-n-200 rounded-[14px] text-sm font-body text-[var(--success)]">
+                      <div className="flex items-center gap-2 px-3 py-2.5 bg-[var(--success-light)] border border-mare-card rounded-[14px] text-sm font-body text-[var(--success)]">
                         <Check size={14} strokeWidth={2} />
                         {t('customerDetail.emailSent')}
                       </div>

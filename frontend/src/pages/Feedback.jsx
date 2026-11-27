@@ -221,7 +221,7 @@ export default function Feedback() {
         subtitle={t('feedbackPage.subtitle')}
         eyebrow={t('nav.sections.clientes')}
         actions={
-          <Button variant="secondary" icon={RefreshCw} size="sm"
+          <Button variant="secondary" icon={RefreshCw} size="sm" className="min-h-11 md:min-h-0"
             onClick={() => { setLoading(true); window.location.reload(); }}>
             {t('feedbackPage.refresh')}
           </Button>
