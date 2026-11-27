@@ -103,6 +103,66 @@ describe('Messages', () => {
     return screen.getByRole('button', { name: 'Enviar' });
   }
 
+  describe('estilo Mare', () => {
+    it('o cabeçalho traz o eyebrow Clientes', async () => {
+      await abre();
+      expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
+    });
+
+    it('a lista de contactos e a conversa são cartões Mare', async () => {
+      await abre();
+      const lista = screen.getByText('Colaboradores').closest('[data-mare-lista]');
+      expect(lista).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      const conversa = document.querySelector('[data-mare-conversa]');
+      expect(conversa).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+    });
+
+    it('o contacto activo tem sinal sem cor (aria-current e nome a negrito) e os outros não', async () => {
+      await abre();
+      const rui = contacto('Rui');
+      await abreConversa('Rui');
+      expect(rui).toHaveAttribute('aria-current', 'true');
+      expect(rui.querySelector('p.font-body.truncate')).toHaveClass('font-bold');
+      expect(contacto('Ana')).not.toHaveAttribute('aria-current');
+    });
+
+    it('a contagem de não lidas continua a ser texto', async () => {
+      await abre();
+      evento('message:new', { id: 'x1', sender_type: 'staff', sender_id: 's2', recipient_id: 'op1', content: 'Oi', created_at: AGORA });
+      expect(await within(contacto('Ana')).findByText('1')).toBeInTheDocument();
+    });
+
+    it('as bolhas quebram mensagens compridas sem espaços e as horas usam font-mono', async () => {
+      await abre();
+      const longa = 'x'.repeat(300);
+      await abreConversa('Rui', [
+        { id: 'l1', sender_type: 'staff', sender_id: 's1', recipient_id: 'op1', content: longa, created_at: AGORA, is_read: true },
+        { id: 'l2', sender_type: 'manager', sender_id: 'op1', recipient_id: 's1', content: 'Resposta', created_at: AGORA, channel: 'internal', is_read: false },
+      ]);
+      const texto = screen.getByText(longa);
+      expect(texto).toHaveClass('break-words');
+      const bolha = texto.closest('div.max-w-\\[72\\%\\]');
+      expect(bolha).toHaveClass('break-words', 'min-w-0');
+      expect(bolha.parentElement).toHaveClass('min-w-0');
+      const hora = bolha.querySelector('span.font-mono');
+      expect(hora).not.toBeNull();
+      expect(hora).toHaveClass('tabular-nums');
+    });
+
+    it('a caixa de escrita fica numa caixa interior Mare e o botão de voltar tem nome', async () => {
+      await abre();
+      await abreConversa('Rui');
+      const form = caixa().closest('form');
+      expect(form).toHaveClass('bg-mare-head', 'border', 'border-mare-card', 'rounded-[14px]');
+      const voltar = screen.getByRole('button', { name: 'Voltar à lista de conversas' });
+      expect(voltar).toHaveClass('md:hidden', 'min-h-11');
+      const conversa = document.querySelector('[data-mare-conversa]');
+      expect(conversa).toHaveClass('flex');
+      fireEvent.click(voltar);
+      expect(conversa).toHaveClass('hidden');
+    });
+  });
+
   it('lista colaboradores e conversas (grupos e clientes) por actividade mais recente', async () => {
     await abre();
     expect(screen.getByText('Colaboradores')).toBeInTheDocument();

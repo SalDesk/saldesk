@@ -140,6 +140,35 @@ describe('FounderChat', () => {
     renderPagina();
     expect(await screen.findByText('Sem mensagens ainda')).toBeInTheDocument();
   });
+  describe('estilo Mare', () => {
+    it('o cabeçalho traz o eyebrow Clientes', async () => {
+      await abre();
+      expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
+    });
+
+    it('a conversa é um cartão Mare e a caixa de escrita uma caixa interior Mare', async () => {
+      await abre();
+      const cartao = document.querySelector('[data-mare-conversa]');
+      expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      const caixa = screen.getByPlaceholderText('Escreve uma mensagem...').closest('[data-mare-caixa]');
+      expect(caixa).toHaveClass('bg-mare-head', 'border', 'border-mare-card', 'rounded-[14px]');
+    });
+
+    it('as bolhas quebram mensagens compridas sem espaços e as horas usam font-mono', async () => {
+      const longa = 'y'.repeat(300);
+      getFounderConversation.mockResolvedValue([{ id: 'l1', sender_type: 'team', content: longa, created_at: new Date().toISOString() }]);
+      renderPagina();
+      const texto = await screen.findByText(longa);
+      expect(texto).toHaveClass('break-words');
+      const bolha = texto.closest('div');
+      expect(bolha).toHaveClass('break-words', 'min-w-0');
+      expect(bolha.parentElement).toHaveClass('min-w-0');
+      const hora = bolha.querySelector('p.font-mono');
+      expect(hora).not.toBeNull();
+      expect(hora).toHaveClass('tabular-nums');
+    });
+  });
+
 });
 
 /* Painel em ingles: os rotulos mudam; o que as pessoas escreveram aparece como foi escrito */
