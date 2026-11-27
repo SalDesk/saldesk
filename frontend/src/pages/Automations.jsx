@@ -330,7 +330,7 @@ function SequenceCard({ seq, automation, onSaved }) {
           disabled={toggling}
           aria-pressed={isActive}
           aria-label={t(isActive ? 'automations.deactivate' : 'automations.activate', { title: titulo })}
-          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors before:absolute before:content-[''] before:-inset-x-1 before:-inset-y-3 ${FOCO} ${toggling ? 'opacity-50' : ''} ${isActive ? 'bg-ocean-700' : 'bg-n-300'}`}
+          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors before:absolute before:content-[''] before:-inset-x-1.5 before:-inset-y-3.5${FOCO} ${toggling ? 'opacity-50' : ''} ${isActive ? 'bg-ocean-700' : 'bg-n-300'}`}
         >
           <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-4' : 'translate-x-0'}`} />
         </button>

@@ -730,6 +730,25 @@ describe('Marketing: estilo Mare', () => {
   });
 });
 
+/* ───────────────────────── niveis de titulo ───────────────────────── */
+
+describe('Marketing: niveis de titulo', () => {
+  it('os_titulos_de_seccao_de_cada_separador_sao_h2_logo_a_seguir_ao_h1', async () => {
+    await montar();
+    expect(screen.getByRole('heading', { level: 2, name: 'Preview' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+    await abrir('Indicações', 'O seu link de indicação');
+    expect(screen.getByRole('heading', { level: 2, name: 'Indique outro operador' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /^As suas indicações/ })).toBeInTheDocument();
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+    await abrir('Estatísticas', 'Visitas ao perfil');
+    for (const nome of [/^Posts — /, 'Origem das reservas', 'Link de reserva directa']) {
+      expect(screen.getByRole('heading', { level: 2, name: nome })).toBeInTheDocument();
+    }
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+  });
+});
+
 /* ───────────────────────── painel em ingles ───────────────────────── */
 
 describe('Marketing em ingles', () => {

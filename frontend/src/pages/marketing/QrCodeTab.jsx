@@ -109,7 +109,7 @@ export default function QrCodeTab({ slug, units }) {
 
       {/* Preview */}
       <section className={`${CARTAO} flex flex-col items-center gap-4`}>
-        <h3 className={`${TITULO} self-start`}>{t('marketingPage.qr.preview')}</h3>
+        <h2 className={`${TITULO} self-start`}>{t('marketingPage.qr.preview')}</h2>
         <div className="w-full min-h-56 flex items-center justify-center rounded-[14px] border border-mare-card bg-white p-6">
           {loading ? (
             <LoadingSpinner size={32} />

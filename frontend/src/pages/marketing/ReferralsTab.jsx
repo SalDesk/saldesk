@@ -52,7 +52,7 @@ export default function ReferralsTab({ referrals, loading }) {
           <Gift size={22} strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className={TITULO}>{t('marketingPage.referrals.inviteTitle')}</h3>
+          <h2 className={TITULO}>{t('marketingPage.referrals.inviteTitle')}</h2>
           <p className="text-sm font-body text-n-600 mt-0.5">
             {t('marketingPage.referrals.inviteText')}
           </p>
@@ -75,7 +75,7 @@ export default function ReferralsTab({ referrals, loading }) {
       </div>
 
       <section className={CARTAO}>
-        <h3 className={`${TITULO} mb-3`}>{t('marketingPage.referrals.yours', { n: list.length })}</h3>
+        <h2 className={`${TITULO} mb-3`}>{t('marketingPage.referrals.yours', { n: list.length })}</h2>
         {list.length === 0 ? (
           <EmptyState icon={UserPlus} title={t('marketingPage.referrals.none')} />
         ) : (

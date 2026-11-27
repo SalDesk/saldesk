@@ -201,7 +201,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
                 </p>
                 <p className="text-xs font-body text-n-500 truncate">{t('loyaltyPage.points.redeemHelp', { pct: currentLevel.discount_pct })}</p>
               </div>
-              <Button size="sm" variant="secondary" loading={redeeming} disabled={current <= 0} onClick={handleRedeem} className="shrink-0">
+              <Button size="sm" variant="secondary" loading={redeeming} disabled={current <= 0} onClick={handleRedeem} className="shrink-0 min-h-11 md:min-h-0">
                 {t('loyaltyPage.points.redeem')}
               </Button>
             </div>
@@ -327,10 +327,10 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
             />
           )}
           <div className="flex gap-2 pt-1">
-            <Button variant="secondary" size="sm" onClick={() => { setDraft({ ...level }); setOpen(false); }} className="flex-1">
+            <Button variant="secondary" size="sm" onClick={() => { setDraft({ ...level }); setOpen(false); }} className="flex-1 min-h-11 md:min-h-0">
               {t('loyaltyPage.level.cancel')}
             </Button>
-            <Button size="sm" icon={Save} onClick={handleSave} className="flex-1">
+            <Button size="sm" icon={Save} onClick={handleSave} className="flex-1 min-h-11 md:min-h-0">
               {t('loyaltyPage.level.save')}
             </Button>
           </div>
@@ -502,7 +502,7 @@ export default function Loyalty() {
         <div className="space-y-5">
           {/* Points per euro */}
           <section className={CARTAO}>
-            <h3 className={`${TITULO} mb-4`}>{t('loyaltyPage.earning.title')}</h3>
+            <h2 className={`${TITULO} mb-4`}>{t('loyaltyPage.earning.title')}</h2>
             <div className="flex flex-wrap items-end gap-x-4 max-w-xs">
               <Input
                 label={t('loyaltyPage.earning.pointsPerEuro')} aria-label={t('loyaltyPage.earning.pointsPerEuro')}
@@ -519,7 +519,7 @@ export default function Loyalty() {
 
           {/* Levels */}
           <section className={CARTAO}>
-            <h3 className={`${TITULO} mb-4`}>{t('loyaltyPage.tiers.title')}</h3>
+            <h2 className={`${TITULO} mb-4`}>{t('loyaltyPage.tiers.title')}</h2>
             <div className="space-y-3">
               {config.levels.map((l, i) => (
                 <LevelCard key={l.name} level={l} index={i} onUpdate={updateLevel} totalCustomers={customers.length} />

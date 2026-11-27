@@ -696,6 +696,17 @@ describe('Automações: estilo Mare', () => {
     const tabela = await screen.findByRole('table');
     expect(tabela.closest('section').className).toContain('border-mare-card');
     expect(within(tabela).getByText('Ana')).toBeInTheDocument();
+    const data = within(tabela).getAllByRole('row')[1].querySelectorAll('td')[0].querySelector('span');
+    expect(data.className).toContain('font-mono');
+    expect(data.className).toContain('tabular-nums');
+  });
+
+  it('o_interruptor_activar_desactivar_tem_area_de_toque_de_44px', async () => {
+    await montar();
+    const b = screen.getByRole('button', { name: `Desactivar ${T_EMAIL}` });
+    /* border-2 faz o pseudo-elemento medir-se a partir da caixa de preenchimento: 32x16 + 2x6 e 2x14 = 44x44 */
+    expect(b.className).toContain('before:-inset-x-1.5');
+    expect(b.className).toContain('before:-inset-y-3.5');
   });
 
   it('os_botoes_de_PT_EN_e_as_variaveis_tem_44px_no_telemovel_e_anel_de_foco', async () => {

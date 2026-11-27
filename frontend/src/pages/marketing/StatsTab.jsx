@@ -43,7 +43,7 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Posts this month */}
         <section className={CARTAO}>
-          <h3 className={`${TITULO} mb-4`}>{t('marketingPage.stats.postsTitle', { month: nomeMes(now.getMonth(), t) })}</h3>
+          <h2 className={`${TITULO} mb-4`}>{t('marketingPage.stats.postsTitle', { month: nomeMes(now.getMonth(), t) })}</h2>
           <div className="flex flex-wrap gap-x-6 gap-y-3">
             <div>
               <p className={`${NUM} font-bold text-3xl text-ocean-900`}>{postsThisMonth.length}</p>
@@ -68,7 +68,7 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
 
         {/* Origin */}
         <section className={CARTAO}>
-          <h3 className={`${TITULO} mb-4`}>{t('marketingPage.stats.origin')}</h3>
+          <h2 className={`${TITULO} mb-4`}>{t('marketingPage.stats.origin')}</h2>
           {sources ? (
             <div className="space-y-2.5">
               {sources.map(([src, count]) => (
@@ -92,7 +92,7 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
       {/* Booking link */}
       {bookingLink && (
         <section className={CARTAO}>
-          <h3 className={`${TITULO} mb-3`}>{t('marketingPage.stats.bookingLink')}</h3>
+          <h2 className={`${TITULO} mb-3`}>{t('marketingPage.stats.bookingLink')}</h2>
           <div className="flex items-center gap-3 flex-wrap">
             <div className={`${CAIXA} flex-1`}>
               <p className="text-xs font-mono text-n-700 break-all">{bookingLink}</p>

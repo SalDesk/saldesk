@@ -588,4 +588,20 @@ describe('Vouchers: estilo Mare', () => {
     expect(b.className).toContain('min-h-11');
     expect(b.className).toContain('focus-visible:ring-sand-500');
   });
+
+  it('os_botoes_Enviar_do_WhatsApp_e_o_Gerar_tem_44px_no_telemovel_e_anel_de_foco', async () => {
+    await montar();
+    fireEvent.click(within(linha('VERAO20')).getByTitle('Partilhar'));
+    const enviar = within(screen.getByRole('dialog')).getAllByRole('button', { name: /Enviar/ });
+    expect(enviar).toHaveLength(2);
+    for (const b of enviar) {
+      expect(b.className).toContain('min-h-11');
+      expect(b.className).toContain('md:min-h-0');
+      expect(b.className).toContain('focus-visible:ring-sand-500');
+    }
+    cleanup();
+    await montar();
+    fireEvent.click(novoVoucher());
+    expect(screen.getByRole('button', { name: 'Gerar' }).className).toContain('min-h-11');
+  });
 });

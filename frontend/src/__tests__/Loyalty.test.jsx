@@ -851,4 +851,26 @@ describe('Fidelidade: estilo Mare', () => {
     expect(screen.getByTitle('Copiar código').className).toContain('min-h-11');
     expect((await screen.findByText('+50')).className).toContain('tabular-nums');
   });
+
+  it('os_botoes_Cancelar_Guardar_do_nivel_e_Resgatar_do_modal_tem_44px_no_telemovel', async () => {
+    await montar();
+    abrirNivel('0–100 pts · 5% desconto');
+    for (const n of ['Cancelar', 'Guardar']) {
+      expect(screen.getByRole('button', { name: n }).className).toContain('min-h-11');
+      expect(screen.getByRole('button', { name: n }).className).toContain('md:min-h-0');
+    }
+    cleanup();
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    expect(screen.getByRole('button', { name: 'Resgatar' }).className).toContain('min-h-11');
+  });
+
+  it('os_titulos_de_regra_e_niveis_sao_h2_logo_a_seguir_ao_h1', async () => {
+    await montar();
+    for (const nome of ['Regra de acumulação', 'Níveis e recompensas']) {
+      expect(screen.getByRole('heading', { level: 2, name: nome })).toBeInTheDocument();
+    }
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+  });
 });

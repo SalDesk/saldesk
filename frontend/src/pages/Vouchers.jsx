@@ -131,7 +131,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
             <Input label={t('vouchersPage.modal.code')} aria-label={t('vouchersPage.modal.code')} value={form.code} onChange={set('code')} required
               className="font-mono uppercase" placeholder={t('vouchersPage.modal.codePlaceholder')} />
           </div>
-          <Button type="button" variant="secondary" size="sm"
+          <Button type="button" variant="secondary" size="sm" className="min-h-11 md:min-h-0"
             onClick={() => setForm(p => ({ ...p, code: generateCode() }))}>
             {t('vouchersPage.modal.generate')}
           </Button>
@@ -245,7 +245,7 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <CopyBtn text={msgPt} />
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgPt)}`, '_blank', 'noopener')}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
+                className="flex items-center gap-1.5 text-xs px-2 py-1 min-h-11 md:min-h-0 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                 <Share2 size={11} strokeWidth={1.75} />{t('vouchersPage.share.send')}
               </button>
             </div>
@@ -254,7 +254,7 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <CopyBtn text={msgEn} />
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgEn)}`, '_blank', 'noopener')}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
+                className="flex items-center gap-1.5 text-xs px-2 py-1 min-h-11 md:min-h-0 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                 <Share2 size={11} strokeWidth={1.75} />{t('vouchersPage.share.send')}
               </button>
             </div>
