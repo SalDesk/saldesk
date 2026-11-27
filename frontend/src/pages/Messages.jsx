@@ -14,6 +14,7 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import EmptyState from '../components/ui/EmptyState';
 import { ehDoOperador } from '../utils/mensagens';
@@ -109,19 +110,20 @@ function ContactRow({ contact, isOnline, unread, isActive, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-n-50 transition-colors border-b border-n-100 ${isActive ? 'bg-ocean-50' : ''}`}
+      aria-current={isActive ? 'true' : undefined}
+      className={`w-full flex items-center gap-3 px-3 py-3 min-h-11 text-left hover:bg-n-50 transition-colors border-b border-mare-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sand-500 ${isActive ? 'bg-ocean-50' : ''}`}
     >
       <ContactAvatar contact={contact} online={isOnline} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-1">
-          <p className={`text-sm font-body truncate ${hasUnread ? 'font-bold text-n-900' : 'font-semibold text-n-900'}`}>{contact.label}</p>
+          <p className={`text-sm font-body truncate ${hasUnread || isActive ? 'font-bold text-n-900' : 'font-semibold text-n-900'}`}>{contact.label}</p>
           {hasUnread && (
-            <span className="shrink-0 w-5 h-5 rounded-full bg-ocean-700 text-white text-xs font-body font-bold flex items-center justify-center">
+            <span className="shrink-0 w-5 h-5 rounded-full bg-ocean-700 text-white text-xs font-mono tabular-nums font-bold flex items-center justify-center">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
         </div>
-        <p className={`text-xs font-body truncate mt-0.5 ${hasUnread ? 'font-bold text-n-700' : 'text-n-400'}`}>
+        <p className={`text-xs font-body truncate mt-0.5 ${hasUnread ? 'font-bold text-n-700' : 'text-n-600'}`}>
           {contact.type === 'staff' && isOnline ? (
             <span className="text-[var(--success)]">{t('messagesPage.online')}</span>
           ) : contact.sublabel}
@@ -386,6 +388,7 @@ export default function Messages() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.clientes')}
         title={`${t('messagesPage.title')}${totalUnread > 0 ? ` (${totalUnread})` : ''}`}
         actions={
           <Button variant="secondary" icon={Plus} onClick={() => setGroupModal(true)}>
@@ -395,14 +398,14 @@ export default function Messages() {
       />
 
       <div
-        className="flex bg-white rounded-md border border-n-200 shadow-sm overflow-hidden"
+        className="flex gap-4"
         style={{ height: 'calc(100vh - 168px)', minHeight: 500 }}
       >
-        {/* Contacts sidebar */}
-        <div className={`flex-col w-full md:w-72 border-r border-n-200 shrink-0 ${showChat ? 'hidden md:flex' : 'flex'}`}>
-          <div className="px-3 py-2.5 border-b border-n-100">
+        {/* Contacts sidebar: cartao Mare */}
+        <div data-mare-lista className={`flex-col w-full md:w-56 lg:w-72 bg-white border border-mare-card rounded-[18px] overflow-hidden shrink-0 ${showChat ? 'hidden md:flex' : 'flex'}`}>
+          <div className="px-3 py-2.5 border-b border-mare-card">
             <div className="relative">
-              <Search size={13} strokeWidth={1.75} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-n-400 pointer-events-none" />
+              <Search size={13} strokeWidth={1.75} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-n-500 pointer-events-none" />
               <Input
                 type="text"
                 value={search}
@@ -415,14 +418,14 @@ export default function Messages() {
 
           <div className="flex-1 overflow-y-auto">
             {filteredStaff.length === 0 && filteredOther.length === 0 ? (
-              <p className="p-4 text-xs font-body text-n-400 text-center">
+              <p className="p-4 text-xs font-body text-n-600 text-center">
                 {search ? t('common.noResults') : t('messagesPage.emptyList')}
               </p>
             ) : (
               <>
                 {filteredStaff.length > 0 && (
                   <>
-                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">{t('messagesPage.staff')}</p>
+                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-600">{t('messagesPage.staff')}</p>
                     {filteredStaff.map(c => (
                       <ContactRow
                         key={c.id}
@@ -437,7 +440,7 @@ export default function Messages() {
                 )}
                 {filteredOther.length > 0 && (
                   <>
-                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">{t('messagesPage.conversations')}</p>
+                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-600">{t('messagesPage.conversations')}</p>
                     {filteredOther.map(c => (
                       <ContactRow
                         key={c.id}
@@ -455,8 +458,8 @@ export default function Messages() {
           </div>
         </div>
 
-        {/* Chat panel */}
-        <div className={`flex-1 flex-col overflow-hidden ${showChat ? 'flex' : 'hidden md:flex'}`}>
+        {/* Chat panel: cartao Mare */}
+        <div data-mare-conversa className={`flex-1 min-w-0 flex-col bg-white border border-mare-card rounded-[18px] overflow-hidden ${showChat ? 'flex' : 'hidden md:flex'}`}>
           {!selectedContact ? (
             <div className="flex-1 flex items-center justify-center">
               <EmptyState icon={MessageCircle} title={t('messagesPage.selectConversation')} />
@@ -464,34 +467,35 @@ export default function Messages() {
           ) : (
             <>
               {/* Chat header */}
-              <div className="px-4 py-3 border-b border-n-200 flex items-center gap-3">
-                <button
-                  className="md:hidden p-1 rounded hover:bg-n-50"
+              <div className="px-4 py-3 border-b border-mare-card flex flex-wrap items-center gap-3">
+                <IconBtn
+                  icon={ArrowLeft}
+                  label={t('messagesPage.backToList')}
                   onClick={() => setShowChat(false)}
-                >
-                  <ArrowLeft size={18} strokeWidth={1.75} className="text-n-600" />
-                </button>
+                  hover={EDIT_HOVER}
+                  className="md:hidden text-n-600"
+                />
                 <ContactAvatar
                   contact={selectedContact}
                   online={selectedContact.type === 'staff' && onlineUsers.has(selectedContact.id)}
                   size={32}
                 />
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-[7rem]">
                   <p className="font-display font-semibold text-sm text-n-900 truncate">{selectedContact.label}</p>
                   {typingContacts.has(selectedContact.id) ? (
                     <p className="text-xs font-body text-ocean-600 italic">{t('messagesPage.typing')}</p>
                   ) : (
-                    <p className="text-xs font-body text-n-400 truncate">{selectedContact.sublabel}</p>
+                    <p className="text-xs font-body text-n-600 truncate">{selectedContact.sublabel}</p>
                   )}
                 </div>
                 {selectedContact.type === 'guest' && (
-                  <div className="flex items-center gap-1 shrink-0 bg-n-100 rounded-sm p-0.5">
+                  <div className="flex flex-wrap max-w-full items-center gap-1 ml-auto bg-mare-head border border-mare-card rounded-sm p-0.5">
                     <button
                       type="button"
                       aria-pressed={guestChannel === 'internal'}
                       onClick={() => setGuestChannel('internal')}
                       title={t('messagesPage.chatTitle')}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors ${guestChannel === 'internal' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+                      className={`flex items-center gap-1 px-2 py-1 min-h-11 md:min-h-0 rounded-xs text-xs font-body font-semibold transition-colors ${guestChannel === 'internal' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
                     >
                       <MessageCircle size={13} strokeWidth={1.75} /> {t('messagesPage.chat')}
                     </button>
@@ -501,7 +505,7 @@ export default function Messages() {
                       aria-pressed={guestChannel === 'email'}
                       onClick={() => setGuestChannel('email')}
                       title={selectedContact.email || t('messagesPage.noEmail')}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'email' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+                      className={`flex items-center gap-1 px-2 py-1 min-h-11 md:min-h-0 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'email' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
                     >
                       <Mail size={13} strokeWidth={1.75} /> {t('messagesPage.email')}
                     </button>
@@ -511,7 +515,7 @@ export default function Messages() {
                       aria-pressed={guestChannel === 'whatsapp'}
                       onClick={() => setGuestChannel('whatsapp')}
                       title={selectedContact.phone || t('messagesPage.noPhone')}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'whatsapp' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+                      className={`flex items-center gap-1 px-2 py-1 min-h-11 md:min-h-0 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'whatsapp' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
                     >
                       <MessageSquare size={13} strokeWidth={1.75} /> WhatsApp
                     </button>
@@ -520,35 +524,35 @@ export default function Messages() {
               </div>
 
               {/* Messages area */}
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+              <div className="flex-1 overflow-y-auto px-[22px] py-4 space-y-3">
                 {loadingMsgs ? (
                   <div className="flex justify-center py-8"><LoadingSpinner /></div>
                 ) : messages.length === 0 ? (
                   <div className="flex justify-center py-12">
-                    <p className="text-xs font-body text-n-400">{t('messagesPage.noMessages')}</p>
+                    <p className="text-xs font-body text-n-600">{t('messagesPage.noMessages')}</p>
                   </div>
                 ) : messages.map(msg => {
                   const isMe = ehDoOperador(msg);
                   return (
-                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[72%] px-3 py-2 rounded-md text-sm font-body ${isMe ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-800'}`}>
+                    <div key={msg.id} className={`flex min-w-0 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`min-w-0 max-w-[72%] break-words px-3 py-2 rounded-md text-sm font-body ${isMe ? 'bg-ocean-700 text-white' : 'bg-mare-head border border-mare-card text-n-800'}`}>
                         {!isMe && (
-                          <p className="text-xs font-semibold mb-1 opacity-60 capitalize">{msg.sender_name || msg.sender_type}</p>
+                          <p className="text-xs font-semibold mb-1 text-n-600 capitalize">{msg.sender_name || msg.sender_type}</p>
                         )}
                         {msg.sender_type === 'system' && (
                           <p className="text-xs font-semibold mb-1 opacity-70">{t('messagesPage.autoReply')}</p>
                         )}
                         <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                         {msg.channel && msg.channel !== 'internal' && (
-                          <p className={`flex items-center gap-1 text-xs mt-1 ${msg.delivery_status === 'failed' ? 'text-[var(--error-light)]' : 'opacity-60'}`}>
+                          <p className={`flex items-center gap-1 text-xs mt-1 ${msg.delivery_status === 'failed' ? 'text-[var(--error-light)]' : (isMe ? 'text-ocean-100' : 'text-n-600')}`}>
                             {msg.channel === 'email' ? <Mail size={11} strokeWidth={1.75} /> : <MessageSquare size={11} strokeWidth={1.75} />}
                             {msg.delivery_status === 'failed' ? (
                               <span className="flex items-center gap-1"><AlertTriangle size={11} strokeWidth={2} /> {t('messagesPage.deliveryFailed')}</span>
                             ) : msg.channel === 'email' ? t('messagesPage.sentByEmail') : t('messagesPage.sentByWhatsapp')}
                           </p>
                         )}
-                        <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? 'opacity-60' : ''}`}>
-                          <span className="text-xs">{formatTime(msg.created_at, lang)}</span>
+                        <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? 'text-ocean-100' : 'text-n-600'}`}>
+                          <span className="text-xs font-mono tabular-nums">{formatTime(msg.created_at, lang)}</span>
                           {msg.sender_type === 'manager' && msg.channel === 'internal' && (
                             msg.is_read
                               ? <CheckCheck size={12} strokeWidth={2} className="text-sand-300" />
@@ -563,19 +567,17 @@ export default function Messages() {
               </div>
 
               {/* Input area */}
-              <div className="border-t border-n-200">
+              <div className="border-t border-mare-card">
                 {attachment && (
                   <div className="px-4 pt-2.5 pb-0 flex items-center gap-2">
                     <div className="flex items-center gap-1.5 bg-ocean-50 border border-ocean-200 rounded-xs px-2 py-1 text-xs font-body text-ocean-700">
                       <Paperclip size={12} strokeWidth={1.75} />
                       <span className="max-w-[180px] truncate">{attachment.name}</span>
-                      <button onClick={() => setAttachment(null)} className="hover:text-error">
-                        <X size={12} strokeWidth={2} />
-                      </button>
+                      <IconBtn icon={X} label={t('messagesPage.removeAttachment')} onClick={() => setAttachment(null)} hover={DELETE_HOVER} className="text-ocean-700" />
                     </div>
                   </div>
                 )}
-                <form onSubmit={handleSend} className="px-4 py-3 flex items-center gap-2">
+                <form onSubmit={handleSend} className="m-3 px-3 py-2 flex items-center gap-2 bg-mare-head border border-mare-card rounded-[14px]">
                   {selectedContact.type !== 'guest' && (
                     <>
                       <input
@@ -585,17 +587,17 @@ export default function Messages() {
                         onChange={handleFileChange}
                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
                       />
-                      <button
-                        type="button"
-                        onClick={() => fileRef.current?.click()}
-                        className="p-2 rounded-sm text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors shrink-0"
+                      <IconBtn
+                        icon={Paperclip}
+                        label={t('messagesPage.attachFile')}
                         title={t('messagesPage.attachFile')}
-                      >
-                        <Paperclip size={16} strokeWidth={1.75} />
-                      </button>
+                        onClick={() => fileRef.current?.click()}
+                        hover={EDIT_HOVER}
+                        className="text-n-600"
+                      />
                     </>
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <Input
                       value={text}
                       onChange={handleTextChange}
@@ -615,6 +617,7 @@ export default function Messages() {
                       (selectedContact.type === 'guest' && guestChannel !== 'internal' && !selectedContact[guestChannel === 'email' ? 'email' : 'phone'])
                     }
                     size="sm"
+                    className="min-h-11 md:min-h-0"
                   >
                     {t('messagesPage.send')}
                   </Button>
@@ -665,7 +668,7 @@ export default function Messages() {
                     />
                     <span className="text-sm font-body text-n-700">
                       {s.name}
-                      <span className="text-n-400"> · {rotuloCargo(s.role, t, lang)}</span>
+                      <span className="text-n-500"> · {rotuloCargo(s.role, t, lang)}</span>
                     </span>
                   </label>
                 ))}

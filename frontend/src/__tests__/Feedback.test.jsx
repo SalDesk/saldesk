@@ -83,7 +83,7 @@ describe('Feedback', () => {
     await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
   }
   function kpi(rotulo) {
-    return screen.getByText(rotulo).previousElementSibling.textContent;
+    return screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
   }
   function separador(texto) {
     fireEvent.click(screen.getByText(texto));
@@ -299,6 +299,70 @@ describe('Feedback', () => {
     expect(kpi('Tours realizados')).toBe('0');
     expect(kpi('Média geral')).toBe('—');
   });
+
+  describe('estilo Mare', () => {
+    it('o cabeçalho traz o eyebrow Clientes', async () => {
+      await abre();
+      expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
+    });
+
+    it('o botão Actualizar tem 44 px no telemóvel', async () => {
+      await abre();
+      expect(screen.getByRole('button', { name: 'Actualizar' })).toHaveClass('min-h-11', 'md:min-h-0');
+    });
+
+    it('os KPIs são MareStat com os mesmos valores', async () => {
+      await abre();
+      ['Tours realizados', 'Avaliações recebidas', 'Taxa de resposta', 'Média geral'].forEach(r => {
+        const quadro = screen.getByText(r).closest('article');
+        expect(quadro).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      });
+      expect(screen.getByText('Tours realizados').closest('article').querySelector('p.font-display').textContent).toBe('11');
+      expect(screen.getByText('Média geral').closest('article').querySelector('p.font-display').textContent).toBe('4.5 / 5');
+    });
+
+    it('os separadores continuam a trocar de painel', async () => {
+      await abre();
+      separador('Pendentes (9)');
+      expect(screen.getByRole('table')).toBeInTheDocument();
+      separador('Template');
+      expect(screen.getByText('Template do pedido de avaliação')).toBeInTheDocument();
+    });
+
+    it('cada tour é um cartão Mare, com taxa e média em font-mono', async () => {
+      await abre();
+      const cartao = cartaoDe('Buggy Tour').closest('.border-mare-card');
+      expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      expect(within(cartao).getByText('50%')).toHaveClass('font-mono', 'tabular-nums');
+      expect(within(cartao).getByText('5.0')).toHaveClass('font-mono', 'tabular-nums');
+    });
+
+    it('a tabela de pendentes fica num cartão Mare que rola por dentro, com datas em font-mono', async () => {
+      await abre();
+      separador('Pendentes (9)');
+      const cartao = screen.getByRole('table').closest('.border-mare-card');
+      expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]', 'overflow-hidden');
+      const celula = within(linhas()[0]).getAllByRole('cell')[2].querySelector('span');
+      expect(celula).toHaveClass('font-mono', 'tabular-nums');
+    });
+
+    it('o separador Template tem cartões Mare e a pré-visualização é uma caixa interior', async () => {
+      await abre();
+      separador('Template');
+      const titulo = screen.getByText('Template do pedido de avaliação');
+      expect(titulo).toHaveClass('font-display', 'text-lg', 'text-ocean-900');
+      expect(titulo.closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]');
+      const caixa = screen.getByText('Kitesurf Lesson', { exact: false }).closest('.rounded-\\[14px\\]');
+      expect(caixa).toHaveClass('border-mare-card');
+    });
+
+    it('o vazio de tours fica num cartão Mare', async () => {
+      listReservations.mockResolvedValue([]);
+      servicos({ avaliacoes: [] });
+      await abre();
+      expect(screen.getByText('Sem tours com checkout registado.').closest('.border-mare-card')).toHaveClass('bg-white', 'rounded-[18px]');
+    });
+  });
 });
 
 /* ───────────────────────── painel em ingles ───────────────────────── */
@@ -360,8 +424,8 @@ describe('Feedback: painel em inglês', () => {
   it('mostra_titulo_kpis_e_tours_em_ingles_com_a_media_e_sem_portugues', async () => {
     await abreEn();
     expect(screen.getByText('Post-Tour Feedback')).toBeInTheDocument();
-    expect(screen.getByText('Overall average').previousElementSibling.textContent).toBe('4.5 / 5');
-    expect(screen.getByText('Response rate').previousElementSibling.textContent).toBe('18%');
+    expect(screen.getByText('Overall average').closest('article').querySelector('p.font-display').textContent).toBe('4.5 / 5');
+    expect(screen.getByText('Response rate').closest('article').querySelector('p.font-display').textContent).toBe('18%');
     expect(screen.getAllByText('response rate')).toHaveLength(3);
     expect(screen.getAllByText('tours completed')).toHaveLength(3);
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();

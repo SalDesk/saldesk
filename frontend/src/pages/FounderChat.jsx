@@ -63,10 +63,11 @@ export default function FounderChat() {
 
   return (
     <div>
-      <PageHeader title={t('founderChat.title')} subtitle={t('founderChat.subtitle')} />
+      <PageHeader eyebrow={t('nav.sections.clientes')} title={t('founderChat.title')} subtitle={t('founderChat.subtitle')} />
 
-      <div className="bg-white rounded-md border border-n-200 flex flex-col h-[calc(100vh-220px)] min-h-[420px]">
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* cartao Mare da conversa */}
+      <div data-mare-conversa className="bg-white rounded-[18px] border border-mare-card flex flex-col overflow-hidden h-[calc(100vh-220px)] min-h-[420px]">
+        <div className="flex-1 overflow-y-auto p-[22px] space-y-3">
           {loading && (
             <div className="flex justify-center py-10"><LoadingSpinner size={24} /></div>
           )}
@@ -78,14 +79,14 @@ export default function FounderChat() {
             />
           )}
           {messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.sender_type === 'operator' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm ${
+            <div key={msg.id} className={`flex min-w-0 ${msg.sender_type === 'operator' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`min-w-0 max-w-xs lg:max-w-md break-words px-4 py-2.5 rounded-2xl text-sm ${
                 msg.sender_type === 'operator'
                   ? 'bg-ocean-700 text-white rounded-br-sm'
-                  : 'bg-n-50 border border-n-200 text-n-900 rounded-bl-sm'
+                  : 'bg-mare-head border border-mare-card text-n-900 rounded-bl-sm'
               }`}>
-                <p className="whitespace-pre-wrap">{msg.content}</p>
-                <p className={`text-xs mt-1 ${msg.sender_type === 'operator' ? 'text-ocean-200' : 'text-n-400'}`}>
+                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                <p className={`font-mono tabular-nums text-xs mt-1 ${msg.sender_type === 'operator' ? 'text-ocean-100' : 'text-n-600'}`}>
                   {fmt(msg.created_at, lang)}
                 </p>
               </div>
@@ -94,8 +95,9 @@ export default function FounderChat() {
           <div ref={bottomRef} />
         </div>
 
-        <div className="p-3 border-t border-n-200">
-          <div className="flex items-end gap-2">
+        <div className="p-3 border-t border-mare-card">
+          {/* caixa interior Mare da escrita */}
+          <div data-mare-caixa className="flex items-end gap-2 bg-mare-head border border-mare-card rounded-[14px] p-2">
             <div className="flex-1">
               <Textarea
                 rows={2}

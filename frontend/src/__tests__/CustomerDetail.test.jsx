@@ -270,6 +270,64 @@ describe('CustomerDetail', () => {
     fireEvent.click(container.querySelector('.fixed > .absolute'));
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it('as secções do perfil são caixas interiores Maré', async () => {
+    await abre();
+    for (const titulo of ['Contacto', 'Tags']) {
+      const caixa = screen.getByRole('heading', { name: new RegExp(titulo) }).closest('section');
+      expect(caixa).toHaveClass('rounded-[14px]', 'border', 'border-mare-card', 'bg-mare-head');
+    }
+    const metricas = screen.getByText('Visitas').parentElement;
+    expect(metricas).toHaveClass('rounded-[14px]', 'border-mare-card');
+  });
+
+  it('dinheiro, contagens e datas usam font-mono', async () => {
+    await abre();
+    expect(screen.getByText('€620')).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText('3')).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText('17/05/1990')).toHaveClass('font-mono');
+    seccao('Histórico');
+    for (const t of ['10/03/2026', '12/03/2026', '€55.00']) {
+      expect(screen.getByText(t)).toHaveClass('font-mono', 'tabular-nums');
+    }
+    expect(screen.getByText('Buggy Tour').closest('div').parentElement).toHaveClass('rounded-[14px]', 'border-mare-card');
+  });
+
+  it('os botões pequenos de acção têm 44 px no telemóvel', async () => {
+    await abre();
+    expect(screen.getAllByRole('button', { name: 'Email' })[0]).toHaveClass('min-h-11', 'md:min-h-0');
+    expect(screen.getByRole('button', { name: 'WhatsApp' })).toHaveClass('min-h-11', 'md:min-h-0');
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveClass('min-h-11', 'md:min-h-0');
+    expect(screen.getByRole('button', { name: 'Guardar' })).toHaveClass('min-h-11', 'md:min-h-0');
+  });
+
+  it('o X da etiqueta própria tem nome acessível com a etiqueta', async () => {
+    await abre();
+    const remover = screen.getByRole('button', { name: 'Remover etiqueta Custom' });
+    fireEvent.click(remover);
+    await waitFor(() => expect(updateCustomer).toHaveBeenCalledWith('c1', { tags: ['VIP'] }));
+  });
+
+  it('o aviso de email enviado usa a borda Mare', async () => {
+    await abre();
+    seccao('Comunicação');
+    const form = screen.getByDisplayValue('ana@x.cv').closest('form');
+    fireEvent.change(within(form).getByPlaceholderText('Assunto do email'), { target: { value: 'Olá' } });
+    fireEvent.change(within(form).getByPlaceholderText('Corpo do email...'), { target: { value: 'Corpo' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Enviar email' }));
+    const aviso = (await screen.findByText('Email enviado com sucesso')).closest('div');
+    expect(aviso).toHaveClass('border-mare-card');
+    expect(aviso).not.toHaveClass('border-n-200');
+  });
+
+  it('as etiquetas são pílulas com o mesmo texto e a etiqueta própria também', async () => {
+    await abre();
+    expect(screen.getByRole('button', { name: 'grupo' })).toHaveClass('rounded-full', 'border');
+    const ativa = screen.getByRole('button', { name: 'VIP' });
+    expect(ativa).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Custom').closest('span')).toHaveClass('rounded-full');
+  });
 });
 
 /* Painel em ingles: os rotulos mudam; as etiquetas gravadas e os textos para o cliente ficam como estavam */

@@ -89,7 +89,7 @@ describe('Occurrences', () => {
     return label.nextElementSibling;
   }
   function kpi(rotulo) {
-    return screen.getByText(rotulo).previousElementSibling.textContent;
+    return screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
   }
 
   it('lista as ocorrências da mais recente para a mais antiga, com as colunas', async () => {
@@ -309,6 +309,110 @@ describe('Occurrences', () => {
   });
 });
 
+/* ───────────────────────── Estilo Mare ───────────────────────── */
+
+describe('Occurrences no estilo Mare', () => {
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    listOccurrences.mockReset().mockResolvedValue(TODAS);
+    listUnits.mockReset().mockResolvedValue(UNIDADES);
+    listStaff.mockReset().mockResolvedValue(COLABORADORES);
+  });
+  afterEach(() => cleanup());
+
+  async function abreMare() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Occurrences />
+      </MemoryRouter>
+    );
+    await screen.findByRole('table');
+  }
+  function primeiraLinha() {
+    return within(screen.getByRole('table')).getAllByRole('row')[1];
+  }
+
+  it('o cabecalho traz o eyebrow Clientes', async () => {
+    await abreMare();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
+  });
+
+  it('os quatro quadros de numeros sao MareStat com os mesmos valores', async () => {
+    await abreMare();
+    const valores = ['Total registadas', 'Este mês', 'Alta / Crítica', 'Críticas'].map(r => {
+      const q = screen.getByText(r).closest('article');
+      expect(q).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      return q.querySelector('p.font-display').textContent;
+    });
+    expect(valores).toEqual(['5', '3', '3', '2']);
+  });
+
+  it('tipo e severidade na tabela sao selos Badge sem serem botoes', async () => {
+    await abreMare();
+    const linha = primeiraLinha();
+    const tipo = within(linha).getByText('Acidente');
+    const sev = within(linha).getByText('Crítica');
+    for (const selo of [tipo, sev]) {
+      expect(selo.tagName).toBe('SPAN');
+      expect(selo.className).toContain('app:rounded-full');
+      expect(selo.closest('button')).toBeNull();
+    }
+  });
+
+  it('a escala de severidade e neutra, oceano, areia, vermelho', async () => {
+    await abreMare();
+    const cores = {};
+    for (const nome of ['Baixa', 'Média', 'Alta', 'Crítica']) {
+      const selo = screen.getAllByText(nome).find(e => e.tagName === 'SPAN' && e.className.includes('app:rounded-full'));
+      cores[nome] = selo ? selo.className : null;
+    }
+    expect(cores['Baixa']).toContain('app:bg-n-100');
+    expect(cores['Média']).toContain('app:bg-ocean-100');
+    expect(cores['Alta']).toContain('app:bg-sand-100');
+    expect(cores['Crítica']).toContain('app:bg-[var(--error-light)]');
+  });
+
+  it('a tabela fica num cartao Mare, com a data em font-mono', async () => {
+    await abreMare();
+    const cartao = screen.getByRole('table').closest('.border-mare-card');
+    expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+    const data = within(primeiraLinha()).getAllByRole('cell')[0].firstElementChild;
+    expect(data).toHaveClass('font-mono', 'tabular-nums');
+  });
+
+  it('o relatorio mensal e o aviso de criticas usam cartoes Mare', async () => {
+    await abreMare();
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const agora = new Date();
+    const cartao = screen.getByText(`Relatório mensal — ${meses[agora.getMonth()]} ${agora.getFullYear()}`).parentElement;
+    expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+    const titulo = within(cartao).getByRole('heading');
+    expect(titulo).toHaveClass('font-display', 'text-lg', 'font-semibold', 'text-ocean-900');
+    const aviso = screen.getByText('1 ocorrência(s) crítica(s) não resolvida(s)').parentElement.parentElement;
+    expect(aviso).toHaveClass('rounded-[14px]');
+  });
+
+  it('o modal agrupa os campos em caixas internas Mare', async () => {
+    await abreMare();
+    fireEvent.click(screen.getByRole('button', { name: 'Registar ocorrência' }));
+    const dialogo = await screen.findByRole('dialog');
+    const caixas = [...dialogo.querySelectorAll('form > div')].filter(c => c.classList.contains('rounded-[14px]'));
+    expect(caixas.length).toBeGreaterThanOrEqual(2);
+    caixas.forEach(c => expect(c).toHaveClass('border', 'border-mare-card', 'bg-mare-head'));
+  });
+
+  it('sem ocorrencias o vazio fica num cartao Mare', async () => {
+    listOccurrences.mockResolvedValue([]);
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Occurrences />
+      </MemoryRouter>
+    );
+    const vazio = (await screen.findByText('Sem ocorrências')).closest('.border-mare-card');
+    expect(vazio).toHaveClass('bg-white', 'rounded-[18px]');
+  });
+});
+
 /* ───────────────────────── Painel em ingles ───────────────────────── */
 
 describe('Occurrences em inglês', () => {
@@ -363,7 +467,7 @@ describe('Occurrences em inglês', () => {
     expect(c1[0]).toBe(new Date(HOJE).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }));
     expect(c1.slice(1, 3)).toEqual(['Accident', 'Critical']);
     expect(within(linhasEn()[1]).getAllByRole('cell').map(c => c.textContent)[6]).toBe('Not recorded');
-    const kpi = (rotulo) => screen.getByText(rotulo).previousElementSibling.textContent;
+    const kpi = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
     expect(kpi('Total logged')).toBe('5');
     expect(kpi('This month')).toBe('3');
     expect(kpi('High / Critical')).toBe('3');
