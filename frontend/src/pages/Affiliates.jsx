@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   UserPlus, Plus, Pencil, Trash2, Copy, Check, Share2,
-  Euro, BarChart2, ToggleLeft, ToggleRight, Save,
+  Euro, BarChart2, ToggleLeft, ToggleRight, Save, Clock,
 } from 'lucide-react';
 import { getBookingLink } from '../services/marketingService';
 import {
@@ -11,18 +11,26 @@ import {
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
 import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import { getT, useT } from '../i18n';
 import { useLingua } from '../utils/formatoLingua';
 import { eurosDuasCasas } from '../utils/formatoEuros';
 import { eurosInteiros } from './reservations/shared';
 
 const DEFAULT_CONF = { active: false, commission_pct: 10, min_booking_value: 0 };
+
+/* ── Estilo Mare: cartao de pagina, titulo de cartao e figuras (codigos, comissoes, valores) ── */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const CARTAO_VAZIO = 'bg-white rounded-[18px] border border-mare-card min-w-0 overflow-hidden';
+const TITULO = 'font-display text-[18px] font-semibold text-ocean-900';
+const NUM = 'font-mono tabular-nums';
+const ACAO_PEQUENA = 'flex items-center gap-1.5 text-xs px-2 py-1 min-h-11 md:min-h-8 rounded-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
 
 /* ── Code generator ── */
 function genCode(name) {
@@ -32,7 +40,7 @@ function genCode(name) {
 }
 
 /* ── CopyBtn ── */
-function CopyBtn({ text, small }) {
+function CopyBtn({ text }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   function copy() {
@@ -40,8 +48,8 @@ function CopyBtn({ text, small }) {
   }
   return (
     <button onClick={copy}
-      className={`flex items-center gap-1 transition-colors font-body font-medium ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 rounded-sm'} ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
-      {copied ? <Check size={small ? 10 : 13} strokeWidth={2} /> : <Copy size={small ? 10 : 13} strokeWidth={1.75} />}
+      className={`${ACAO_PEQUENA} ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
+      {copied ? <Check size={11} strokeWidth={2} /> : <Copy size={11} strokeWidth={1.75} />}
       {copied ? t('affiliatesPage.copied') : t('affiliatesPage.copy')}
     </button>
   );
@@ -147,12 +155,12 @@ function PaymentModal({ affiliate, onSave, onClose }) {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm">
-            <p className="text-[10px] font-mono text-n-400">{t('affiliatesPage.payment.totalPaid')}</p>
-            <p className="font-display font-bold text-sm text-n-700">{eurosDuasCasas(totalPaid, lang)}</p>
+            <p className="text-[10px] font-mono text-n-600">{t('affiliatesPage.payment.totalPaid')}</p>
+            <p className={`${NUM} font-bold text-sm text-n-700`}>{eurosDuasCasas(totalPaid, lang)}</p>
           </div>
           <div className="px-3 py-2 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
             <p className="text-[10px] font-mono text-[var(--warning)]">{t('affiliatesPage.payment.pending')}</p>
-            <p className="font-display font-bold text-sm text-[var(--warning)]">{eurosDuasCasas(pending, lang)}</p>
+            <p className={`${NUM} font-bold text-sm text-[var(--warning)]`}>{eurosDuasCasas(pending, lang)}</p>
           </div>
         </div>
         <Input label={t('affiliatesPage.payment.amount')} aria-label={t('affiliatesPage.payment.amount')} type="number" min="0.01" step="0.01"
@@ -259,7 +267,7 @@ export default function Affiliates() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={t('affiliatesPage.title')} subtitle={t('affiliatesPage.subtitle')} />
+        <PageHeader eyebrow={t('nav.sections.crescimento')} title={t('affiliatesPage.title')} subtitle={t('affiliatesPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -281,12 +289,13 @@ export default function Affiliates() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.crescimento')}
         title={t('affiliatesPage.title')}
         subtitle={t('affiliatesPage.subtitle')}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={toggleProgramActive} aria-pressed={!!config.active}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-xs font-body font-semibold transition-colors ${
+              className={`flex items-center gap-2 px-3 py-1.5 min-h-11 md:min-h-9 rounded-sm border text-xs font-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${
                 config.active ? 'bg-[var(--success-light)] text-[var(--success)] border-[var(--success)]' : 'bg-n-100 text-n-600 border-n-200'
               }`}>
               {config.active
@@ -294,29 +303,17 @@ export default function Affiliates() {
                 : <ToggleLeft  size={16} strokeWidth={1.5} />}
               {config.active ? t('affiliatesPage.programActive') : t('affiliatesPage.programInactive')}
             </button>
-            <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('affiliatesPage.newAffiliate')}</Button>
+            <Button icon={Plus} className="min-h-11 md:min-h-0" onClick={() => setModal({ _new: true })}>{t('affiliatesPage.newAffiliate')}</Button>
           </div>
         }
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        {[
-          { label: t('affiliatesPage.kpi.active'),   value: affiliates.filter(a => a.active !== false).length, color: 'text-n-900' },
-          { label: t('affiliatesPage.kpi.bookings'),    value: totalBookings,                                       color: 'text-ocean-700' },
-          { label: t('affiliatesPage.kpi.paid'),       value: eurosInteiros(totalPaid, lang),                         color: 'text-[var(--success)]' },
-          { label: t('affiliatesPage.kpi.pending'),   value: eurosInteiros(totalPending, lang),                      color: 'text-[var(--warning)]' },
-        ].map(m => (
-          <Card key={m.label} padding="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <UserPlus size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
-              <div>
-                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-                <p className="text-xs font-body text-n-500">{m.label}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <MareStat label={t('affiliatesPage.kpi.active')} value={affiliates.filter(a => a.active !== false).length} icon={UserPlus} />
+        <MareStat label={t('affiliatesPage.kpi.bookings')} value={totalBookings} icon={BarChart2} />
+        <MareStat label={t('affiliatesPage.kpi.paid')} value={eurosInteiros(totalPaid, lang)} icon={Euro} tone="bom" />
+        <MareStat label={t('affiliatesPage.kpi.pending')} value={eurosInteiros(totalPending, lang)} icon={Clock} tone="aviso" />
       </div>
 
       {/* Tabs */}
@@ -326,79 +323,71 @@ export default function Affiliates() {
 
       {activeTab === 'afiliados' && (
         affiliates.length === 0 ? (
-          <Card padding="p-0">
+          <section className={CARTAO_VAZIO}>
             <EmptyState icon={UserPlus} title={t('affiliatesPage.empty.title')}
               description={t('affiliatesPage.empty.description')}
-              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('affiliatesPage.newAffiliate')}</Button>} />
-          </Card>
+              action={<Button icon={Plus} className="min-h-11 md:min-h-0" onClick={() => setModal({ _new: true })}>{t('affiliatesPage.newAffiliate')}</Button>} />
+          </section>
         ) : (
           <div className="space-y-3">
             {affiliates.map(a => {
               const link = affiliateLink(a);
               return (
-                <Card key={a.id} padding="px-4 py-4" className={a.active === false ? 'opacity-60' : ''}>
+                <article key={a.id} className={`${CARTAO} ${a.active === false ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-full bg-ocean-100 flex items-center justify-center shrink-0">
                       <span className="font-display font-bold text-xs text-ocean-700">{a.name?.[0]?.toUpperCase() || '?'}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <p className="font-display font-semibold text-sm text-n-900">{a.name}</p>
-                          <p className="text-xs font-body text-n-500">{a.email} · <span className="font-mono">{a.code}</span> · {t('affiliatesPage.row.commission', { pct: a.commission_pct || 0 })}</p>
+                      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 mb-2">
+                        <div className="min-w-0">
+                          <p className="font-display font-semibold text-base text-ocean-900 break-words">{a.name}</p>
+                          <p className="text-xs font-body text-n-600 break-words">{a.email} · <span className={NUM}>{a.code}</span> · <span className={NUM}>{t('affiliatesPage.row.commission', { pct: a.commission_pct || 0 })}</span></p>
                         </div>
-                        <div className="flex gap-1 shrink-0">
-                          <button onClick={() => setPayModal(a)} aria-label={t('affiliatesPage.row.registerPaymentFor', { name: a.name })}
-                            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('affiliatesPage.row.registerPayment')}>
-                            <Euro size={13} strokeWidth={1.75} />
-                          </button>
-                          <button onClick={() => handleToggle(a)} aria-label={t(a.active !== false ? 'affiliatesPage.row.deactivate' : 'affiliatesPage.row.activate', { name: a.name })}
-                            className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
-                            {a.active !== false
-                              ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
-                              : <ToggleLeft size={13} strokeWidth={1.75} />}
-                          </button>
-                          <button onClick={() => setModal(a)} aria-label={t('affiliatesPage.row.edit', { name: a.name })}
-                            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                            <Pencil size={13} strokeWidth={1.75} />
-                          </button>
-                          <button onClick={() => handleDelete(a.id)} aria-label={t('affiliatesPage.row.delete', { name: a.name })}
-                            className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
-                            <Trash2 size={13} strokeWidth={1.75} />
-                          </button>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <IconBtn icon={Euro} label={t('affiliatesPage.row.registerPaymentFor', { name: a.name })} title={t('affiliatesPage.row.registerPayment')}
+                            onClick={() => setPayModal(a)} hover={EDIT_HOVER} />
+                          <IconBtn icon={a.active !== false ? ToggleRight : ToggleLeft}
+                            label={t(a.active !== false ? 'affiliatesPage.row.deactivate' : 'affiliatesPage.row.activate', { name: a.name })}
+                            onClick={() => handleToggle(a)} hover="hover:text-n-800 hover:bg-n-100"
+                            className={a.active !== false ? 'text-ocean-700' : ''} />
+                          <IconBtn icon={Pencil} label={t('affiliatesPage.row.edit', { name: a.name })}
+                            onClick={() => setModal(a)} hover={EDIT_HOVER} />
+                          <IconBtn icon={Trash2} label={t('affiliatesPage.row.delete', { name: a.name })}
+                            onClick={() => handleDelete(a.id)} hover={DELETE_HOVER} />
                         </div>
                       </div>
 
                       {/* Stats */}
-                      <div className="flex gap-4 text-center mb-3">
+                      <div className="flex flex-wrap gap-x-6 gap-y-2 text-center mb-3">
                         {[
-                          { label: t('affiliatesPage.row.bookings'), value: a.bookings_count || 0, color: 'text-ocean-700' },
-                          { label: t('affiliatesPage.row.paid'),     value: eurosInteiros(a.commission_paid, lang),    color: 'text-[var(--success)]' },
-                          { label: t('affiliatesPage.row.pending'), value: eurosInteiros(a.commission_pending, lang), color: 'text-[var(--warning)]' },
+                          { label: t('affiliatesPage.row.bookings'), value: a.bookings_count || 0, color: 'text-ocean-900' },
+                          { label: t('affiliatesPage.row.paid'),     value: eurosInteiros(a.commission_paid, lang),    color: 'text-ocean-900' },
+                          { label: t('affiliatesPage.row.pending'), value: eurosInteiros(a.commission_pending, lang), color: 'text-ocean-900' },
                         ].map(m => (
                           <div key={m.label}>
-                            <p className={`font-display font-bold text-sm ${m.color}`}>{m.value}</p>
-                            <p className="text-[9px] font-mono text-n-400">{m.label}</p>
+                            <p className={`${NUM} font-bold text-sm ${m.color}`}>{m.value}</p>
+                            <p className="text-[11px] font-body text-n-600">{m.label}</p>
                           </div>
                         ))}
                       </div>
 
                       {/* Link */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <div className="bg-n-50 border border-n-200 rounded-xs px-2 py-1 flex-1 min-w-0">
-                          <p className="text-[10px] font-mono text-n-600 truncate">{link}</p>
+                        <div className="bg-mare-head border border-mare-card rounded-[10px] px-2.5 py-1.5 flex-1 min-w-0">
+                          <p className={`${NUM} text-[11px] text-n-600 break-all`}>{link}</p>
                         </div>
-                        <CopyBtn text={link} small />
+                        <CopyBtn text={link} />
                         <button
                           onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(getT('pt')('affiliatesPage.shareText', { link }))}`, '_blank', 'noopener')}
-                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
-                          <Share2 size={10} strokeWidth={1.75} />
+                          className={`${ACAO_PEQUENA} bg-[var(--success)] text-white hover:opacity-90`}>
+                          <Share2 size={11} strokeWidth={1.75} />
                           WA
                         </button>
                       </div>
                     </div>
                   </div>
-                </Card>
+                </article>
               );
             })}
           </div>
@@ -406,8 +395,8 @@ export default function Affiliates() {
       )}
 
       {activeTab === 'config' && (
-        <Card padding="px-6 py-5">
-          <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('affiliatesPage.config.title')}</h3>
+        <section className={CARTAO}>
+          <h2 className={`${TITULO} mb-5`}>{t('affiliatesPage.config.title')}</h2>
           <div className="space-y-4 max-w-sm">
             <Input label={t('affiliatesPage.config.globalCommission')} aria-label={t('affiliatesPage.config.globalCommission')} type="number" min="0" max="50" step="0.5"
               value={config.commission_pct}
@@ -425,30 +414,30 @@ export default function Affiliates() {
 
             <Button icon={confSaved ? Check : Save}
               loading={confSaving}
-              className={confSaved ? '!bg-[var(--success)] !text-white hover:!opacity-90' : ''}
+              className={`min-h-11 md:min-h-0 ${confSaved ? '!bg-[var(--success)] !text-white hover:!opacity-90' : ''}`}
               onClick={handleSaveConfig}>
               {confSaved ? t('affiliatesPage.config.saved') : t('affiliatesPage.config.save')}
             </Button>
 
-            <div className="pt-3 border-t border-n-100">
-              <p className="text-xs font-body text-n-400">
+            <div className="bg-mare-head rounded-[14px] p-3">
+              <p className="text-xs font-body text-n-600">
                 <span className="font-semibold">{t('affiliatesPage.config.portalLabel')}</span> {t('affiliatesPage.config.portalIntro')}{' '}
-                <span className="font-mono">saldesk.cv/afiliado/[CODIGO]</span> {t('affiliatesPage.config.portalMid')}<span className="font-mono">?ref=CODIGO</span>{t('affiliatesPage.config.portalEnd')}
+                <span className={`${NUM} break-all`}>saldesk.cv/afiliado/[CODIGO]</span> {t('affiliatesPage.config.portalMid')}<span className={NUM}>?ref=CODIGO</span>{t('affiliatesPage.config.portalEnd')}
               </p>
             </div>
           </div>
-        </Card>
+        </section>
       )}
 
       {activeTab === 'analytics' && (
         <div className="space-y-4">
           {topAff.length === 0 ? (
-            <Card padding="p-0">
+            <section className={CARTAO_VAZIO}>
               <EmptyState icon={BarChart2} title={t('affiliatesPage.analytics.empty')} />
-            </Card>
+            </section>
           ) : (
-            <Card padding="px-5 py-5">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('affiliatesPage.analytics.top')}</h3>
+            <section className={CARTAO}>
+              <h2 className={`${TITULO} mb-4`}>{t('affiliatesPage.analytics.top')}</h2>
               <div className="space-y-3">
                 {topAff.map((a, i) => {
                   const maxBookings = topAff[0]?.bookings_count || 1;
@@ -461,7 +450,7 @@ export default function Affiliates() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-body font-semibold text-n-800 truncate">{a.name}</p>
-                          <span className="text-xs font-mono text-n-600 shrink-0 ml-2">
+                          <span className={`text-xs ${NUM} text-n-600 shrink-0 ml-2`}>
                             {t('affiliatesPage.analytics.line', { n: a.bookings_count || 0, paid: eurosInteiros(a.commission_paid, lang) })}
                           </span>
                         </div>
@@ -474,7 +463,7 @@ export default function Affiliates() {
                   );
                 })}
               </div>
-            </Card>
+            </section>
           )}
         </div>
       )}

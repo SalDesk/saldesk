@@ -51,16 +51,12 @@ async function montar(primeiro = 'Hotel Morabeza') {
   await screen.findByText(primeiro);
   return r;
 }
-/* linha/cartao: o primeiro ascendente do nome que contem botoes (a linha com as acoes) */
-const cartao = (nome) => {
-  let e = screen.getByText(nome);
-  while (e && !e.querySelector('button')) e = e.parentElement;
-  return e;
-};
+/* cartao: o artigo do parceiro (nome, dados e accoes) */
+const cartao = (nome) => screen.getByText(nome).closest('article');
 const botoes = (nome) => within(cartao(nome)).getAllByRole('button');
 const separador = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
 const tabPedidos = () => screen.getByText(/^Pedidos/).closest('button');
-const metrica = (rotulo) => screen.getByText(rotulo).previousSibling.textContent;
+const metrica = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
 
 /* ───────────────────────── caracterizacao: lista, pedidos e dashboard ───────────────────────── */
 
@@ -301,7 +297,7 @@ describe('Parcerias: design system (separadores, lista, pedidos e dashboard)', (
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
     expect(html).not.toMatch(/bg-red-/);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -644,7 +640,7 @@ describe('Parcerias: design system (modais)', () => {
     html += document.body.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
     expect(html).not.toMatch(/bg-red-/);
   });
 });
@@ -783,5 +779,88 @@ describe('Parcerias: painel em ingles', () => {
     render(<Partners />);
     expect(await screen.findByText('No partners set up')).toBeInTheDocument();
     expect(chavesCruas(['partnersPage'])).toEqual([]);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Parcerias: estilo Mare', () => {
+  const eMare = (el) => {
+    expect(el).not.toBeNull();
+    expect(el.className).toContain('bg-white');
+    expect(el.className).toContain('border-mare-card');
+    expect(el.className).toContain('rounded-[18px]');
+  };
+
+  it('mostra_o_eyebrow_da_area_Crescimento_tambem_a_carregar', async () => {
+    listPartners.mockReturnValue(new Promise(() => {}));
+    render(<Partners />);
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+    cleanup();
+    listPartners.mockResolvedValue(PARCEIROS);
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('cada_parceiro_esta_num_cartao_Mare_e_os_valores_sao_mono', async () => {
+    await montar();
+    const c = cartao('Hotel Morabeza');
+    eMare(c);
+    expect(c.tagName).toBe('ARTICLE');
+    expect(within(c).getByText('3').className).toContain('font-mono');
+    expect(within(c).getByText('3').className).toContain('tabular-nums');
+    expect(within(c).getByText('2').className).toContain('font-mono');
+    expect(within(c).getByText(/10% comissão/).className).toContain('font-mono');
+  });
+
+  it('os_botoes_de_icone_tem_44px_e_o_eliminar_mantem_o_hover_vermelho', async () => {
+    await montar();
+    for (const n of ['Registar reservas Hotel Morabeza', 'Desactivar Hotel Morabeza', 'Editar Hotel Morabeza', 'Eliminar Hotel Morabeza']) {
+      expect(screen.getByRole('button', { name: n }).className).toContain('min-h-11');
+    }
+    expect(screen.getByRole('button', { name: 'Eliminar Hotel Morabeza' }).className).toContain('hover:bg-[var(--error-light)]');
+  });
+
+  it('o_vazio_esta_num_cartao_Mare', async () => {
+    listPartners.mockResolvedValue([]);
+    render(<Partners />);
+    eMare((await screen.findByText('Sem parceiros configurados')).closest('section'));
+  });
+
+  it('os_pedidos_estao_em_cartoes_Mare_com_titulos_de_secao_e_botoes_de_44px', async () => {
+    await montar();
+    fireEvent.click(tabPedidos());
+    expect(screen.getByText('Recebidos').tagName).toBe('H2');
+    expect(screen.getByText('Enviados').tagName).toBe('H2');
+    eMare(cartao('Tours Sal'));
+    eMare(cartao('Surf CV'));
+    expect(within(cartao('Tours Sal')).getByRole('button', { name: 'Aceitar' }).className).toContain('min-h-11');
+    expect(within(cartao('Surf CV')).getByRole('button').className).toContain('min-h-11');
+  });
+
+  it('os_pedidos_vazios_mostram_as_frases_em_cartoes_Mare', async () => {
+    listPartners.mockResolvedValue([P1]);
+    await montar();
+    fireEvent.click(tabPedidos());
+    eMare(screen.getByText('Sem pedidos de parceria por responder.').closest('section'));
+    eMare(screen.getByText('Sem pedidos de parceria enviados.').closest('section'));
+  });
+
+  it('o_dashboard_tem_MareStat_com_os_mesmos_valores_e_cartoes_de_comissao', async () => {
+    listPartners.mockResolvedValue(PARCEIROS);
+    await montar();
+    fireEvent.click(separador('Dashboard'));
+    await screen.findByText('Reservas enviadas');
+    for (const [rotulo, valor] of [['Parceiros activos', '1'], ['Reservas enviadas', '8'], ['Reservas recebidas', '3'], ['Balanco (recebidas - enviadas)', '-5']]) {
+      const artigo = screen.getByText(rotulo).closest('article');
+      eMare(artigo);
+      expect(artigo.querySelector('[data-mare-stat-tint]')).not.toBeNull();
+      expect(artigo.querySelector('p.font-display')).toHaveTextContent(valor);
+    }
+    const pagar = screen.getByText('Comissões a pagar');
+    expect(pagar.tagName).toBe('H2');
+    eMare(pagar.closest('section'));
+    expect(pagar.nextSibling.className).toContain('font-mono');
+    eMare(screen.getByText('Comissões a receber').closest('section'));
   });
 });

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Handshake, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownRight,
-  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight, Check, X, Clock,
+  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight, Check, X, Clock, ArrowLeftRight,
 } from 'lucide-react';
 import {
   listPartners, createPartner, updatePartner, deletePartner, registerPartnerBooking,
@@ -10,18 +10,25 @@ import {
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
 import { useLingua } from '../utils/formatoLingua';
 import { euroPreco } from '../utils/formatoVendedor';
 import { eurosInteiros } from './reservations/shared';
+
+/* ── Estilo Mare: cartao de pagina, titulo de cartao e figuras (comissoes, contagens, valores) ── */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const CARTAO_VAZIO = 'bg-white rounded-[18px] border border-mare-card min-w-0 overflow-hidden';
+const TITULO = 'font-display text-[18px] font-semibold text-ocean-900';
+const NUM = 'font-mono tabular-nums';
 
 /* tipos de parceiro e de parceria gravados; os rotulos vem de partnersPage.types e partnersPage.partnershipTypes */
 const PARTNER_TYPES = [
@@ -371,7 +378,7 @@ export default function Partners() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={t('partnersPage.title')} subtitle={t('partnersPage.subtitle')} />
+        <PageHeader eyebrow={t('nav.sections.crescimento')} title={t('partnersPage.title')} subtitle={t('partnersPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -380,10 +387,11 @@ export default function Partners() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.crescimento')}
         title={t('partnersPage.title')}
         subtitle={t('partnersPage.subtitle')}
         actions={
-          <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('partnersPage.addPartner')}</Button>
+          <Button icon={Plus} className="min-h-11 md:min-h-0" onClick={() => setModal({ _new: true })}>{t('partnersPage.addPartner')}</Button>
         }
       />
 
@@ -393,14 +401,14 @@ export default function Partners() {
 
       {activeTab === 'parceiros' && (
         activePartners.length === 0 ? (
-          <Card padding="p-0">
+          <section className={CARTAO_VAZIO}>
             <EmptyState
               icon={Handshake}
               title={t('partnersPage.empty.title')}
               description={t('partnersPage.empty.description')}
-              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('partnersPage.addPartner')}</Button>}
+              action={<Button icon={Plus} className="min-h-11 md:min-h-0" onClick={() => setModal({ _new: true })}>{t('partnersPage.addPartner')}</Button>}
             />
-          </Card>
+          </section>
         ) : (
           <div className="space-y-3">
             {activePartners.map(p => {
@@ -408,61 +416,53 @@ export default function Partners() {
               const pshipType = tipoParceria(p.partnership_type);
               const isRejected = p.status === 'rejected';
               return (
-                <Card key={p.id} padding="px-4 py-4 flex items-start gap-4" className={(!p.active || isRejected) ? 'opacity-60' : ''}>
-                  <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-                    <typeInfo.Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-display font-semibold text-sm text-n-900 flex items-center gap-1.5">
+                <article key={p.id} className={`${CARTAO} ${(!p.active || isRejected) ? 'opacity-60' : ''}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                    <div className="flex items-start gap-3 flex-1 min-w-0 basis-[14rem]">
+                      <div className="w-9 h-9 rounded-[10px] bg-ocean-50 flex items-center justify-center shrink-0">
+                        <typeInfo.Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-display font-semibold text-base text-ocean-900 flex flex-wrap items-center gap-1.5 break-words">
                           {p.name}
                           {p.partner_operator_id && <Badge variant="info">SalDesk</Badge>}
                           {isRejected && <Badge variant="cancelled">{t('partnersPage.rejected')}</Badge>}
                         </p>
-                        <p className="text-xs font-body text-n-500 mt-0.5">{t(`partnersPage.types.${typeInfo.value}`)} · {t(`partnersPage.partnershipTypes.${pshipType}`)}</p>
+                        <p className="text-xs font-body text-n-600 mt-0.5">{t(`partnersPage.types.${typeInfo.value}`)} · {t(`partnersPage.partnershipTypes.${pshipType}`)}</p>
                         {p.commission_pct > 0 && (
-                          <p className="text-xs font-mono text-n-400 mt-0.5">
+                          <p className={`text-xs ${NUM} text-n-600 mt-0.5`}>
                             {t('partnersPage.commissionLine', { pct: p.commission_pct })}{p.avg_booking_value > 0 ? t('partnersPage.avgBookingLine', { amount: euroPreco(p.avg_booking_value, lang) }) : ''}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 shrink-0 text-center">
-                        <div>
-                          <p className="font-display font-bold text-sm text-ocean-700">{p.bookings_sent || 0}</p>
-                          <p className="text-[9px] font-mono text-n-400">{t('partnersPage.bookingsSent')}</p>
-                        </div>
-                        <div>
-                          <p className="font-display font-bold text-sm text-[var(--success)]">{p.bookings_received || 0}</p>
-                          <p className="text-[9px] font-mono text-n-400">{t('partnersPage.bookingsReceived')}</p>
-                        </div>
-                      </div>
                     </div>
-                    {p.message_pt && (
-                      <p className="text-xs font-body text-n-500 mt-2 line-clamp-1">{p.message_pt}</p>
-                    )}
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <IconBtn icon={Handshake} label={t('partnersPage.actions.recordAria', { name: p.name })} title={t('partnersPage.actions.record')}
+                        onClick={() => setLogModal(p)} hover={EDIT_HOVER} />
+                      <IconBtn icon={p.active ? ToggleRight : ToggleLeft}
+                        label={t(p.active ? 'partnersPage.actions.deactivateAria' : 'partnersPage.actions.activateAria', { name: p.name })}
+                        onClick={() => handleToggle(p)} hover="hover:text-n-800 hover:bg-n-100"
+                        className={p.active ? 'text-ocean-700' : ''} />
+                      <IconBtn icon={Pencil} label={t('partnersPage.actions.editAria', { name: p.name })}
+                        onClick={() => setModal(p)} hover={EDIT_HOVER} />
+                      <IconBtn icon={Trash2} label={t('partnersPage.actions.deleteAria', { name: p.name })}
+                        onClick={() => handleDelete(p.id)} hover={DELETE_HOVER} />
+                    </div>
                   </div>
-                  <div className="flex gap-1 shrink-0">
-                    <button type="button" onClick={() => setLogModal(p)} aria-label={t('partnersPage.actions.recordAria', { name: p.name })}
-                      className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('partnersPage.actions.record')}>
-                      <Handshake size={13} strokeWidth={1.75} />
-                    </button>
-                    <button type="button" onClick={() => handleToggle(p)} aria-label={t(p.active ? 'partnersPage.actions.deactivateAria' : 'partnersPage.actions.activateAria', { name: p.name })}
-                      className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
-                      {p.active
-                        ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
-                        : <ToggleLeft size={13} strokeWidth={1.75} />}
-                    </button>
-                    <button type="button" onClick={() => setModal(p)} aria-label={t('partnersPage.actions.editAria', { name: p.name })}
-                      className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                      <Pencil size={13} strokeWidth={1.75} />
-                    </button>
-                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={t('partnersPage.actions.deleteAria', { name: p.name })}
-                      className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
-                      <Trash2 size={13} strokeWidth={1.75} />
-                    </button>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 text-center mt-3">
+                    <div>
+                      <p className={`${NUM} font-bold text-sm text-ocean-900`}>{p.bookings_sent || 0}</p>
+                      <p className="text-[11px] font-body text-n-600">{t('partnersPage.bookingsSent')}</p>
+                    </div>
+                    <div>
+                      <p className={`${NUM} font-bold text-sm text-ocean-900`}>{p.bookings_received || 0}</p>
+                      <p className="text-[11px] font-body text-n-600">{t('partnersPage.bookingsReceived')}</p>
+                    </div>
                   </div>
-                </Card>
+                  {p.message_pt && (
+                    <p className="text-xs font-body text-n-600 mt-2 line-clamp-1 break-words">{p.message_pt}</p>
+                  )}
+                </article>
               );
             })}
           </div>
@@ -472,51 +472,55 @@ export default function Partners() {
       {activeTab === 'pedidos' && (
         <div className="space-y-6">
           <div>
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">{t('partnersPage.requests.received')}</h3>
+            <h2 className={`${TITULO} mb-3`}>{t('partnersPage.requests.received')}</h2>
             {pendingReceived.length === 0 ? (
-              <p className="text-sm font-body text-n-400">{t('partnersPage.requests.noneReceived')}</p>
+              <section className={CARTAO}>
+                <p className="text-sm font-body text-n-600">{t('partnersPage.requests.noneReceived')}</p>
+              </section>
             ) : (
               <div className="space-y-2">
                 {pendingReceived.map(p => (
-                  <Card key={p.id} padding="px-4 py-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
+                  <article key={p.id} className={`${CARTAO} flex flex-wrap items-center gap-3`}>
+                    <div className="w-9 h-9 rounded-[10px] bg-ocean-50 flex items-center justify-center shrink-0">
                       <Handshake size={16} strokeWidth={1.75} className="text-ocean-700" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
-                      <p className="text-xs font-body text-n-500">
+                    <div className="flex-1 min-w-0 basis-[10rem]">
+                      <p className="font-display font-semibold text-base text-ocean-900 break-words">{p.name}</p>
+                      <p className="text-xs font-body text-n-600">
                         {t(`partnersPage.partnershipTypes.${tipoParceria(p.partnership_type)}`)}
-                        {p.commission_pct > 0 ? ` · ${t('partnersPage.commissionLine', { pct: p.commission_pct })}` : ''}
+                        {p.commission_pct > 0 ? <>{' · '}<span className={NUM}>{t('partnersPage.commissionLine', { pct: p.commission_pct })}</span></> : ''}
                       </p>
                     </div>
-                    <Button size="sm" icon={Check} loading={responding === p.id} onClick={() => handleRespond(p.id, 'accepted')}>{t('partnersPage.requests.accept')}</Button>
-                    <Button size="sm" variant="secondary" icon={X} loading={responding === p.id} onClick={() => handleRespond(p.id, 'rejected')}>{t('partnersPage.requests.reject')}</Button>
-                  </Card>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button size="sm" icon={Check} className="min-h-11 md:min-h-0" loading={responding === p.id} onClick={() => handleRespond(p.id, 'accepted')}>{t('partnersPage.requests.accept')}</Button>
+                      <Button size="sm" variant="secondary" icon={X} className="min-h-11 md:min-h-0" loading={responding === p.id} onClick={() => handleRespond(p.id, 'rejected')}>{t('partnersPage.requests.reject')}</Button>
+                    </div>
+                  </article>
                 ))}
               </div>
             )}
           </div>
 
           <div>
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">{t('partnersPage.requests.sent')}</h3>
+            <h2 className={`${TITULO} mb-3`}>{t('partnersPage.requests.sent')}</h2>
             {pendingSent.length === 0 ? (
-              <p className="text-sm font-body text-n-400">{t('partnersPage.requests.noneSent')}</p>
+              <section className={CARTAO}>
+                <p className="text-sm font-body text-n-600">{t('partnersPage.requests.noneSent')}</p>
+              </section>
             ) : (
               <div className="space-y-2">
                 {pendingSent.map(p => (
-                  <Card key={p.id} padding="px-4 py-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-sm bg-n-100 flex items-center justify-center shrink-0">
-                      <Clock size={16} strokeWidth={1.75} className="text-n-500" />
+                  <article key={p.id} className={`${CARTAO} flex items-center gap-3`}>
+                    <div className="w-9 h-9 rounded-[10px] bg-n-100 flex items-center justify-center shrink-0">
+                      <Clock size={16} strokeWidth={1.75} className="text-n-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
-                      <p className="text-xs font-body text-n-500">{t('partnersPage.requests.awaiting')}</p>
+                      <p className="font-display font-semibold text-base text-ocean-900 break-words">{p.name}</p>
+                      <p className="text-xs font-body text-n-600">{t('partnersPage.requests.awaiting')}</p>
                     </div>
-                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={t('partnersPage.requests.cancelAria', { name: p.name })}
-                      className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title={t('partnersPage.requests.cancel')}>
-                      <Trash2 size={14} strokeWidth={1.75} />
-                    </button>
-                  </Card>
+                    <IconBtn icon={Trash2} label={t('partnersPage.requests.cancelAria', { name: p.name })} title={t('partnersPage.requests.cancel')}
+                      onClick={() => handleDelete(p.id)} hover={DELETE_HOVER} />
+                  </article>
                 ))}
               </div>
             )}
@@ -526,44 +530,37 @@ export default function Partners() {
 
       {activeTab === 'dashboard' && (
         <div className="space-y-5">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { label: t('partnersPage.dashboard.activePartners'), value: activePartners.filter(p => p.active && p.status !== 'rejected').length, color: 'text-n-900' },
-              { label: t('partnersPage.dashboard.sent'),           value: totalSent,                             color: 'text-ocean-700', Icon: ArrowUpRight },
-              { label: t('partnersPage.dashboard.received'),       value: totalReceived,                         color: 'text-[var(--success)]', Icon: ArrowDownRight },
-              { label: t('partnersPage.dashboard.balance'),        value: totalReceived - totalSent,             color: (totalReceived - totalSent) >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
-            ].map(m => (
-              <Card key={m.label} padding="px-4 py-3">
-                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-                <p className="text-xs font-body text-n-500 mt-0.5">{m.label}</p>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
+            <MareStat label={t('partnersPage.dashboard.activePartners')} value={activePartners.filter(p => p.active && p.status !== 'rejected').length} icon={Handshake} />
+            <MareStat label={t('partnersPage.dashboard.sent')} value={totalSent} icon={ArrowUpRight} />
+            <MareStat label={t('partnersPage.dashboard.received')} value={totalReceived} icon={ArrowDownRight} tone="bom" />
+            <MareStat label={t('partnersPage.dashboard.balance')} value={totalReceived - totalSent} icon={ArrowLeftRight} tone={(totalReceived - totalSent) >= 0 ? 'bom' : 'aviso'} />
           </div>
 
           {activePartners.some(p => p.partnership_type === 'commission') && (
-            <div className="grid grid-cols-2 gap-4">
-              <Card padding="px-5 py-4">
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('partnersPage.dashboard.payable')}</h3>
-                <p className="font-display font-bold text-2xl text-[var(--error)]">{eurosInteiros(commPayable, lang)}</p>
-                <p className="text-xs font-body text-n-400 mt-0.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <section className={CARTAO}>
+                <h2 className={`${TITULO} mb-3`}>{t('partnersPage.dashboard.payable')}</h2>
+                <p className={`${NUM} font-bold text-2xl text-ocean-900`}>{eurosInteiros(commPayable, lang)}</p>
+                <p className="text-xs font-body text-n-600 mt-0.5">
                   {t('partnersPage.dashboard.payableHelp')}
                   <br />{t('partnersPage.dashboard.needsAvg')}
                 </p>
-              </Card>
-              <Card padding="px-5 py-4">
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('partnersPage.dashboard.receivable')}</h3>
-                <p className="font-display font-bold text-2xl text-[var(--success)]">{eurosInteiros(commReceivable, lang)}</p>
-                <p className="text-xs font-body text-n-400 mt-0.5">
+              </section>
+              <section className={CARTAO}>
+                <h2 className={`${TITULO} mb-3`}>{t('partnersPage.dashboard.receivable')}</h2>
+                <p className={`${NUM} font-bold text-2xl text-ocean-900`}>{eurosInteiros(commReceivable, lang)}</p>
+                <p className="text-xs font-body text-n-600 mt-0.5">
                   {t('partnersPage.dashboard.receivableHelp')}
                   <br />{t('partnersPage.dashboard.needsAvg')}
                 </p>
-              </Card>
+              </section>
             </div>
           )}
 
-          <div className="px-4 py-3 bg-[var(--info-light)] border border-n-200 rounded-sm">
-            <p className="text-xs font-body text-[var(--info)]">
-              <span className="font-semibold">{t('partnersPage.dashboard.noteLabel')}</span> {t('partnersPage.dashboard.noteText')} <span className="font-mono">{t('automations.title')}</span>.
+          <div className="px-4 py-3 bg-mare-head border border-mare-card rounded-[14px]">
+            <p className="text-xs font-body text-n-600">
+              <span className="font-semibold">{t('partnersPage.dashboard.noteLabel')}</span> {t('partnersPage.dashboard.noteText')} <span className="font-semibold">{t('automations.title')}</span>.
             </p>
           </div>
         </div>
