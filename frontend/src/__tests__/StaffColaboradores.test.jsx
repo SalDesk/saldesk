@@ -278,7 +278,64 @@ describe('Colaboradores com o design system', () => {
     const html = document.body.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html).not.toMatch(/(?:text|bg|border)-error/);
+    /* o realce do botao de eliminar vem do IconBtn partilhado (hover:text-error) e fica como esta */
+    expect(html.replace(/hover:text-error/g, '')).not.toMatch(/(?:text|bg|border)-error/);
     expect(html).not.toMatch(/sand-(?:700|200)/);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Colaboradores no estilo Mare', () => {
+  it('mostra_o_sobretitulo_da_area_Gestao', async () => {
+    await montar();
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Gestão');
+  });
+
+  it('os_cartoes_de_colaborador_e_de_vendedor_sao_cartoes_Mare', async () => {
+    await montar();
+    const cartoes = [
+      cartao('Rui Lopes').closest('article'),
+      cartao('Ana Tavares').closest('article'),
+      ...screen.getAllByText('Vera Mendes', { selector: 'p' }).map(p => p.closest('article')),
+    ];
+    expect(cartoes).toHaveLength(4);
+    for (const art of cartoes) {
+      expect(art).not.toBeNull();
+      expect(art.className).toContain('rounded-[18px]');
+      expect(art.className).toContain('border-mare-card');
+      expect(art.className).toContain('p-[22px]');
+    }
+  });
+
+  it('estado_e_selo_de_vendedor_sao_Badge_com_o_mesmo_texto', async () => {
+    await montar();
+    expect(within(cartao('Rui Lopes')).getByText('Activo').className).toContain('app:rounded-full');
+    expect(within(cartao('Ana Tavares')).getByText('Inactivo').className).toContain('app:rounded-full');
+    expect(within(cartao('Vera Mendes')).getByText('Vendedor').className).toContain('app:rounded-full');
+  });
+
+  it('as_figuras_do_cartao_e_do_vendedor_sao_em_mono', async () => {
+    await montar();
+    expect(within(cartao('Rui Lopes')).getByText('12 trabalhos').className).toContain('tabular-nums');
+    const seccao = screen.getByText('Vendedores de Praia').closest('div.mt-6');
+    await waitFor(() => expect(listSellerCommissions).toHaveBeenCalled());
+    expect(within(seccao).getAllByText('€0')[0].className).toContain('font-mono');
+    expect(within(seccao).getByText('12% comissão').className).toContain('tabular-nums');
+  });
+
+  it('os_botoes_de_icone_do_cartao_tem_44px_no_telemovel', async () => {
+    await montar();
+    for (const nome of ['Editar Rui Lopes', 'Eliminar Rui Lopes']) {
+      expect(screen.getByRole('button', { name: nome }).className).toContain('min-h-11');
+    }
+  });
+
+  it('os_separadores_continuam_a_alternar', async () => {
+    await montar();
+    fireEvent.click(screen.getByRole('tab', { name: 'Chat' }));
+    expect(screen.getByRole('tab', { name: 'Chat' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Colaboradores' }));
+    expect(await screen.findByText('Rui Lopes')).toBeInTheDocument();
   });
 });

@@ -124,6 +124,7 @@ export default function Staff() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.gestao')}
         title={t('staff.title')}
         subtitle={
           plan === 'starter'
@@ -146,9 +147,9 @@ export default function Staff() {
       />
 
       {atStarterLimit && (
-        <div className="mb-5 px-4 py-3 rounded-sm bg-[var(--sand-50)] border border-[var(--sand-300)] text-sm font-body text-n-800 flex items-center justify-between gap-3">
+        <div className="mb-5 px-4 py-3 rounded-[14px] bg-[var(--sand-50)] border border-[var(--sand-300)] text-sm font-body text-n-800 flex items-center justify-between gap-3">
           <span>{t('staff.limitReached', { limit: STARTER_STAFF_LIMIT })}</span>
-          <button onClick={() => setShowUpgrade(true)} className="font-semibold underline shrink-0">
+          <button onClick={() => setShowUpgrade(true)} className="min-h-11 md:min-h-0 font-semibold underline shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
             {t('staff.upgrade')}
           </button>
         </div>
@@ -198,9 +199,9 @@ export default function Staff() {
         return (
           <div className="mt-6">
             <div className="flex items-center gap-2 mb-4">
-              <div className="flex-1 h-px bg-n-200" />
-              <p className="text-xs font-mono uppercase tracking-wider text-n-500 px-3">{t('staff.sellersTitle')}</p>
-              <div className="flex-1 h-px bg-n-200" />
+              <div className="flex-1 h-px bg-mare-card" />
+              <p className="font-display text-lg font-semibold text-ocean-900 px-3">{t('staff.sellersTitle')}</p>
+              <div className="flex-1 h-px bg-mare-card" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {sellers.map(s => <SellerCard key={s.id} seller={s} />)}

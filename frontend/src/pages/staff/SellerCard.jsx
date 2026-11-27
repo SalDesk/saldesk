@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { listSellerCommissions, markCommissionPaid } from '../../services/sellerService';
-import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import { StaffAvatar, rotuloZona } from './shared';
 import { useT } from '../../i18n';
 import { useLingua } from '../../utils/formatoLingua';
+
+/* Estilo Mare: cartao de pagina, caixa interior calma e figuras em mono */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const CAIXA = 'bg-mare-head rounded-[14px] px-3 py-2.5';
+const NUM = 'font-mono tabular-nums';
 
 /* Cartao de um Vendedor de Praia com as comissoes do mes (total e por pagar).
    As comissoes sao pedidas UMA vez por vendedor (antes pedia-se a cada render e o resultado, uma
@@ -44,41 +48,41 @@ export default function SellerCard({ seller }) {
   }
 
   return (
-    <Card padding="p-4">
+    <article className={CARTAO}>
       <div className="space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
             <StaffAvatar member={seller} size={40} />
-            <div>
-              <p className="font-display font-semibold text-sm text-n-900">{seller.name}</p>
-              <p className="text-xs font-body text-n-500">{rotuloZona(seller.seller_zone, t, lang) || t('staff.seller.noZone')}</p>
+            <div className="min-w-0">
+              <p className="font-display text-lg font-semibold text-ocean-900 break-words">{seller.name}</p>
+              <p className="text-sm font-body text-n-600 break-words">{rotuloZona(seller.seller_zone, t, lang) || t('staff.seller.noZone')}</p>
             </div>
           </div>
-          <Badge variant="direct">{t('staff.card.sellerBadge')}</Badge>
+          <span className="shrink-0"><Badge variant="direct">{t('staff.card.sellerBadge')}</Badge></span>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-n-50 rounded-sm px-2.5 py-2">
-            <p className="font-display font-bold text-sm text-ocean-700">€{Math.round(totalMonth)}</p>
-            <p className="text-[10px] font-body text-n-400">{t('staff.seller.commissionsMonth')}</p>
+          <div className={CAIXA}>
+            <p className={`font-display font-bold text-base text-ocean-900 ${NUM}`}>€{Math.round(totalMonth)}</p>
+            <p className="text-xs font-body text-n-600">{t('staff.seller.commissionsMonth')}</p>
           </div>
-          <div className="bg-[var(--warning-light)] rounded-sm px-2.5 py-2">
-            <p className="font-display font-bold text-sm text-[var(--warning)]">€{Math.round(totalPending)}</p>
-            <p className="text-[10px] font-body text-n-400">{t('staff.seller.unpaid')}</p>
+          <div className="bg-sand-50 rounded-[14px] px-3 py-2.5">
+            <p className={`font-display font-bold text-base text-ocean-900 ${NUM}`}>€{Math.round(totalPending)}</p>
+            <p className="text-xs font-body text-n-600">{t('staff.seller.unpaid')}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between text-xs font-body text-n-500 pt-1 border-t border-n-100">
-          <span>{t('staff.seller.commissionPct', { pct: seller.commission_pct || 10 })}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-body text-n-600 pt-3 border-t border-n-100">
+          <span className={NUM}>{t('staff.seller.commissionPct', { pct: seller.commission_pct || 10 })}</span>
           {totalPending > 0 && (
             <button
               type="button"
               disabled={paying}
               onClick={handlePay}
-              className="text-xs font-body font-semibold text-ocean-700 hover:underline disabled:opacity-50">
+              className="min-h-11 md:min-h-0 text-sm font-body font-semibold text-ocean-700 hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 disabled:opacity-50">
               {t('staff.seller.recordPayment')}
             </button>
           )}
         </div>
       </div>
-    </Card>
+    </article>
   );
 }

@@ -4,7 +4,8 @@ import { Check, X, Calendar, FileText, Award, Users, AlertTriangle } from 'lucid
 import { getHrOverview, updateLeaveStatus } from '../services/staffService';
 import { useToast } from '../store/toastStore';
 import PageHeader from '../components/layout/PageHeader';
-import Card from '../components/ui/Card';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
 import { useT } from '../i18n';
@@ -15,21 +16,12 @@ function daysBetween(a, b) {
   return Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
 }
 
-function StatCard({ Icon, value, label, tone }) {
-  return (
-    <Card padding="p-4">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${tone === 'warn' ? 'bg-[var(--warning-light)] text-[var(--warning)]' : 'bg-ocean-50 text-ocean-700'}`}>
-          <Icon size={18} strokeWidth={1.75} />
-        </div>
-        <div>
-          <p className="font-display font-bold text-xl text-n-900">{value}</p>
-          <p className="text-xs font-body text-n-500">{label}</p>
-        </div>
-      </div>
-    </Card>
-  );
-}
+/* Estilo Mare: cartao de pagina, titulo de cartao, caixa interior calma e figuras em mono */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+const CAIXA = 'bg-mare-head rounded-[14px] px-4 py-3';
+const NUM = 'font-mono tabular-nums';
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
 
 export default function RH() {
   const t = useT();
@@ -70,73 +62,73 @@ export default function RH() {
 
   return (
     <div>
-      <PageHeader title={t('hr.title')} subtitle={t('hr.subtitle')} />
+      <PageHeader eyebrow={t('nav.sections.gestao')} title={t('hr.title')} subtitle={t('hr.subtitle')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard Icon={Calendar} value={pending.length} label={t('hr.pendingLeave')} tone={pending.length ? 'warn' : 'ok'} />
-        <StatCard Icon={AlertTriangle} value={expiring.length} label={t('hr.expiring')} tone={expiring.length ? 'warn' : 'ok'} />
-        <StatCard Icon={Users} value={staff.length} label={t('hr.activeStaff')} />
+        <MareStat icon={Calendar} value={pending.length} label={t('hr.pendingLeave')} tone={pending.length ? 'aviso' : 'default'} />
+        <MareStat icon={AlertTriangle} value={expiring.length} label={t('hr.expiring')} tone={expiring.length ? 'aviso' : 'default'} />
+        <MareStat icon={Users} value={staff.length} label={t('hr.activeStaff')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section>
-          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">{t('hr.pendingLeave')}</h3>
-          {!pending.length && <p className="text-sm font-body text-n-500">{t('hr.noPending')}</p>}
+        <section className={CARTAO}>
+          <h3 className={`${TITULO} mb-4`}>{t('hr.pendingLeave')}</h3>
+          {!pending.length && <p className="text-sm font-body text-n-600">{t('hr.noPending')}</p>}
           <div className="space-y-2">
             {pending.map(l => (
-              <Card key={l.id} padding="px-4 py-3">
+              <div key={l.id} className={CAIXA}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-body font-semibold text-sm text-n-900 truncate">{l.staff_name}</p>
-                    <p className="text-xs font-body text-n-500">
-                      {rotuloTipoFerias(l.type, t)} · {l.start_date} → {l.end_date}
-                      <span className="text-n-400"> ({t('hr.daysCount', { n: daysBetween(l.start_date, l.end_date) })})</span>
+                    <p className="text-xs font-body text-n-600">
+                      {rotuloTipoFerias(l.type, t)} · <span className={NUM}>{l.start_date} → {l.end_date}</span>
+                      <span className={`text-n-600 ${NUM}`}> ({t('hr.daysCount', { n: daysBetween(l.start_date, l.end_date) })})</span>
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => changeStatus(l.staff_id, l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label={t('hr.approve')}><Check size={16} strokeWidth={2} /></button>
-                    <button onClick={() => changeStatus(l.staff_id, l.id, 'rejected')} className="text-[var(--error)] hover:opacity-70" aria-label={t('hr.reject')}><X size={16} strokeWidth={2} /></button>
+                  <div className="flex items-center shrink-0">
+                    <IconBtn icon={Check} label={t('hr.approve')} hover={EDIT_HOVER} className="text-ocean-700" onClick={() => changeStatus(l.staff_id, l.id, 'approved')} />
+                    <IconBtn icon={X} label={t('hr.reject')} hover={DELETE_HOVER} className="text-[var(--error)]" onClick={() => changeStatus(l.staff_id, l.id, 'rejected')} />
                   </div>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         </section>
 
-        <section>
-          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">{t('hr.expiringSoon')}</h3>
-          {!expiring.length && <p className="text-sm font-body text-n-500">{t('hr.nothingExpiring')}</p>}
+        <section className={CARTAO}>
+          <h3 className={`${TITULO} mb-4`}>{t('hr.expiringSoon')}</h3>
+          {!expiring.length && <p className="text-sm font-body text-n-600">{t('hr.nothingExpiring')}</p>}
           <div className="space-y-2">
             {expiring.map(item => (
-              <Card key={`${item.kind}-${item.id}`} padding="px-4 py-3">
+              <div key={`${item.kind}-${item.id}`} className={CAIXA}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {item.kind === 'document' ? <FileText size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0" /> : <Award size={16} strokeWidth={1.75} className="text-[var(--sand-600)] shrink-0" />}
                     <div className="min-w-0">
                       <p className="font-body font-semibold text-sm text-n-900 truncate">{item.name}</p>
-                      <p className="text-xs font-body text-n-500 truncate">{item.staff_name}</p>
+                      <p className="text-xs font-body text-n-600 truncate">{item.staff_name}</p>
                     </div>
                   </div>
                   <ExpiryBadge date={item.expiry_date} />
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         </section>
       </div>
 
-      <section className="mt-6">
-        <h3 className="font-display font-semibold text-sm text-n-900 mb-3">{t('hr.staffHeading')}</h3>
+      <section className={`${CARTAO} mt-6`}>
+        <h3 className={`${TITULO} mb-4`}>{t('hr.staffHeading')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {staff.map(s => (
             <button key={s.id} onClick={() => navigate(`/colaboradores/${s.id}`)}
-              className="flex items-center gap-3 bg-white border border-n-200 rounded-md px-4 py-3 text-left hover:border-ocean-300 transition-colors">
-              <div className="w-8 h-8 rounded-full bg-ocean-50 text-ocean-700 flex items-center justify-center font-display font-bold text-xs shrink-0">
+              className={`flex items-center gap-3 min-h-11 bg-mare-head rounded-[14px] px-4 py-3 text-left hover:bg-ocean-50 transition-colors ${FOCO}`}>
+              <div className="w-8 h-8 rounded-full bg-ocean-100 text-ocean-800 flex items-center justify-center font-display font-bold text-xs shrink-0">
                 {s.name?.charAt(0)?.toUpperCase()}
               </div>
               <div className="min-w-0">
                 <p className="font-body font-semibold text-sm text-n-900 truncate">{s.name}</p>
-                <p className="text-xs font-body text-n-500 truncate">{rotuloCargo(s.role, t, lang)}</p>
+                <p className="text-xs font-body text-n-600 truncate">{rotuloCargo(s.role, t, lang)}</p>
               </div>
             </button>
           ))}

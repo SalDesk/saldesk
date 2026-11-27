@@ -282,3 +282,26 @@ describe('StaffForm com o design system', () => {
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('StaffForm no estilo Mare', () => {
+  it('as_seccoes_do_formulario_sao_caixas_interiores_Mare', async () => {
+    montar();
+    fireEvent.change(screen.getByLabelText('Cargo'), { target: { value: 'Vendedor de Praia' } });
+    await screen.findByLabelText('Comissão (%)');
+    for (const titulo of ['Foto de perfil', 'Horário habitual', 'Competências e certificações', 'Configuração do Vendedor de Praia', 'Criar conta /staff']) {
+      const caixa = screen.getAllByText(titulo)[0].closest('section');
+      expect(caixa, titulo).not.toBeNull();
+      expect(caixa.className).toContain('rounded-[14px]');
+      if (titulo !== 'Configuração do Vendedor de Praia') expect(caixa.className).toContain('bg-mare-head');
+    }
+  });
+
+  it('os_dias_do_horario_e_os_tours_tem_44px_no_telemovel', async () => {
+    montar();
+    expect(screen.getByRole('button', { name: 'Seg' }).className).toContain('min-h-11');
+    fireEvent.change(screen.getByLabelText('Cargo'), { target: { value: 'Vendedor de Praia' } });
+    expect((await screen.findByRole('button', { name: 'Quad' })).className).toContain('min-h-11');
+  });
+});
