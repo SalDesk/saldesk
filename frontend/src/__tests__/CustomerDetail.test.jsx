@@ -270,6 +270,36 @@ describe('CustomerDetail', () => {
     fireEvent.click(container.querySelector('.fixed > .absolute'));
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it('as secções do perfil são caixas interiores Maré', async () => {
+    await abre();
+    for (const titulo of ['Contacto', 'Tags']) {
+      const caixa = screen.getByRole('heading', { name: new RegExp(titulo) }).closest('section');
+      expect(caixa).toHaveClass('rounded-[14px]', 'border', 'border-mare-card', 'bg-mare-head');
+    }
+    const metricas = screen.getByText('Visitas').parentElement;
+    expect(metricas).toHaveClass('rounded-[14px]', 'border-mare-card');
+  });
+
+  it('dinheiro, contagens e datas usam font-mono', async () => {
+    await abre();
+    expect(screen.getByText('€620')).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText('3')).toHaveClass('font-mono', 'tabular-nums');
+    expect(screen.getByText('17/05/1990')).toHaveClass('font-mono');
+    seccao('Histórico');
+    for (const t of ['10/03/2026', '12/03/2026', '€55.00']) {
+      expect(screen.getByText(t)).toHaveClass('font-mono', 'tabular-nums');
+    }
+    expect(screen.getByText('Buggy Tour').closest('div').parentElement).toHaveClass('rounded-[14px]', 'border-mare-card');
+  });
+
+  it('as etiquetas são pílulas com o mesmo texto e a etiqueta própria também', async () => {
+    await abre();
+    expect(screen.getByRole('button', { name: 'grupo' })).toHaveClass('rounded-full', 'border');
+    const ativa = screen.getByRole('button', { name: 'VIP' });
+    expect(ativa).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Custom').closest('span')).toHaveClass('rounded-full');
+  });
 });
 
 /* Painel em ingles: os rotulos mudam; as etiquetas gravadas e os textos para o cliente ficam como estavam */

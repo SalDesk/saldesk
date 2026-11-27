@@ -8,7 +8,7 @@ import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Input, { Textarea } from '../components/ui/Input';
-import Card from '../components/ui/Card';
+import MareStat from '../components/shared/MareStat';
 import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
 import FilterChips from '../components/ui/FilterChips';
@@ -28,39 +28,24 @@ const SEGMENTS = [
   { key: 'vip',        label: 'vip',       Icon: Crown },
 ];
 
-function MetricCard({ icon: Icon, label, value, sub }) {
-  return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm px-5 py-4 flex items-center gap-4">
-      <div className="w-10 h-10 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-        <Icon size={20} strokeWidth={1.75} className="text-ocean-700" />
-      </div>
-      <div>
-        <p className="font-display font-bold text-xl text-n-900">{value}</p>
-        <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
-        {sub && <p className="text-xs font-body text-n-400">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
 const COLUMNS = (t, onSelect, lang) => [
   {
     key: 'name',
     label: t('customers.name'),
     render: (c) => (
-      <button onClick={() => onSelect(c.id)} className="font-body font-semibold text-n-900 hover:text-ocean-700 transition-colors text-left">
+      <button onClick={() => onSelect(c.id)} className="font-body font-semibold text-ocean-900 hover:text-ocean-700 transition-colors text-left min-h-11 md:min-h-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
         {c.name}
       </button>
     ),
   },
   { key: 'email', label: t('customers.email'), render: (c) => <span className="text-n-600">{c.email}</span> },
-  { key: 'country_code', label: t('customers.nationality'), render: (c) => c.country_code || '—', width: '80px' },
-  { key: 'total_visits', label: t('customers.visits'), render: (c) => c.total_visits, width: '80px' },
+  { key: 'country_code', label: t('customers.nationality'), render: (c) => <span className="font-mono">{c.country_code || '—'}</span>, width: '80px' },
+  { key: 'total_visits', label: t('customers.visits'), render: (c) => <span className="font-mono tabular-nums">{c.total_visits}</span>, width: '80px' },
   {
     key: 'total_spent',
     label: t('customers.totalSpent'),
     render: (c) => (
-      <span className="font-display font-semibold text-ocean-700">
+      <span className="font-mono tabular-nums font-semibold text-ocean-900">
         {eurosDuasCasas(c.total_spent, lang)}
       </span>
     ),
@@ -69,13 +54,13 @@ const COLUMNS = (t, onSelect, lang) => [
   {
     key: 'language',
     label: t('customersPage.language'),
-    render: (c) => <span className="text-n-500 text-xs uppercase">{c.language}</span>,
+    render: (c) => <span className="text-n-600 text-xs uppercase">{c.language}</span>,
     width: '70px',
   },
   {
     key: 'custom_price',
     label: t('customersPage.agreedPrice'),
-    render: (c) => c.custom_price != null ? <span className="font-display font-semibold text-n-700">{eurosDuasCasas(c.custom_price, lang)}</span> : <span className="text-n-300">—</span>,
+    render: (c) => c.custom_price != null ? <span className="font-mono tabular-nums font-semibold text-n-700">{eurosDuasCasas(c.custom_price, lang)}</span> : <span className="text-n-500">—</span>,
     width: '110px',
   },
 ];
@@ -148,8 +133,8 @@ function NewCustomerModal({ open, onClose, onCreated }) {
                   key={key}
                   type="button"
                   onClick={() => toggleTag(key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-body font-medium border transition-colors ${
-                    active ? 'bg-ocean-700 border-ocean-700 text-white' : 'bg-white border-n-200 text-n-600 hover:border-ocean-300'
+                  className={`flex items-center gap-1.5 px-3 min-h-11 md:min-h-9 rounded-full text-xs font-body font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${
+                    active ? 'bg-ocean-700 border-ocean-700 text-white' : 'bg-white border-mare-card text-n-600 hover:border-ocean-300'
                   }`}
                 >
                   <Icon size={14} strokeWidth={1.75} />
@@ -224,23 +209,23 @@ function CsvImportModal({ open, onClose, onImported }) {
   return (
     <Modal open={open} onClose={onClose} title={t('customersPage.importModal.title')} size="md">
       <div className="space-y-4">
-        <div className="px-3 py-2.5 bg-ocean-50 border border-ocean-100 rounded-sm text-xs font-body text-ocean-700 space-y-1">
+        <div className="px-3 py-2.5 bg-mare-head border border-mare-card rounded-[14px] text-xs font-body text-ocean-800 space-y-1">
           <p className="font-semibold">{t('customersPage.importModal.expected')}</p>
           <p className="font-mono">first_name, last_name, email, phone, country_code, language</p>
         </div>
 
         <div
           onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed border-n-300 rounded-md p-8 text-center cursor-pointer hover:border-ocean-400 hover:bg-ocean-50/30 transition-colors">
-          <Upload size={24} strokeWidth={1.25} className="mx-auto mb-2 text-n-400" />
+          className="border-2 border-dashed border-mare-card rounded-[14px] p-8 text-center cursor-pointer hover:border-ocean-400 hover:bg-mare-head transition-colors">
+          <Upload size={24} strokeWidth={1.25} className="mx-auto mb-2 text-n-500" />
           <p className="text-sm font-body text-n-600">{file ? file.name : t('customersPage.importModal.selectFile')}</p>
-          <p className="text-xs font-body text-n-400 mt-1">{t('customersPage.importModal.fileHint')}</p>
+          <p className="text-xs font-body text-n-500 mt-1">{t('customersPage.importModal.fileHint')}</p>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="hidden" />
         </div>
 
         {preview.length > 0 && (
-          <div className="border border-n-200 rounded-sm overflow-hidden">
-            <div className="px-3 py-2 bg-n-50 border-b border-n-200">
+          <div className="border border-mare-card rounded-[14px] overflow-hidden">
+            <div className="px-3 py-2 bg-mare-head border-b border-mare-card">
               <p className="text-xs font-mono text-n-500 uppercase tracking-wide">{t('customersPage.importModal.preview', { n: preview.length })}</p>
             </div>
             <div className="p-3 space-y-1">
@@ -347,6 +332,7 @@ export default function Customers() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.clientes')}
         title={t('customers.title')}
         subtitle={t('customersPage.subtitle', { n: customers.length })}
         actions={
@@ -365,18 +351,18 @@ export default function Customers() {
       />
 
       {importMsg && (
-        <div className="mb-4 px-4 py-2.5 bg-[var(--success-light)] border border-n-200 rounded-md text-sm font-body text-[var(--success)]">
+        <div className="mb-4 px-4 py-2.5 bg-[var(--success-light)] border border-mare-card rounded-[14px] text-sm font-body text-[var(--success)]">
           {importMsg}
         </div>
       )}
 
       {/* Metricas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <MetricCard icon={Users}      label={t('customersPage.metrics.totalCustomers')}  value={customers.length} />
-        <MetricCard icon={TrendingUp} label={t('customersPage.metrics.totalRevenue')}   value={eurosInteiros(totalGasto, lang)} />
-        <MetricCard icon={Globe}      label={t('customersPage.metrics.countries')}      value={paises} />
-        <MetricCard icon={Star}       label={t('customersPage.metrics.topCustomer')}    value={topCliente?.name?.split(' ')[0] || '—'}
-          sub={topCliente ? eurosInteiros(topCliente.total_spent, lang) : ''} />
+        <MareStat icon={Users}      label={t('customersPage.metrics.totalCustomers')}  value={customers.length} />
+        <MareStat icon={TrendingUp} label={t('customersPage.metrics.totalRevenue')}   value={eurosInteiros(totalGasto, lang)} />
+        <MareStat icon={Globe}      label={t('customersPage.metrics.countries')}      value={paises} />
+        <MareStat icon={Star}       label={t('customersPage.metrics.topCustomer')}    value={topCliente?.name?.split(' ')[0] || '—'}
+          hint={topCliente ? eurosInteiros(topCliente.total_spent, lang) : ''} />
       </div>
 
       {/* Segmentacao */}
@@ -406,9 +392,9 @@ export default function Customers() {
       </div>
 
       {/* Tabela */}
-      <Card padding="p-0">
+      <div className="bg-white border border-mare-card rounded-[18px] overflow-hidden">
         <Table columns={COLUMNS(t, setSelectedId, lang)} rows={segmented} loading={loading} />
-      </Card>
+      </div>
 
       {/* Perfil lateral */}
       {selectedId && (

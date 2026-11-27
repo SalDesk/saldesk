@@ -7,6 +7,7 @@ import { getCustomer, updateCustomer } from '../../services/customersService';
 import api from '../../services/api';
 import { useT, getT } from '../../i18n';
 import Badge from '../ui/Badge';
+import { IconBtn } from '../shared/IconBtn';
 import Button from '../ui/Button';
 import Tabs from '../ui/Tabs';
 import Input, { Textarea } from '../ui/Input';
@@ -17,11 +18,11 @@ import { eurosInteiros, formatDate } from '../../pages/reservations/shared';
 import { eurosDuasCasas } from '../../utils/formatoEuros';
 import { rotuloEtiqueta } from './rotulosClientes';
 
-function InfoRow({ label, value }) {
+function InfoRow({ label, value, mono = false }) {
   return (
     <div className="flex items-start gap-2 text-sm">
-      <span className="font-body text-n-500 w-24 shrink-0 mt-0.5">{label}</span>
-      <span className="font-body text-n-800">{value || '—'}</span>
+      <span className="font-body text-n-600 w-24 shrink-0 mt-0.5">{label}</span>
+      <span className={`font-body text-n-800 min-w-0 break-words ${mono ? 'font-mono tabular-nums' : ''}`}>{value || '—'}</span>
     </div>
   );
 }
@@ -141,20 +142,18 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
     <div className="fixed inset-0 z-40 flex justify-end">
       <div className="absolute inset-0 bg-ocean-900/30" onClick={onClose} />
 
-      <div className="relative z-50 w-full max-w-md bg-white shadow-lg flex flex-col h-full overflow-hidden">
+      <div className="relative z-50 w-full max-w-md bg-white shadow-lg border-l border-mare-card flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-n-200 shrink-0">
-          <div className="flex items-center gap-2">
-            <h2 className="font-display font-bold text-base text-n-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-mare-card shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="font-display font-semibold text-lg text-ocean-900 break-words min-w-0">
               {loading ? t('common.loading') : customer?.name}
             </h2>
             {isVip && !loading && (
               <Crown size={14} strokeWidth={1.75} className="text-sand-500" />
             )}
           </div>
-          <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-n-400 hover:text-n-700 transition-colors">
-            <X size={18} strokeWidth={1.75} />
-          </button>
+          <IconBtn icon={X} label={t('common.close')} onClick={onClose} hover="hover:text-ocean-900 hover:bg-mare-head" className="text-n-600 shrink-0" />
         </div>
 
         {loading ? (
@@ -164,21 +163,21 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
         ) : customer ? (
           <>
             {/* Metrics */}
-            <div className="grid grid-cols-3 border-b border-n-200 shrink-0">
+            <div className="grid grid-cols-3 gap-2 px-4 py-3 border-b border-mare-card shrink-0">
               {[
                 { label: t('customers.visits'),         value: customer.total_visits },
                 { label: t('customerDetail.ltv'),       value: eurosInteiros(customer.total_spent, lang) },
                 { label: t('customersPage.country'),    value: customer.country_code || '—' },
               ].map(m => (
-                <div key={m.label} className="px-4 py-4 text-center border-r last:border-r-0 border-n-200">
-                  <p className="font-display font-bold text-xl text-ocean-700">{m.value}</p>
-                  <p className="text-xs font-body text-n-500 mt-0.5">{m.label}</p>
+                <div key={m.label} className="px-3 py-3 text-center rounded-[14px] border border-mare-card bg-mare-head min-w-0">
+                  <p className="font-mono tabular-nums font-bold text-xl text-ocean-900 break-words">{m.value}</p>
+                  <p className="text-xs font-body text-n-600 mt-0.5">{m.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Quick actions */}
-            <div className="flex gap-2 px-4 py-3 border-b border-n-100 shrink-0">
+            <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-mare-card shrink-0">
               <Button variant="secondary" size="sm" icon={Mail} onClick={() => setSection('comms')}>{t('customers.email')}</Button>
               <Button variant="secondary" size="sm" icon={MessageCircle} onClick={handleWhatsApp}>WhatsApp</Button>
             </div>
@@ -191,30 +190,30 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
             <div className="flex-1 overflow-y-auto">
               {/* PERFIL */}
               {activeSection === 'perfil' && (
-                <div className="px-5 py-4 space-y-5">
-                  <section>
-                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">{t('customerDetail.contact')}</h3>
+                <div className="px-5 py-4 space-y-4">
+                  <section className="rounded-[14px] border border-mare-card bg-mare-head p-4">
+                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-ocean-900 mb-3">{t('customerDetail.contact')}</h3>
                     <div className="space-y-2">
                       <InfoRow label={t('customers.email')} value={customer.email} />
-                      <InfoRow label={t('customers.phone')} value={customer.phone} />
-                      <InfoRow label="WhatsApp" value={customer.whatsapp} />
+                      <InfoRow label={t('customers.phone')} value={customer.phone} mono />
+                      <InfoRow label="WhatsApp" value={customer.whatsapp} mono />
                       <InfoRow label={t('customersPage.language')} value={customer.language?.toUpperCase()} />
-                      <InfoRow label={t('customerDetail.birthday')} value={customer.birthday ? formatDate(customer.birthday) : null} />
+                      <InfoRow label={t('customerDetail.birthday')} value={customer.birthday ? formatDate(customer.birthday) : null} mono />
                     </div>
                   </section>
 
                   {/* Tags */}
-                  <section>
-                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">{t('customers.tags')}</h3>
+                  <section className="rounded-[14px] border border-mare-card bg-mare-head p-4">
+                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-ocean-900 mb-2">{t('customers.tags')}</h3>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {SEGMENT_TAGS.map(tag => {
                         const active = (customer.tags || []).includes(tag);
                         return (
                           <button key={tag} onClick={() => toggleTag(tag)} disabled={savingTags}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-xs text-xs font-body transition-colors border ${
+                            className={`flex items-center gap-1 px-3 min-h-11 md:min-h-8 rounded-full text-xs font-body font-medium transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${
                               active
-                                ? 'bg-ocean-50 border-ocean-300 text-ocean-700'
-                                : 'bg-n-50 border-n-200 text-n-500 hover:border-n-400'
+                                ? 'bg-ocean-100 border-ocean-300 text-ocean-800'
+                                : 'bg-white border-mare-card text-n-600 hover:border-ocean-300'
                             }`}>
                             {active && <Check size={9} strokeWidth={2.5} />}
                             {rotuloEtiqueta(tag, t, lang)}
@@ -222,9 +221,9 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                         );
                       })}
                       {(customer.tags || []).filter(t => !SEGMENT_TAGS.includes(t)).map(tag => (
-                        <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-sand-50 border border-sand-200 text-sand-600 rounded-xs text-xs font-body">
+                        <span key={tag} className="flex items-center gap-1 pl-3 pr-1 min-h-8 bg-sand-100 border border-sand-200 text-n-800 rounded-full text-xs font-body font-medium">
                           <Tag size={9} strokeWidth={1.75} />{rotuloEtiqueta(tag, t, lang)}
-                          <button onClick={() => toggleTag(tag)} disabled={savingTags} className="ml-0.5 hover:text-error"><X size={9} strokeWidth={2} /></button>
+                          <button onClick={() => toggleTag(tag)} disabled={savingTags} className="ml-0.5 inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-6 md:min-w-6 rounded-full hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"><X size={9} strokeWidth={2} /></button>
                         </span>
                       ))}
                     </div>
@@ -238,12 +237,12 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                   </section>
 
                   {/* Notas */}
-                  <section>
+                  <section className="rounded-[14px] border border-mare-card bg-mare-head p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('customerDetail.internalNotes')}</h3>
+                      <h3 className="text-xs font-body font-bold uppercase tracking-wide text-ocean-900">{t('customerDetail.internalNotes')}</h3>
                       {!editingNotes && (
                         <button onClick={() => setEditNotes(true)}
-                          className="text-xs text-ocean-700 hover:underline flex items-center gap-1">
+                          className="text-xs text-ocean-700 hover:underline flex items-center gap-1 min-h-11 md:min-h-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
                           <Pencil size={11} strokeWidth={1.75} /> {t('common.edit')}
                         </button>
                       )}
@@ -258,7 +257,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                       </div>
                     ) : (
                       <p className="text-sm font-body text-n-600 whitespace-pre-line min-h-[2rem]">
-                        {customer.notes || <span className="text-n-400 italic">{t('customerDetail.noNotes')}</span>}
+                        {customer.notes || <span className="text-n-500 italic">{t('customerDetail.noNotes')}</span>}
                       </p>
                     )}
                   </section>
@@ -268,15 +267,15 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
               {/* HISTORICO */}
               {activeSection === 'tours' && (
                 <div className="px-5 py-4">
-                  <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">
+                  <h3 className="text-xs font-body font-bold uppercase tracking-wide text-ocean-900 mb-3">
                     {t('customerDetail.history', { n: customer.reservations?.length || 0 })}
                   </h3>
                   {!customer.reservations?.length ? (
-                    <p className="text-sm font-body text-n-400 italic">{t('customerDetail.noBookings')}</p>
+                    <p className="text-sm font-body text-n-500 italic">{t('customerDetail.noBookings')}</p>
                   ) : (
                     <div className="space-y-2">
                       {customer.reservations?.map(r => (
-                        <div key={r.id} className="rounded-sm border border-n-200 px-3 py-2.5">
+                        <div key={r.id} className="rounded-[14px] border border-mare-card bg-white px-3 py-2.5">
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <p className="text-xs font-body font-semibold text-n-700 truncate">
                               {r.units?.name || '—'}
@@ -284,10 +283,10 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                             <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>
                           </div>
                           <div className="flex items-center gap-1.5 text-xs font-body text-n-500">
-                            <span>{formatDate(r.check_in)}</span>
+                            <span className="font-mono tabular-nums">{formatDate(r.check_in)}</span>
                             <ArrowRight size={10} strokeWidth={1.75} />
-                            <span>{formatDate(r.check_out)}</span>
-                            <span className="ml-auto font-semibold text-n-700">{eurosDuasCasas(r.total_price || r.total_amount || 0, lang)}</span>
+                            <span className="font-mono tabular-nums">{formatDate(r.check_out)}</span>
+                            <span className="ml-auto font-mono tabular-nums font-semibold text-n-700">{eurosDuasCasas(r.total_price || r.total_amount || 0, lang)}</span>
                           </div>
                         </div>
                       ))}
@@ -298,12 +297,12 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
 
               {/* COMUNICACAO */}
               {activeSection === 'comms' && (
-                <div className="px-5 py-4 space-y-5">
+                <div className="px-5 py-4 space-y-4">
                   {/* Email form */}
-                  <section>
-                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">{t('customerDetail.sendEmailTitle')}</h3>
+                  <section className="rounded-[14px] border border-mare-card bg-mare-head p-4">
+                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-ocean-900 mb-3">{t('customerDetail.sendEmailTitle')}</h3>
                     {emailSent ? (
-                      <div className="flex items-center gap-2 px-3 py-2.5 bg-[var(--success-light)] border border-n-200 rounded-sm text-sm font-body text-[var(--success)]">
+                      <div className="flex items-center gap-2 px-3 py-2.5 bg-[var(--success-light)] border border-n-200 rounded-[14px] text-sm font-body text-[var(--success)]">
                         <Check size={14} strokeWidth={2} />
                         {t('customerDetail.emailSent')}
                       </div>
@@ -324,8 +323,8 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                   </section>
 
                   {/* WhatsApp template */}
-                  <section>
-                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">WhatsApp</h3>
+                  <section className="rounded-[14px] border border-mare-card bg-mare-head p-4">
+                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-ocean-900 mb-3">WhatsApp</h3>
                     {customer.whatsapp || customer.phone ? (
                       <div className="space-y-2">
                         {[
@@ -338,16 +337,16 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                             <a key={label}
                               href={`https://wa.me/${number}?text=${encodeURIComponent(text)}`}
                               target="_blank" rel="noreferrer"
-                              className="flex items-center gap-2 px-3 py-2.5 rounded-sm border border-n-200 bg-n-50 hover:border-ocean-300 hover:bg-ocean-50 transition-colors">
+                              className="flex items-center gap-2 px-3 min-h-11 py-2.5 rounded-[14px] border border-mare-card bg-white hover:border-ocean-300 hover:bg-ocean-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
                               <MessageCircle size={14} strokeWidth={1.75} className="text-[var(--success)] shrink-0" />
                               <span className="text-sm font-body text-n-700">{label}</span>
-                              <ArrowRight size={12} strokeWidth={1.75} className="ml-auto text-n-400" />
+                              <ArrowRight size={12} strokeWidth={1.75} className="ml-auto text-n-500" />
                             </a>
                           );
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm font-body text-n-400 italic">{t('customerDetail.noWhatsapp')}</p>
+                      <p className="text-sm font-body text-n-500 italic">{t('customerDetail.noWhatsapp')}</p>
                     )}
                   </section>
                 </div>

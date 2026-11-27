@@ -89,7 +89,7 @@ describe('Customers', () => {
     return label.nextElementSibling;
   }
   function metrica(rotulo) {
-    return screen.getByText(rotulo).previousElementSibling.textContent;
+    return screen.getByText(rotulo).closest("article").querySelector("p.font-display").textContent;
   }
 
   it('lista os clientes com as colunas e o subtítulo', async () => {
@@ -275,6 +275,44 @@ describe('Customers', () => {
     fireEvent.click(screen.getByRole('button', { name: 'VIP' }));
     expect(screen.getByText('Sem resultados')).toBeInTheDocument();
   });
+
+  it('o cabeçalho traz o eyebrow Clientes', async () => {
+    await abre();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Clientes');
+  });
+
+  it('as quatro métricas são quadros MareStat com os mesmos valores e a pista do top cliente', async () => {
+    await abre();
+    for (const [rotulo, valor] of [['Total clientes', '4'], ['Receita total', '€810'], ['Países', '4'], ['Top cliente', 'Ana']]) {
+      const quadro = screen.getByText(rotulo).closest('article');
+      expect(quadro).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+      expect(quadro).toHaveTextContent(valor);
+    }
+    expect(screen.getByText('Top cliente').closest('article')).toHaveTextContent('€120');
+  });
+
+  it('a tabela está num cartão Maré e dinheiro e contagens usam font-mono', async () => {
+    await abre();
+    const cartao = screen.getByRole('table').closest('.border-mare-card');
+    expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]', 'overflow-hidden');
+    const linha = within(screen.getByRole('table')).getAllByRole('row')[2];
+    const celulas = within(linha).getAllByRole('cell');
+    for (const i of [3, 4]) {
+      expect(celulas[i].querySelector('.font-mono') || celulas[i]).toHaveClass('font-mono', 'tabular-nums');
+    }
+    expect(within(within(screen.getByRole('table')).getAllByRole('row')[1]).getAllByRole('cell')[6].querySelector('.font-mono')).toBeTruthy();
+  });
+
+  it('a importação CSV usa caixas interiores Maré', async () => {
+    await abre();
+    fireEvent.click(screen.getByRole('button', { name: 'Importar CSV' }));
+    const dialogo = await screen.findByRole('dialog');
+    const dica = within(dialogo).getByText(/first_name/).parentElement;
+    const zona = dialogo.querySelector('input[type="file"]').parentElement;
+    for (const caixa of [dica, zona]) {
+      expect(caixa).toHaveClass('rounded-[14px]', 'border-mare-card');
+    }
+  });
 });
 
 /* Painel em ingles: os rotulos mudam, o que se grava (etiquetas, filtros) fica igual */
@@ -328,9 +366,9 @@ describe('Customers em ingles', () => {
       .toEqual(['Name', 'Email', 'Nationality', 'Visits', 'Total spent', 'Language', 'Agreed price']);
     const c2 = within(within(screen.getByRole('table')).getAllByRole('row')[2]).getAllByRole('cell').map(c => c.textContent);
     expect(c2).toEqual(['John Smith', 'john@x.com', 'GB', '6', '€650.00', 'en', '—']);
-    expect(screen.getByText('Total customers').previousElementSibling.textContent).toBe('4');
-    expect(screen.getByText('Total revenue').previousElementSibling.textContent).toBe('€810');
-    expect(screen.getByText('Top customer').previousElementSibling.textContent).toBe('Ana');
+    expect(screen.getByText('Total customers').closest("article").querySelector("p.font-display").textContent).toBe('4');
+    expect(screen.getByText('Total revenue').closest("article").querySelector("p.font-display").textContent).toBe('€810');
+    expect(screen.getByText('Top customer').closest("article").querySelector("p.font-display").textContent).toBe('Ana');
     ['Tourists', 'Locals', 'Groups', 'Corporate', 'VIP', 'New Customer', 'Import CSV', 'Export'].forEach((nome) => {
       expect(screen.getByRole('button', { name: nome })).toBeInTheDocument();
     });
