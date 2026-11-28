@@ -7,20 +7,27 @@ import api from '../../services/api';
 import { updateOperator } from '../../services/authService';
 import { camposAlterados } from '../../utils/camposAlterados';
 import useAuthStore from '../../store/authStore';
-import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import Toggle from '../../components/ui/Toggle';
 import { textoPoliticaGerada } from '../../utils/politicaCancelamento';
 import ImageUploader from '../../components/shared/ImageUploader';
 import { uploadImage, validateImageFile } from '../../services/uploadService';
-import { CopyButton, SaveBanner } from './shared';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
+import { CopyButton, SaveBanner, CARTAO, CAIXA, TITULO } from './shared';
 import { COR_ORIGINAL, corValida } from '../../utils/brandPalette';
 import { useT } from '../../i18n';
 
 /* ─────────────────────────────────────────────────────────
    TAB 2 — PERFIL PUBLICO
 ───────────────────────────────────────────────────────── */
+
+/* Anel de foco da marca nos controlos nativos da pagina */
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
+/* Linha de um campo de caixa de marcar: 44 px de altura no telemovel */
+const LINHA_CHECK = 'flex items-center gap-2 min-h-11 md:min-h-0 text-sm font-body text-n-700 cursor-pointer';
+/* Etiqueta pequena de um bloco (ligacao, QR, widget) */
+const ETIQUETA = 'text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-1.5 block';
 
 /* Chat do site: resposta automatica fora de horas (hora de Cabo Verde). Dias 0 = domingo ... 6 = sabado. */
 /* rotulo de cada dia: settings.perfil.days.<l> */
@@ -196,27 +203,29 @@ export default function PerfilPublicoTab({ operator }) {
   return (
     <form onSubmit={handleSave} className="space-y-5 max-w-2xl">
       {/* Logo */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.logo')}</h3>}>
-        <div className="flex items-center gap-5">
-          <div className="relative w-20 h-20 rounded-md border-2 border-dashed border-n-200 bg-n-50 flex items-center justify-center overflow-hidden shrink-0">
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.logo')}</h2>
+        <div className="flex flex-wrap items-center gap-5">
+          <div className="relative w-20 h-20 rounded-[14px] border-2 border-dashed border-mare-field bg-mare-head flex items-center justify-center overflow-hidden shrink-0">
             {logoPreview
               ? <img src={logoPreview} alt={t('settings.perfil.logo')} className="w-full h-full object-contain p-1" />
-              : <Camera size={22} strokeWidth={1.75} className="text-n-400" />}
+              : <Camera size={22} strokeWidth={1.75} className="text-n-600" />}
           </div>
-          <div className="space-y-2">
-            <Button type="button" variant="secondary" icon={Upload} size="sm" onClick={() => logoRef.current?.click()}>
+          <div className="space-y-2 min-w-0">
+            <Button type="button" variant="secondary" icon={Upload} size="sm" className="min-h-11 md:min-h-0" onClick={() => logoRef.current?.click()}>
               {t('settings.perfil.chooseLogo')}
             </Button>
             <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label={t('settings.perfil.logoFile')} onChange={handleLogo} className="hidden" />
             {logoError
               ? <p className="text-xs font-body text-[var(--error)]">{logoError}</p>
-              : <p className="text-xs font-body text-n-400">{t('settings.perfil.logoHint')}</p>}
+              : <p className="text-xs font-body text-n-600">{t('settings.perfil.logoHint')}</p>}
           </div>
         </div>
-      </Card>
+      </section>
 
       {/* Cover photos */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.covers')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.covers')}</h2>
         <ImageUploader
           value={covers}
           onChange={setCovers}
@@ -224,24 +233,26 @@ export default function PerfilPublicoTab({ operator }) {
           label={t('settings.perfil.coversLabel')}
           hint={t('settings.perfil.coversHint')}
         />
-      </Card>
+      </section>
 
       {/* Description */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.description')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.description')}</h2>
         <div className="space-y-3">
           <Textarea label={t('settings.perfil.descriptionLabel')} value={descricao} onChange={e => setDescricao(e.target.value)}
             rows={4} placeholder={t('settings.perfil.descriptionPlaceholder')}
             hint={t('settings.perfil.descriptionHint')} />
         </div>
-      </Card>
+      </section>
 
       {/* Politica de cancelamento -- mostrada na pagina publica antes do
           pagamento (checkbox obrigatorio), exigida pela SISP no checklist
           de validacao de site. Sem isto configurado, a pagina publica avisa
           que ainda nao foi definida em vez de inventar uma politica. */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.cancelPolicy')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.cancelPolicy')}</h2>
         <div className="space-y-3">
-          <p className="text-xs font-body text-n-400">
+          <p className="text-xs font-body text-n-600">
             {t('settings.perfil.cancelPolicyIntro')}
           </p>
           <Select label={t('settings.perfil.freeCancellation')} value={horasCancel} onChange={e => setHorasCancel(e.target.value)}
@@ -249,7 +260,7 @@ export default function PerfilPublicoTab({ operator }) {
             {PRAZOS_CANCELAMENTO.map(p => <option key={p.valor} value={p.valor}>{t(`settings.perfil.deadlines.${p.chave}`, { h: p.h })}</option>)}
           </Select>
           {horasCancel !== '' && !temPoliticaEscrita && (
-            <div className="rounded-sm bg-n-50 border border-n-200 px-3 py-2">
+            <div className={CAIXA}>
               <p className="text-xs font-body font-semibold text-n-600">{t('settings.perfil.generatedText')}</p>
               <p className="text-sm font-body text-n-700 mt-0.5">{textoPoliticaGerada(Number(horasCancel), 'pt')}</p>
             </div>
@@ -262,54 +273,57 @@ export default function PerfilPublicoTab({ operator }) {
           <Textarea label={t('settings.perfil.englishEn')} aria-label={t('settings.perfil.cancelPolicyEnAria')} value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
             rows={4} placeholder={t('settings.perfil.cancelPolicyEnExample')} />
         </div>
-      </Card>
+      </section>
 
       {/* Confirmacao automatica: so as reservas pagas presencialmente entram confirmadas;
           as pagas online ficam confirmadas quando o pagamento e capturado. */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.bookingConfirmation')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.bookingConfirmation')}</h2>
         <Toggle checked={autoConfirm} onChange={setAutoConfirm} label={t('settings.perfil.autoConfirm')}
           hint={t('settings.perfil.autoConfirmHint')} />
-      </Card>
+      </section>
 
       {/* Cor da pagina publica e do widget */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.brandColor')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.brandColor')}</h2>
         <div className="space-y-3">
-          <p className="text-xs font-body text-n-400">
+          <p className="text-xs font-body text-n-600">
             {t('settings.perfil.brandColorIntro')}
           </p>
           <div className="flex flex-wrap items-end gap-3">
             <input type="color" aria-label={t('settings.perfil.pickColor')} value={corEmUso} onChange={e => setCorMarca(e.target.value)}
-              className="h-10 w-12 cursor-pointer rounded-sm border border-n-200 bg-white p-1" />
+              className={`h-11 md:h-10 w-12 cursor-pointer rounded-[10px] border border-mare-field bg-white p-1 ${FOCO}`} />
             <div className="w-36">
               <Input label={t('settings.perfil.colorHex')} aria-label={t('settings.perfil.colorHexAria')} value={corMarca} placeholder={COR_ORIGINAL} maxLength={9}
                 onChange={e => setCorMarca(e.target.value)} />
             </div>
             <div data-testid="previa-cor" style={{ backgroundColor: corEmUso }}
-              className="h-10 px-5 rounded-md text-white text-sm font-body font-semibold flex items-center">{t('settings.perfil.previewButton')}</div>
+              className="h-11 md:h-10 px-5 rounded-[10px] text-white text-sm font-body font-semibold flex items-center">{t('settings.perfil.previewButton')}</div>
             {corNormal && (
-              <Button type="button" variant="ghost" size="sm" onClick={() => setCorMarca('')}>{t('settings.perfil.resetColor')}</Button>
+              <Button type="button" variant="ghost" size="sm" className="min-h-11 md:min-h-0" onClick={() => setCorMarca('')}>{t('settings.perfil.resetColor')}</Button>
             )}
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label={t('settings.perfil.suggestedColors')}>
             {CORES_SUGERIDAS.map(c => (
               <button key={c.hex} type="button" title={t(`settings.perfil.colors.${c.nome}`)} aria-label={t('settings.perfil.useColor', { hex: c.hex })} onClick={() => setCorMarca(c.hex)}
                 style={{ backgroundColor: c.hex }}
-                className={`h-8 w-8 rounded-full border-2 ${corNormal === c.hex ? 'border-n-900' : 'border-white shadow-sm'}`} />
+                className={`h-11 w-11 md:h-8 md:w-8 rounded-full border-2 ${corNormal === c.hex ? 'border-n-900' : 'border-white shadow-sm'} ${FOCO}`} />
             ))}
           </div>
           {erroCor && <p role="alert" className="text-xs font-body text-[var(--error)]">{erroCor}</p>}
         </div>
-      </Card>
+      </section>
 
       {/* Chat do site: resposta automatica fora de horas */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.chatTitle')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.chatTitle')}</h2>
         <div className="space-y-3">
-          <p className="text-xs font-body text-n-400">
+          <p className="text-xs font-body text-n-600">
             {t('settings.perfil.chatIntro')}
           </p>
-          <label className="flex items-center gap-2 text-sm font-body text-n-700 cursor-pointer">
+          <label className={LINHA_CHECK}>
             <input type="checkbox" checked={chatAuto.enabled} onChange={e => setChatAuto(c => ({ ...c, enabled: e.target.checked }))}
-              className="w-4 h-4 accent-[var(--ocean-700)]" />
+              className={`w-4 h-4 accent-[var(--ocean-700)] ${FOCO}`} />
             {t('settings.perfil.chatEnable')}
           </label>
 
@@ -317,11 +331,11 @@ export default function PerfilPublicoTab({ operator }) {
             <div className="space-y-3 pt-1">
               <div>
                 <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-1.5">{t('settings.perfil.chatDays')}</p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-x-3">
                   {DIAS_CHAT.map(d => (
-                    <label key={d.v} className="flex items-center gap-1.5 text-sm font-body text-n-700 cursor-pointer">
+                    <label key={d.v} className={LINHA_CHECK}>
                       <input type="checkbox" checked={chatAuto.days.includes(d.v)} onChange={() => alternarDia(d.v)}
-                        className="w-4 h-4 accent-[var(--ocean-700)]" />
+                        className={`w-4 h-4 accent-[var(--ocean-700)] ${FOCO}`} />
                       {t(`settings.perfil.days.${d.l}`)}
                     </label>
                   ))}
@@ -333,7 +347,7 @@ export default function PerfilPublicoTab({ operator }) {
               </div>
               {erroChat && <p role="alert" className="text-xs font-body text-[var(--error)]">{erroChat}</p>}
               {!erroChat && chatAuto.to < chatAuto.from && (
-                <p className="text-xs font-body text-n-400">
+                <p className="text-xs font-body text-n-600">
                   {t('settings.perfil.chatOvernight')}
                 </p>
               )}
@@ -341,81 +355,74 @@ export default function PerfilPublicoTab({ operator }) {
                 onChange={e => setChatAuto(c => ({ ...c, message_pt: e.target.value }))} rows={3} maxLength={500} placeholder={TEXTO_CHAT_PT} />
               <Textarea label={t('settings.perfil.englishEn')} aria-label={t('settings.perfil.messageEnAria')} value={chatAuto.message_en}
                 onChange={e => setChatAuto(c => ({ ...c, message_en: e.target.value }))} rows={3} maxLength={500} placeholder={TEXTO_CHAT_EN} />
-              <p className="text-xs font-body text-n-400">{t('settings.perfil.chatBlankHint')}</p>
+              <p className="text-xs font-body text-n-600">{t('settings.perfil.chatBlankHint')}</p>
             </div>
           )}
         </div>
-      </Card>
+      </section>
 
       {/* FAQ personalizado */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.faqTitle')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.faqTitle')}</h2>
         <div className="space-y-4">
-          <p className="text-xs font-body text-n-400">
+          <p className="text-xs font-body text-n-600">
             {t('settings.perfil.faqIntro')}
           </p>
           {faqs.map((f, i) => (
-            <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('settings.perfil.question', { n: i + 1 })}</span>
+            <div key={i} className={`${CAIXA} space-y-2`}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-body font-bold uppercase tracking-wide text-n-600">{t('settings.perfil.question', { n: i + 1 })}</span>
                 <div className="flex gap-1">
-                  <button type="button" aria-label={t('settings.perfil.moveUp', { n: i + 1 })} onClick={() => moveFaq(i, -1)} disabled={i === 0}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                    <ChevronUp size={12} strokeWidth={2} />
-                  </button>
-                  <button type="button" aria-label={t('settings.perfil.moveDown', { n: i + 1 })} onClick={() => moveFaq(i, 1)} disabled={i === faqs.length - 1}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                    <ChevronDown size={12} strokeWidth={2} />
-                  </button>
-                  <button type="button" aria-label={t('settings.perfil.remove', { n: i + 1 })} onClick={() => removeFaq(i)}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
-                    <X size={12} strokeWidth={2} />
-                  </button>
+                  <IconBtn icon={ChevronUp} label={t('settings.perfil.moveUp', { n: i + 1 })} onClick={() => moveFaq(i, -1)} disabled={i === 0} hover={EDIT_HOVER} />
+                  <IconBtn icon={ChevronDown} label={t('settings.perfil.moveDown', { n: i + 1 })} onClick={() => moveFaq(i, 1)} disabled={i === faqs.length - 1} hover={EDIT_HOVER} />
+                  <IconBtn icon={X} label={t('settings.perfil.remove', { n: i + 1 })} onClick={() => removeFaq(i)} hover={DELETE_HOVER} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Input label={t('settings.perfil.questionPt')} aria-label={t('settings.perfil.questionPtAria', { n: i + 1 })} value={f.question_pt} onChange={e => updateFaq(i, 'question_pt', e.target.value)} />
                 <Input label={t('settings.perfil.questionEn')} aria-label={t('settings.perfil.questionEnAria', { n: i + 1 })} value={f.question_en} onChange={e => updateFaq(i, 'question_en', e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Textarea label={t('settings.perfil.answerPt')} aria-label={t('settings.perfil.answerPtAria', { n: i + 1 })} rows={2} value={f.answer_pt} onChange={e => updateFaq(i, 'answer_pt', e.target.value)} />
                 <Textarea label={t('settings.perfil.answerEn')} aria-label={t('settings.perfil.answerEnAria', { n: i + 1 })} rows={2} value={f.answer_en} onChange={e => updateFaq(i, 'answer_en', e.target.value)} />
               </div>
             </div>
           ))}
-          <Button type="button" variant="secondary" icon={Plus} size="sm" onClick={addFaq}>
+          <Button type="button" variant="secondary" icon={Plus} size="sm" className="min-h-11 md:min-h-0" onClick={addFaq}>
             {t('settings.perfil.addQuestion')}
           </Button>
         </div>
-      </Card>
+      </section>
 
       {/* Editor da pagina publica */}
-      <Card>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.editorTitle')}</h3>
-            <p className="text-xs font-body text-n-500 mt-0.5">
+      <section className={CARTAO}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className={TITULO}>{t('settings.perfil.editorTitle')}</h2>
+            <p className="text-xs font-body text-n-600 mt-1">
               {t('settings.perfil.editorText')}
             </p>
           </div>
           <Link to="/editor-pagina" className="shrink-0">
-            <Button type="button" variant="secondary" icon={ExternalLink} size="sm">{t('settings.perfil.openEditor')}</Button>
+            <Button type="button" variant="secondary" icon={ExternalLink} size="sm" className="min-h-11 md:min-h-0">{t('settings.perfil.openEditor')}</Button>
           </Link>
         </div>
-      </Card>
+      </section>
 
       {/* Marketing tools */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.marketingTitle')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.marketingTitle')}</h2>
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-1.5 block">
+            <h3 className={ETIQUETA}>
               {t('settings.perfil.directLink')}
-            </label>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-n-50 border border-n-200 rounded px-3 py-2 text-sm font-mono text-ocean-700 truncate">{bookingLink || '...'}</code>
+            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <code className={`flex-1 min-w-0 ${CAIXA} !py-2 !px-3 text-sm font-mono text-ocean-700 break-all`}>{bookingLink || '...'}</code>
               <CopyButton text={bookingLink} />
               {bookingLink && (
                 <a href={bookingLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="ghost" size="sm" icon={ArrowUpRight}>{t('settings.perfil.open')}</Button>
+                  <Button variant="ghost" size="sm" icon={ArrowUpRight} className="min-h-11 md:min-h-0">{t('settings.perfil.open')}</Button>
                 </a>
               )}
             </div>
@@ -423,14 +430,14 @@ export default function PerfilPublicoTab({ operator }) {
 
           {qrcodeUrl && (
             <div>
-              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-1.5 block">{t('settings.perfil.qrCode')}</label>
-              <div className="flex items-center gap-4">
-                <img src={qrcodeUrl} alt={t('settings.perfil.qrCode')} className="w-24 h-24 rounded border border-n-200"
+              <h3 className={ETIQUETA}>{t('settings.perfil.qrCode')}</h3>
+              <div className="flex flex-wrap items-center gap-4">
+                <img src={qrcodeUrl} alt={t('settings.perfil.qrCode')} className="w-24 h-24 rounded-[14px] border border-mare-card"
                   onError={e => e.target.style.display = 'none'} />
-                <div className="space-y-2">
-                  <p className="text-xs font-body text-n-500">{t('settings.perfil.qrHint')}</p>
+                <div className="space-y-2 min-w-0">
+                  <p className="text-xs font-body text-n-600">{t('settings.perfil.qrHint')}</p>
                   <a href={qrcodeUrl} download="qrcode.png">
-                    <Button variant="secondary" icon={Download} size="sm">{t('settings.perfil.downloadPng')}</Button>
+                    <Button variant="secondary" icon={Download} size="sm" className="min-h-11 md:min-h-0">{t('settings.perfil.downloadPng')}</Button>
                   </a>
                 </div>
               </div>
@@ -439,37 +446,38 @@ export default function PerfilPublicoTab({ operator }) {
 
           {widget && (
             <div>
-              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-1.5 block">{t('settings.perfil.widget')}</label>
-              <div className="bg-n-50 border border-n-200 rounded p-3 font-mono text-xs text-n-700 whitespace-pre-wrap break-all mb-2">{widget}</div>
+              <h3 className={ETIQUETA}>{t('settings.perfil.widget')}</h3>
+              <div className={`${CAIXA} font-mono text-xs text-n-700 whitespace-pre-wrap break-all mb-2`}>{widget}</div>
               <CopyButton text={widget} />
             </div>
           )}
 
-          <div className="pt-2 border-t border-n-100">
+          <div className="pt-3 border-t border-n-100">
             <a href={operator?.booking_link_slug || operator?.slug ? `/book/${operator.booking_link_slug || operator.slug}` : '#'} target="_blank" rel="noopener noreferrer">
-              <Button variant="secondary" icon={Eye} size="sm">{t('settings.perfil.preview')}</Button>
+              <Button variant="secondary" icon={Eye} size="sm" className="min-h-11 md:min-h-0">{t('settings.perfil.preview')}</Button>
             </a>
           </div>
         </div>
-      </Card>
+      </section>
 
       {/* Programa de indicacao -- 1 mes gratis para ti e para o operador que
           indicares, aplicado automaticamente quando ele se tornar cliente
           pagante (ver aplicarRecompensaReferencia em billingController.js). */}
       {operator?.slug && (
-        <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.perfil.referralTitle')}</h3>}>
+        <section className={CARTAO}>
+          <h2 className={`${TITULO} mb-4`}>{t('settings.perfil.referralTitle')}</h2>
           <div className="space-y-3">
             <p className="text-sm font-body text-n-600">
               {t('settings.perfil.referralBefore')}<strong>{t('settings.perfil.referralBold')}</strong>{t('settings.perfil.referralAfter')}
             </p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-n-50 border border-n-200 rounded px-3 py-2 text-sm font-mono text-ocean-700 truncate">
+            <div className="flex flex-wrap items-center gap-2">
+              <code className={`flex-1 min-w-0 ${CAIXA} !py-2 !px-3 text-sm font-mono text-ocean-700 break-all`}>
                 {`https://saldesk.cv/operadores.html?ref=${operator.slug}`}
               </code>
               <CopyButton text={`https://saldesk.cv/operadores.html?ref=${operator.slug}`} />
             </div>
           </div>
-        </Card>
+        </section>
       )}
 
       <div className="flex items-center gap-3">

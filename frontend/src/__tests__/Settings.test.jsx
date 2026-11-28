@@ -97,7 +97,10 @@ function montar(url = '/definicoes', operador = OPERADOR) {
 const separador = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
 const abrir = async (rotulo, ancora) => { fireEvent.click(separador(rotulo)); await screen.findAllByText(ancora); };
 const campo = (etiqueta, tag = 'input', raiz = screen) => raiz.getByText(etiqueta).parentElement.querySelector(tag);
-const cartao = (titulo) => screen.getByText(titulo, { selector: 'h3' }).parentElement.parentElement;
+const cartao = (titulo) => {
+  const h = screen.getByText(titulo, { selector: 'h2,h3' });
+  return h.closest('section') || h.parentElement.parentElement;
+};
 const botao = (nome) => screen.getByRole('button', { name: nome });
 const ultimoPut = () => updateOperator.mock.calls[updateOperator.mock.calls.length - 1][0];
 
@@ -661,7 +664,7 @@ describe('Definições: Pagamentos', () => {
 
 /* ───────────────────────── caracterizacao: Facturacao ───────────────────────── */
 
-const plano = (nome) => screen.getAllByText(nome).find(e => e.tagName === 'P' && e.className.includes('text-n-900') && !e.className.includes('text-lg')).closest('div.space-y-2');
+const plano = (nome) => screen.getAllByText(nome).find(e => e.closest('article')).closest('article');
 async function abrirFacturacao(op = OPERADOR) {
   montar('/definicoes', op);
   await abrir('Facturação', 'Subscrição actual');
@@ -1102,7 +1105,8 @@ describe('Definições: design system (Perfil Público)', () => {
     /* as fotos sao do ImageUploader (partilhado, com o botao de remover em bg-error): so se verifica o resto do ecra */
     const sem = container.cloneNode(true);
     sem.querySelectorAll('div.group').forEach(n => n.remove());
-    semCoresForaDosTokens(classes(sem));
+    /* o hover vermelho dos botoes de remover vem do DELETE_HOVER do IconBtn (hover:text-error) */
+    semCoresForaDosTokens(classes(sem).replace(/hover:text-error/g, ''));
   });
 });
 
@@ -1258,5 +1262,164 @@ describe('Definições: estilo Maré (cabeçalho, Conta, Notificações, Seguran
     fireEvent.change(screen.getByLabelText('POS ID'), { target: { value: '90051' } });
     fireEvent.click(screen.getAllByRole('button').find(b => b.type === 'submit'));
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/marketing/payment-settings', { sisp_merchant_id: '90051' }));
+  });
+});
+
+/* ───────────────────────── estilo Mare: Facturacao e Perfil Publico ───────────────────────── */
+
+describe('Definições: estilo Maré (Facturação e Perfil Público)', () => {
+  const fichas = (el) => el.className.split(/\s+/);
+  const secaoDe = (titulo) => screen.getByRole('heading', { level: 2, name: titulo }).closest('section');
+  const ehCartao = (el) => {
+    const c = fichas(el);
+    ['bg-white', 'rounded-[18px]', 'border', 'border-mare-card'].forEach(k => expect(c).toContain(k));
+  };
+  const ehTitulo = (h) => ['font-display', 'text-lg', 'font-semibold', 'text-ocean-900'].forEach(k => expect(fichas(h)).toContain(k));
+  const mono = (el) => ['font-mono', 'tabular-nums'].forEach(k => expect(fichas(el)).toContain(k));
+
+  it('Facturacao_mostra_o_eyebrow_e_tem_a_subscricao_e_o_historico_em_cartoes_Mare_com_h2', async () => {
+    await abrirFacturacao();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Configuração');
+    ['Subscrição actual', 'Histórico de pagamentos'].forEach((t) => {
+      const sec = secaoDe(t);
+      ehCartao(sec);
+      ehTitulo(within(sec).getByRole('heading', { level: 2, name: t }));
+    });
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+  });
+
+  it('Facturacao_os_tres_planos_sao_cartoes_Mare_com_preco_em_mono_e_o_actual_destacado_sem_conflito_de_bordas', async () => {
+    await abrirFacturacao();
+    ['Starter', 'Business', 'Pro'].forEach((n) => ehCartao(plano(n)));
+    mono(within(plano('Starter')).getByText('€29'));
+    expect(plano('Starter')).toHaveTextContent('€29/mês');
+    mono(within(plano('Business')).getByText('€79'));
+    /* o plano actual ganha um anel e o botao diz "Plano actual": nao so a cor */
+    expect(fichas(plano('Pro'))).toEqual(expect.arrayContaining(['ring-2', 'ring-ocean-700', 'border-mare-card']));
+    expect(fichas(plano('Starter'))).not.toContain('ring-2');
+    const sub = within(plano('Starter')).getByRole('button', { name: 'Subscrever' });
+    expect(fichas(sub)).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0']));
+    expect(fichas(plano('Starter').parentElement)).toEqual(expect.arrayContaining(['grid-cols-1', 'sm:grid-cols-3']));
+  });
+
+  it('Facturacao_o_estado_do_plano_e_Badge_com_texto_e_cancelar_tem_44px_no_telemovel', async () => {
+    await abrirFacturacao();
+    const sub = within(secaoDe('Subscrição actual'));
+    const badge = sub.getByText('Activo');
+    expect(badge.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(fichas(badge)).toEqual(expect.arrayContaining(['inline-flex', 'rounded-xs']));
+    const cancelar = sub.getByRole('button', { name: 'Cancelar subscrição' });
+    expect(fichas(cancelar)).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0', 'focus-visible:ring-sand-500']));
+  });
+
+  it('Facturacao_historico_com_datas_e_valores_em_mono_e_estados_em_Badge_com_texto', async () => {
+    await abrirFacturacao();
+    const h = within(secaoDe('Histórico de pagamentos'));
+    mono(h.getByText('€69.00'));
+    mono(h.getByText('€79.00'));
+    mono(h.getByText(new Date('2026-10-01T10:00:00Z').toLocaleDateString('pt-PT')));
+    const pago = h.getByText('Pago');
+    const falhou = h.getByText('Falhou');
+    const pendente = h.getByText('Pendente');
+    expect(fichas(pago)).toContain('bg-[var(--success-light)]');
+    expect(fichas(falhou)).toContain('bg-[var(--error-light)]');
+    expect(fichas(pendente)).toContain('bg-[var(--warning-light)]');
+    [pago, falhou, pendente].forEach(b => expect(b.querySelector('[aria-hidden="true"]')).not.toBeNull());
+    const linha = pago.closest('div.rounded-\\[14px\\]');
+    expect(fichas(linha)).toContain('bg-mare-head');
+  });
+
+  it('Facturacao_o_vazio_e_a_escolha_do_plano_continuam_a_funcionar', async () => {
+    getBillingHistory.mockResolvedValue([]);
+    await abrirFacturacao();
+    expect(screen.getByText('Sem pagamentos registados.')).toBeInTheDocument();
+    escolher('Starter');
+    expect(screen.getByText('Como quer pagar?')).toBeInTheDocument();
+  });
+
+  it('Perfil_Publico_mostra_o_eyebrow_e_todas_as_seccoes_sao_cartoes_Mare_com_h2_Sora', async () => {
+    await abrirPerfil();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Configuração');
+    ['Logo', 'Fotos de capa', 'Descrição', 'Política de cancelamento', 'Confirmação das reservas',
+      'Cor da página pública e do widget', 'Chat do site: resposta automática', 'FAQ personalizado',
+      'Secções, redes sociais, horário e mais', 'Ferramentas de marketing', 'Indique um operador'].forEach((t) => {
+      const sec = secaoDe(t);
+      ehCartao(sec);
+      ehTitulo(within(sec).getByRole('heading', { level: 2, name: t }));
+    });
+  });
+
+  it('Perfil_Publico_tem_caixas_internas_Mare_e_o_uploader_nao_foi_tocado', async () => {
+    const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg'] });
+    /* cada pergunta do FAQ e uma caixa interna */
+    expect(fichas(faq(1))).toEqual(expect.arrayContaining(['rounded-[14px]', 'bg-mare-head']));
+    /* a pre-visualizacao do logo tambem */
+    expect(secaoDe('Logo').querySelector('div.rounded-\\[14px\\]')).not.toBeNull();
+    /* o uploader continua a ser o partilhado: fotos em div.group com o botao de remover */
+    expect(container.querySelectorAll('div.group')).toHaveLength(1);
+    expect(container.querySelector('button[title="Remover foto"]')).not.toBeNull();
+    /* grelhas de duas colunas com uma coluna no telemovel */
+    const g = screen.getByLabelText('Pergunta 1 PT').closest('div.grid');
+    expect(fichas(g)).toEqual(expect.arrayContaining(['grid-cols-1', 'sm:grid-cols-2']));
+  });
+
+  it('Perfil_Publico_cada_seccao_mantem_os_campos_ligados_as_etiquetas', async () => {
+    await abrirPerfil();
+    expect(within(secaoDe('Logo')).getByLabelText('Ficheiro do logo')).toHaveAttribute('type', 'file');
+    expect(within(secaoDe('Descrição')).getByLabelText('Descrição da empresa').tagName).toBe('TEXTAREA');
+    const pol = within(secaoDe('Política de cancelamento'));
+    expect(pol.getByLabelText('Cancelamento grátis').tagName).toBe('SELECT');
+    expect(pol.getByLabelText('Política de cancelamento em Português').tagName).toBe('TEXTAREA');
+    const cor = within(secaoDe('Cor da página pública e do widget'));
+    expect(cor.getByLabelText('Cor em hexadecimal').tagName).toBe('INPUT');
+    expect(fichas(cor.getByLabelText('Escolher cor'))).toEqual(expect.arrayContaining(['h-11', 'md:h-10', 'border-mare-field', 'focus-visible:ring-sand-500']));
+    expect(within(secaoDe('FAQ personalizado')).getByLabelText('Resposta 2 EN').tagName).toBe('TEXTAREA');
+    expect(within(secaoDe('Confirmação das reservas')).getByRole('switch', { name: 'Confirmar reservas automaticamente' })).toBeInTheDocument();
+  });
+
+  it('Perfil_Publico_o_chat_ligado_mantem_as_etiquetas_dos_dias_e_horas', async () => {
+    await abrirPerfil();
+    const chat = within(secaoDe('Chat do site: resposta automática'));
+    const ligar = chat.getAllByRole('checkbox')[0];
+    expect(fichas(ligar)).toContain('focus-visible:ring-sand-500');
+    fireEvent.click(ligar);
+    expect(chat.getByLabelText('Abre as').getAttribute('type')).toBe('time');
+    expect(chat.getByLabelText('Seg')).toHaveAttribute('type', 'checkbox');
+    expect(fichas(chat.getByLabelText('Seg').closest('label'))).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0']));
+  });
+
+  it('Perfil_Publico_os_botoes_de_icone_das_FAQ_sao_IconBtn_e_remover_mantem_o_realce_vermelho', async () => {
+    await abrirPerfil();
+    const remover = screen.getByRole('button', { name: 'Remover pergunta 2' });
+    expect(fichas(remover)).toEqual(expect.arrayContaining(['min-h-11', 'min-w-11', 'md:min-h-9', 'md:min-w-9', 'hover:text-error', 'hover:bg-[var(--error-light)]', 'focus-visible:ring-sand-500']));
+    const subir = screen.getByRole('button', { name: 'Mover pergunta 2 para cima' });
+    expect(fichas(subir)).toEqual(expect.arrayContaining(['min-h-11', 'hover:text-ocean-700']));
+    expect(fichas(subir)).not.toContain('hover:text-error');
+    fireEvent.click(remover);
+    expect(screen.queryByText('Pergunta 2')).not.toBeInTheDocument();
+  });
+
+  it('Perfil_Publico_o_link_e_o_slug_compridos_quebram_linha_e_o_guardar_continua_igual', async () => {
+    const slug = 'a'.repeat(80);
+    respostas['/marketing/booking-link'] = { data: { data: { url: `https://saldesk.cv/book/${slug}` } } };
+    montar('/definicoes', { ...OPERADOR, slug });
+    await abrir('Perfil Público', 'Logo');
+    const link = await screen.findByText(`https://saldesk.cv/book/${slug}`);
+    expect(fichas(link)).toEqual(expect.arrayContaining(['break-all', 'min-w-0']));
+    expect(fichas(link)).not.toContain('truncate');
+    expect(fichas(link.parentElement)).toContain('flex-wrap');
+    const ref = screen.getByText(`https://saldesk.cv/operadores.html?ref=${slug}`);
+    expect(fichas(ref)).toEqual(expect.arrayContaining(['break-all', 'min-w-0']));
+    expect(fichas(screen.getByText('<script data-slug="demo"></script>'))).toContain('break-all');
+    fireEvent.change(screen.getByLabelText('Descrição da empresa'), { target: { value: 'Outra' } });
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+    expect(ultimoPut()).toEqual({ description: 'Outra' });
+  });
+
+  it('Perfil_Publico_os_botoes_soltos_tem_44px_no_telemovel', async () => {
+    await abrirPerfil();
+    ['Escolher logo', 'Adicionar pergunta'].forEach(n => expect(fichas(botao(n))).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0'])));
+    ['Abrir editor', 'Pré-visualizar página pública'].forEach(n => expect(fichas(screen.getByRole('link', { name: n }).querySelector('button'))).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0'])));
   });
 });
