@@ -125,7 +125,7 @@ describe('Definicoes em ingles', () => {
     await abrir('Messages', 'EDITOR MENSAGENS');
 
     await abrir('Security', 'Current password');
-    expect(screen.getByText('Change password', { selector: 'h3' })).toBeInTheDocument();
+    expect(screen.getByText('Change password', { selector: 'h2' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Change password' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Show new password' })).toBeInTheDocument();
     expect(chavesCruas()).toEqual([]);

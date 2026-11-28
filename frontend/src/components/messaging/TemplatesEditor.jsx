@@ -4,13 +4,17 @@ import {
   listMessageTemplates, saveMessageTemplate, previewMessageTemplate, getMessagingChannel,
 } from '../../services/messagingService';
 import { useToast } from '../../store/toastStore';
-import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import { Textarea } from '../ui/Input';
 import Button from '../ui/Button';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { useT } from '../../i18n';
 import { mensagemErro } from '../../utils/mensagemErro';
+
+/* Estilo Mare: cartao de pagina, caixa interna, titulo de cartao e figuras (so e usado dentro da app, em Definicoes) */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+const NUM = 'font-mono tabular-nums';
 
 /* Editor dos textos das mensagens de WhatsApp (confirmação, lembrete, pedido de avaliação).
    O operador escreve o texto com variáveis ({nome_cliente}, {data}...) e vê, ao lado,
@@ -147,20 +151,20 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
   const bloqueado = vazio || desconhecidas.length > 0 || semLink || texto.length > MAX;
 
   return (
-    <Card padding="p-5">
+    <section className={CARTAO}>
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">{t(gatilho.titulo)}</h3>
-          <p className="text-xs font-body text-n-500 mt-0.5">{t(gatilho.quando)}</p>
+          <h2 className={TITULO}>{t(gatilho.titulo)}</h2>
+          <p className="text-[13px] font-body text-n-600 mt-0.5">{t(gatilho.quando)}</p>
         </div>
         <Badge variant={estado.variant}>{estado.texto}</Badge>
       </div>
 
-      <div className="flex gap-1 mb-3 bg-n-100 p-1 rounded-md w-fit">
+      <div className="flex gap-1 mb-3 bg-mare-head p-1 rounded-[14px] w-fit max-w-full">
         {IDIOMAS.map((i) => (
           <button
             key={i.id} type="button" onClick={() => { setIdioma(i.id); setErro(''); }}
-            className={`px-3 py-1.5 rounded text-xs font-display font-medium transition-colors ${idioma === i.id ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+            className={`px-3 py-1.5 min-h-11 md:min-h-0 rounded-[10px] text-xs font-display font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${idioma === i.id ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-600 hover:text-n-800'}`}
           >
             {t(i.label)}
           </button>
@@ -177,15 +181,15 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
             aria-label={`${t(gatilho.titulo)} (${idioma.toUpperCase()})`}
             className="!resize-y"
           />
-          <div className="flex items-center justify-between text-xs font-body text-n-500">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 text-xs font-body text-n-600">
             <span>{t('messaging.clickVariable')}</span>
-            <span className={texto.length > MAX ? 'text-[var(--error)] font-semibold' : ''}>{texto.length}/{MAX}</span>
+            <span className={`${NUM} ${texto.length > MAX ? 'text-[var(--error)] font-semibold' : ''}`}>{texto.length}/{MAX}</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {VARIAVEIS.map((v) => (
               <button
                 key={v.nome} type="button" title={t(v.ajuda)} onClick={() => inserirVariavel(v.nome)}
-                className="px-2 py-1 rounded-md bg-ocean-50 hover:bg-ocean-100 text-ocean-700 text-[11px] font-mono transition-colors"
+                className="inline-flex items-center px-2.5 py-1 min-h-11 md:min-h-0 rounded-[10px] bg-ocean-50 hover:bg-ocean-100 text-ocean-700 text-[11px] font-mono transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"
               >
                 {`{${v.nome}}`}
               </button>
@@ -194,11 +198,11 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-[10px] font-body font-semibold uppercase tracking-wide text-n-400 flex items-center gap-1.5">
+          <p className="text-[11px] font-body font-semibold uppercase tracking-wide text-n-600 flex items-center gap-1.5">
             <MessageCircle size={12} strokeWidth={1.75} /> {t('messaging.previewTitle')}
           </p>
-          <div className="rounded-2xl rounded-tl-sm bg-turquoise-50 border border-turquoise-100 px-4 py-3 text-sm font-body text-n-900 whitespace-pre-wrap min-h-[8rem] break-words">
-            {previa.text || <span className="text-n-400">{t('messaging.previewEmpty')}</span>}
+          <div className="rounded-[14px] rounded-tl-sm bg-turquoise-50 border border-turquoise-100 px-4 py-3 text-sm font-body text-n-900 whitespace-pre-wrap min-h-[8rem] break-words">
+            {previa.text || <span className="text-n-600">{t('messaging.previewEmpty')}</span>}
           </div>
         </div>
       </div>
@@ -223,7 +227,7 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
           </Button>
         )}
       </div>
-    </Card>
+    </section>
   );
 }
 
@@ -244,20 +248,20 @@ function CanalCartao() {
   if (!canal) return null;
   const automatico = canal.canal === 'cloud_api';
   return (
-    <Card padding="p-5">
+    <section className={CARTAO}>
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">{t('messaging.channelTitle')}</h3>
+        <h2 className={TITULO}>{t('messaging.channelTitle')}</h2>
         <Badge variant={automatico ? 'confirmed' : 'default'}>
           {automatico ? t('messaging.channelAuto') : t('messaging.channelManual')}
         </Badge>
         {automatico && canal.quality_rating && (
-          <span className="text-[11px] font-body text-n-500">{t('messaging.quality')} <strong>{canal.quality_rating}</strong></span>
+          <span className="text-xs font-body text-n-600">{t('messaging.quality')} <strong>{canal.quality_rating}</strong></span>
         )}
         {canal.cloud_status === 'suspended' && (
           <Badge variant="cancelled">{t('messaging.suspended')}</Badge>
         )}
       </div>
-      <p className="text-sm font-body text-n-600">
+      <p className="text-sm font-body text-n-700">
         {automatico
           ? t('messaging.autoText')
           : t('messaging.manualText')}
@@ -270,13 +274,13 @@ function CanalCartao() {
               <li key={`${m.trigger}:${m.locale}`} className="flex flex-wrap items-center gap-2 text-sm font-body text-n-700">
                 <span>{NOME_GATILHO[m.trigger] ? t(NOME_GATILHO[m.trigger]) : m.trigger} ({m.locale.toUpperCase()})</span>
                 <Badge variant={e.variant}>{t(e.texto)}</Badge>
-                {m.meta_reason && <span className="text-xs text-n-500">{m.meta_reason}</span>}
+                {m.meta_reason && <span className="text-xs text-n-600">{m.meta_reason}</span>}
               </li>
             );
           })}
         </ul>
       )}
-    </Card>
+    </section>
   );
 }
 
@@ -301,11 +305,11 @@ export default function TemplatesEditor() {
   return (
     <div className="space-y-4 max-w-5xl">
       <CanalCartao />
-      <div className="text-sm font-body text-n-600">
+      <div className="text-sm font-body text-n-700">
         <p>
           {t('messaging.introBefore')} <strong>WhatsApp</strong> {t('messaging.introAfter')}
         </p>
-        <p className="mt-1 text-n-500">
+        <p className="mt-1 text-n-600">
           {t('messaging.introNote')}
         </p>
       </div>

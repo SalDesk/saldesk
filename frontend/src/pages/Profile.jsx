@@ -5,10 +5,14 @@ import { uploadImage, validateImageFile } from '../services/uploadService';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
-import Card from '../components/ui/Card';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import ImageUploader from '../components/shared/ImageUploader';
+
+/* Estilo Mare da pagina: cartao, titulo de cartao e anel de foco da marca */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
 
 export default function Profile() {
   const t = useT();
@@ -75,14 +79,15 @@ export default function Profile() {
 
   return (
     <div>
-      <PageHeader title={t('profile.title')} subtitle={t('profile.subtitle')} />
+      <PageHeader eyebrow={t('nav.sections.configuracao')} title={t('profile.title')} subtitle={t('profile.subtitle')} />
 
       <div className="space-y-6">
         {/* Logo + Cover photos row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Logo */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('profile.logo')}</h3>}>
+          <section className={CARTAO}>
+            <h2 className={`${TITULO} mb-4`}>{t('profile.logo')}</h2>
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 {logoUrl ? (
@@ -100,7 +105,7 @@ export default function Profile() {
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   disabled={uploading}
-                  className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-ocean-700 text-white flex items-center justify-center hover:bg-ocean-500 transition-colors disabled:opacity-50"
+                  className={`absolute -bottom-1 -right-1 w-11 h-11 md:w-8 md:h-8 rounded-full bg-ocean-700 text-white flex items-center justify-center hover:bg-ocean-500 transition-colors disabled:opacity-50 ${FOCO}`}
                 >
                   {uploading
                     ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -117,37 +122,32 @@ export default function Profile() {
               {logoError ? (
                 <p className="text-xs text-error text-center">{logoError}</p>
               ) : (
-                <p className="text-xs font-body text-n-400 text-center">
+                <p className="text-xs font-body text-n-600 text-center">
                   {uploading ? t('common.loading') : t('profile.logoHint')}
                 </p>
               )}
             </div>
-          </Card>
+          </section>
 
           {/* Cover photos */}
-          <Card
-            className="lg:col-span-2"
-            header={
-              <div>
-                <h3 className="font-display font-semibold text-sm text-n-700">{t('profile.covers')}</h3>
-                <p className="text-xs font-body text-n-400 mt-0.5">
-                  {t('profile.coversIntro')}
-                </p>
-              </div>
-            }
-          >
+          <section className={`${CARTAO} lg:col-span-2`}>
+            <h2 className={TITULO}>{t('profile.covers')}</h2>
+            <p className="text-xs font-body text-n-600 mt-0.5 mb-4">
+              {t('profile.coversIntro')}
+            </p>
             <ImageUploader
               value={coverImages}
               onChange={setCoverImages}
               maxImages={5}
               hint={t('profile.coversHint')}
             />
-          </Card>
+          </section>
         </div>
 
         {/* Business data */}
         <form onSubmit={handleSave} className="space-y-4">
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('profile.businessInfo')}</h3>}>
+          <section className={CARTAO}>
+            <h2 className={`${TITULO} mb-4`}>{t('profile.businessInfo')}</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input label={t('profile.legalName')} value={form.name} onChange={set('name')} required />
@@ -161,16 +161,17 @@ export default function Profile() {
                 rows={3}
                 placeholder={t('profile.descriptionPlaceholder')}
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input label={t('profile.phone')} value={form.phone} onChange={set('phone')} type="tel" />
                 <Input label={t('profile.whatsapp')} value={form.whatsapp} onChange={set('whatsapp')} type="tel" />
               </div>
               <Input label={t('profile.address')} value={form.address} onChange={set('address')} />
             </div>
-          </Card>
+          </section>
 
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('profile.settings')}</h3>}>
-            <div className="grid grid-cols-3 gap-3">
+          <section className={CARTAO}>
+            <h2 className={`${TITULO} mb-4`}>{t('profile.settings')}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Select label={t('profile.language')} value={form.language} onChange={set('language')}>
                 {['pt', 'en', 'de', 'nl'].map((l) => <option key={l} value={l}>{t(`accountOptions.language.${l}`)}</option>)}
               </Select>
@@ -181,11 +182,10 @@ export default function Profile() {
                 {['Atlantic/Cape_Verde', 'Europe/Lisbon', 'Europe/London'].map((z) => <option key={z} value={z}>{t(`accountOptions.timezone.${z}`)}</option>)}
               </Select>
             </div>
-          </Card>
+          </section>
 
-          <div className="flex items-center gap-3">
-            <Button type="submit" loading={saving} icon={saved ? Check : Save}
-              className={saved ? 'bg-[#1A7A4A] hover:bg-[#15623c]' : ''}>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" loading={saving} icon={saved ? Check : Save}>
               {saved ? t('profile.saved') : t('profile.save')}
             </Button>
           </div>

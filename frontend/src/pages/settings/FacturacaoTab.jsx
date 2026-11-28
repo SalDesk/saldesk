@@ -4,11 +4,11 @@ import api from '../../services/api';
 import { createSubscription, cancelSubscription, getBillingHistory, createSispCheckout } from '../../services/billingService';
 import useAuthStore from '../../store/authStore';
 import usePlan, { PLAN_PRICES } from '../../hooks/usePlan';
-import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import { useT } from '../../i18n';
+import { CARTAO, CAIXA, TITULO, NUM } from './shared';
 import { formatarData, formatarNumero } from '../../utils/formatoLingua';
 
 /* ─────────────────────────────────────────────────────────
@@ -22,6 +22,9 @@ const CVE_PER_EUR = 110.265;
 /* rotulo de cada estado: settings.facturacao.status.<estado> */
 const STATUS_CONHECIDOS = ['trial', 'active', 'suspended', 'cancelled'];
 const STATUS_VARIANT = { trial: 'info', active: 'confirmed', suspended: 'cancelled', cancelled: 'default' };
+/* estado de cada pagamento do historico: Badge com o texto ao lado do ponto */
+const PAGAMENTO_VARIANT = { completed: 'confirmed', failed: 'cancelled' };
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
 
 export default function FacturacaoTab() {
   const t = useT();
@@ -97,10 +100,11 @@ export default function FacturacaoTab() {
 
   return (
     <div className="space-y-5 max-w-2xl">
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.facturacao.currentSubscription')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.facturacao.currentSubscription')}</h2>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="font-display font-bold text-lg text-n-900">{PLAN_LABEL[operator?.plan] || operator?.plan}</p>
+          <div className="min-w-0">
+            <p className="font-display font-bold text-lg text-ocean-900">{PLAN_LABEL[operator?.plan] || operator?.plan}</p>
             {isInTrial() && <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.trialDaysLeft', { n: trialDaysLeft() })}</p>}
             {isTrialExpired() && <p className="text-xs font-body text-[var(--error)] mt-1">{t('settings.facturacao.trialEnded')}</p>}
             {hasActiveSubscription && paidUntil && (
@@ -115,11 +119,11 @@ export default function FacturacaoTab() {
           </Badge>
         </div>
         {hasActiveSubscription && (
-          <button type="button" onClick={() => setShowCancelModal(true)} className="text-xs font-body font-semibold text-[var(--error)] hover:underline mt-3">
+          <button type="button" onClick={() => setShowCancelModal(true)} className={`inline-flex items-center min-h-11 md:min-h-0 rounded-sm text-xs font-body font-semibold text-[var(--error)] hover:underline mt-3 ${FOCO}`}>
             {t('settings.facturacao.cancelSubscription')}
           </button>
         )}
-      </Card>
+      </section>
 
       {error && <p className="text-sm font-body text-[var(--error)] bg-[var(--error-light)] border border-n-200 rounded px-3 py-2">{error}</p>}
 
@@ -127,14 +131,14 @@ export default function FacturacaoTab() {
         {['starter', 'business', 'pro'].map((plan) => {
           const isCurrent = operator?.plan === plan && operator?.plan_status === 'active';
           return (
-            <Card key={plan} className={isCurrent ? 'border-ocean-700' : ''}>
+            <article key={plan} className={`${CARTAO}${isCurrent ? ' ring-2 ring-ocean-700' : ''}`}>
               <div className="space-y-2">
-                <p className="font-display font-bold text-n-900">{PLAN_LABEL[plan]}</p>
-                <p className="font-display font-bold text-2xl text-ocean-700">€{PLAN_PRICES[plan]}<span className="text-xs font-body font-normal text-n-500">{t('settings.facturacao.perMonth')}</span></p>
+                <p className="font-display font-bold text-ocean-900">{PLAN_LABEL[plan]}</p>
+                <p className="font-display font-bold text-2xl text-ocean-700"><span className={NUM}>€{PLAN_PRICES[plan]}</span><span className="text-xs font-body font-normal text-n-600">{t('settings.facturacao.perMonth')}</span></p>
                 <Button
                   variant={isCurrent ? 'secondary' : 'primary'}
                   size="sm"
-                  className="w-full"
+                  className="w-full min-h-11 md:min-h-0"
                   loading={subscribingPlan === plan}
                   disabled={isCurrent}
                   icon={Wallet}
@@ -143,36 +147,37 @@ export default function FacturacaoTab() {
                   {isCurrent ? t('settings.facturacao.currentPlan') : t('settings.facturacao.subscribe')}
                 </Button>
               </div>
-            </Card>
+            </article>
           );
         })}
       </div>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.facturacao.history')}</h3>}>
-        {!history.length && <p className="text-sm font-body text-n-500">{t('settings.facturacao.noPayments')}</p>}
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.facturacao.history')}</h2>
+        {!history.length && <p className="text-sm font-body text-n-600">{t('settings.facturacao.noPayments')}</p>}
         <div className="space-y-2">
           {history.map((p) => (
-            <div key={p.id} className="flex items-center justify-between gap-3 text-sm font-body py-2 border-b border-n-100 last:border-0">
-              <div>
+            <div key={p.id} className={`${CAIXA} flex flex-wrap items-center justify-between gap-3 text-sm font-body`}>
+              <div className="min-w-0">
                 <p className="font-semibold text-n-900">{PLAN_LABEL[p.plan] || p.plan}</p>
-                <p className="text-xs text-n-500">{formatarData(new Date(p.created_at))}</p>
+                <p className={`text-xs text-n-600 ${NUM}`}>{formatarData(new Date(p.created_at))}</p>
               </div>
-              <div className="text-right">
-                <p className="font-semibold text-n-900">€{Number(p.amount_eur).toFixed(2)}</p>
-                <p className={`text-xs ${p.status === 'completed' ? 'text-[var(--success)]' : p.status === 'failed' ? 'text-[var(--error)]' : 'text-n-500'}`}>
+              <div className="flex flex-col items-end gap-1">
+                <p className={`font-semibold text-n-900 ${NUM}`}>€{Number(p.amount_eur).toFixed(2)}</p>
+                <Badge variant={PAGAMENTO_VARIANT[p.status] || 'pending'}>
                   {p.status === 'completed' ? t('settings.facturacao.paid') : p.status === 'failed' ? t('settings.facturacao.failed') : t('settings.facturacao.pending')}
-                </p>
+                </Badge>
               </div>
             </div>
           ))}
         </div>
-      </Card>
+      </section>
 
       <Modal open={!!paymentMethodPlan} onClose={() => setPaymentMethodPlan(null)} title={t('settings.facturacao.howToPay')}>
         <div className="space-y-4">
           <p className="text-sm font-body text-n-600">
             {t('settings.facturacao.plan')} <strong>{PLAN_LABEL[paymentMethodPlan] || paymentMethodPlan}</strong> — €{PLAN_PRICES[paymentMethodPlan]}{t('settings.facturacao.perMonth')}
-            <span className="text-n-400"> (≈ {formatarNumero(Math.round((PLAN_PRICES[paymentMethodPlan] || 0) * CVE_PER_EUR))} CVE)</span>.
+            <span className="text-n-600"> (≈ {formatarNumero(Math.round((PLAN_PRICES[paymentMethodPlan] || 0) * CVE_PER_EUR))} CVE)</span>.
           </p>
           <button
             type="button"
