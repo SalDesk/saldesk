@@ -9,11 +9,21 @@ import {
 import useAuthStore from '../store/authStore';
 import { updateOperator } from '../services/authService';
 import PageHeader from '../components/layout/PageHeader';
-import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Toggle from '../components/ui/Toggle';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import { useT } from '../i18n';
+
+/* Estilo Mare da pagina: cartao, caixa interna, titulo de bloco, dica, figuras e campo de hora */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const CAIXA  = 'rounded-[14px] bg-mare-head p-4 min-w-0';
+const TITULO_BLOCO = 'font-display text-lg font-semibold text-ocean-900 mb-4';
+const DICA = 'text-xs font-body text-n-600 mb-3';
+const NUM = 'font-mono tabular-nums';
+/* Anel de foco da marca nos controlos nativos */
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
+const CAMPO_HORA = `h-11 md:h-8 px-2 border border-mare-field rounded text-sm text-n-800 bg-white focus:outline-none focus:border-ocean-700 ${FOCO}`;
 
 const DEFAULT_SECTIONS = [
   { key: 'featured',           enabled: true },
@@ -69,6 +79,20 @@ function SaveBanner({ saved }) {
   return (
     <div role="status" className="flex items-center gap-2 text-sm font-body text-[var(--success)] bg-[var(--success-light)] border border-n-200 rounded px-3 py-2">
       {t('pageEditor.saved')}
+    </div>
+  );
+}
+
+/* Cabecalho de um item de lista: rotulo e botoes subir, descer e remover (44 px no telemovel) */
+function CabecalhoItem({ rotulo, subirAria, descerAria, removerAria, onSubir, onDescer, onRemover, noTopo, noFim }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-xs font-body font-bold uppercase tracking-wide text-n-600 min-w-0 break-words">{rotulo}</span>
+      <div className="flex shrink-0">
+        <IconBtn icon={ChevronUp} label={subirAria} onClick={onSubir} disabled={noTopo} hover={EDIT_HOVER} />
+        <IconBtn icon={ChevronDown} label={descerAria} onClick={onDescer} disabled={noFim} hover={EDIT_HOVER} />
+        <IconBtn icon={X} label={removerAria} onClick={onRemover} hover={DELETE_HOVER} />
+      </div>
     </div>
   );
 }
@@ -162,22 +186,24 @@ export default function PageEditor() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.configuracao')}
         title={t('pageEditor.title')}
         subtitle={t('pageEditor.subtitle')}
         actions={previewUrl && (
           <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="secondary" icon={Eye} size="sm">{t('pageEditor.viewMyPage')}</Button>
+            <Button variant="secondary" icon={Eye} size="sm" className="min-h-11 md:min-h-0">{t('pageEditor.viewMyPage')}</Button>
           </a>
         )}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── Coluna principal ── */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="lg:col-span-2 space-y-5 min-w-0">
 
           {/* Secções */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.sectionsTitle')}</h3>}>
-            <p className="text-xs font-body text-n-400 mb-3">
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.sectionsTitle')}</h2>
+            <p className={DICA}>
               {t('pageEditor.sectionsHint')}
             </p>
             <div className="space-y-1">
@@ -185,131 +211,90 @@ export default function PageEditor() {
                 const meta = metaSeccao(s.key, t);
                 const Icon = meta.icon;
                 return (
-                  <div key={s.key} className="flex items-center gap-3 py-2 border-b border-n-100 last:border-0">
-                    <div className="flex flex-col shrink-0">
-                      <button type="button" aria-label={t('pageEditor.moveSectionUp', { label: meta.label })} onClick={() => moveSection(i, -1)} disabled={i === 0}
-                        className="w-5 h-4 flex items-center justify-center text-n-400 disabled:opacity-20 hover:text-ocean-700">
-                        <ChevronUp size={12} strokeWidth={2} />
-                      </button>
-                      <button type="button" aria-label={t('pageEditor.moveSectionDown', { label: meta.label })} onClick={() => moveSection(i, 1)} disabled={i === sections.length - 1}
-                        className="w-5 h-4 flex items-center justify-center text-n-400 disabled:opacity-20 hover:text-ocean-700">
-                        <ChevronDown size={12} strokeWidth={2} />
-                      </button>
+                  <div key={s.key} className="flex items-center gap-2 py-1 border-b border-n-100 last:border-0">
+                    <div className="flex shrink-0">
+                      <IconBtn icon={ChevronUp} label={t('pageEditor.moveSectionUp', { label: meta.label })} onClick={() => moveSection(i, -1)} disabled={i === 0} hover={EDIT_HOVER} />
+                      <IconBtn icon={ChevronDown} label={t('pageEditor.moveSectionDown', { label: meta.label })} onClick={() => moveSection(i, 1)} disabled={i === sections.length - 1} hover={EDIT_HOVER} />
                     </div>
                     <div className="w-8 h-8 rounded-full bg-ocean-50 flex items-center justify-center text-ocean-700 shrink-0">
                       <Icon size={15} strokeWidth={1.75} />
                     </div>
-                    <p className="text-sm font-display font-semibold text-n-800 flex-1">{meta.label}</p>
+                    <p className="text-sm font-display font-semibold text-n-800 flex-1 min-w-0 break-words">{meta.label}</p>
                     <Toggle checked={s.enabled} onChange={() => toggleSection(s.key)} aria-label={t('pageEditor.showSection', { label: meta.label })} />
                   </div>
                 );
               })}
             </div>
-          </Card>
+          </section>
 
           {/* Parceiros */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.partnersTitle')}</h3>}>
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.partnersTitle')}</h2>
             <div className="space-y-3">
               {partners.map((p, i) => (
-                <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('pageEditor.partnerN', { n: i + 1 })}</span>
-                    <div className="flex gap-1">
-                      <button type="button" aria-label={t('pageEditor.movePartnerUp', { n: i + 1 })} onClick={() => moveItem(setPartners, i, -1)} disabled={i === 0}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                        <ChevronUp size={12} strokeWidth={2} />
-                      </button>
-                      <button type="button" aria-label={t('pageEditor.movePartnerDown', { n: i + 1 })} onClick={() => moveItem(setPartners, i, 1)} disabled={i === partners.length - 1}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                        <ChevronDown size={12} strokeWidth={2} />
-                      </button>
-                      <button type="button" aria-label={t('pageEditor.removePartner', { n: i + 1 })} onClick={() => removeItem(setPartners, i)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
-                        <X size={12} strokeWidth={2} />
-                      </button>
-                    </div>
-                  </div>
+                <div key={i} className={`${CAIXA} space-y-2`}>
+                  <CabecalhoItem rotulo={t('pageEditor.partnerN', { n: i + 1 })}
+                    subirAria={t('pageEditor.movePartnerUp', { n: i + 1 })} descerAria={t('pageEditor.movePartnerDown', { n: i + 1 })} removerAria={t('pageEditor.removePartner', { n: i + 1 })}
+                    onSubir={() => moveItem(setPartners, i, -1)} onDescer={() => moveItem(setPartners, i, 1)} onRemover={() => removeItem(setPartners, i)}
+                    noTopo={i === 0} noFim={i === partners.length - 1} />
                   <Input label={t('pageEditor.name')} aria-label={t('pageEditor.partnerNameAria', { n: i + 1 })} value={p.name || ''} onChange={e => updateItem(setPartners, i, 'name', e.target.value)} />
                   <Input label={t('pageEditor.logoUrl')} aria-label={t('pageEditor.partnerLogoAria', { n: i + 1 })} value={p.logo_url || ''} onChange={e => updateItem(setPartners, i, 'logo_url', e.target.value)} placeholder="https://..." />
                   <Input label={t('pageEditor.link')} aria-label={t('pageEditor.partnerLinkAria', { n: i + 1 })} value={p.url || ''} onChange={e => updateItem(setPartners, i, 'url', e.target.value)} placeholder="https://..." />
                 </div>
               ))}
-              <Button type="button" variant="secondary" icon={Plus} size="sm"
+              <Button type="button" variant="secondary" icon={Plus} size="sm" className="min-h-11 md:min-h-0"
                 onClick={() => addItem(setPartners, { name: '', logo_url: '', url: '' })}>
                 {t('pageEditor.addPartner')}
               </Button>
             </div>
-          </Card>
+          </section>
 
           {/* Testemunhos em vídeo */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.videosTitle')}</h3>}>
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.videosTitle')}</h2>
             <div className="space-y-3">
               {videos.map((v, i) => (
-                <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('pageEditor.videoN', { n: i + 1 })}</span>
-                    <div className="flex gap-1">
-                      <button type="button" aria-label={t('pageEditor.moveVideoUp', { n: i + 1 })} onClick={() => moveItem(setVideos, i, -1)} disabled={i === 0}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                        <ChevronUp size={12} strokeWidth={2} />
-                      </button>
-                      <button type="button" aria-label={t('pageEditor.moveVideoDown', { n: i + 1 })} onClick={() => moveItem(setVideos, i, 1)} disabled={i === videos.length - 1}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                        <ChevronDown size={12} strokeWidth={2} />
-                      </button>
-                      <button type="button" aria-label={t('pageEditor.removeVideo', { n: i + 1 })} onClick={() => removeItem(setVideos, i)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
-                        <X size={12} strokeWidth={2} />
-                      </button>
-                    </div>
-                  </div>
+                <div key={i} className={`${CAIXA} space-y-2`}>
+                  <CabecalhoItem rotulo={t('pageEditor.videoN', { n: i + 1 })}
+                    subirAria={t('pageEditor.moveVideoUp', { n: i + 1 })} descerAria={t('pageEditor.moveVideoDown', { n: i + 1 })} removerAria={t('pageEditor.removeVideo', { n: i + 1 })}
+                    onSubir={() => moveItem(setVideos, i, -1)} onDescer={() => moveItem(setVideos, i, 1)} onRemover={() => removeItem(setVideos, i)}
+                    noTopo={i === 0} noFim={i === videos.length - 1} />
                   <Input label={t('pageEditor.videoUrl')} aria-label={t('pageEditor.videoUrlAria', { n: i + 1 })} value={v.url || ''} onChange={e => updateItem(setVideos, i, 'url', e.target.value)} placeholder="https://..." />
                   <Input label={t('pageEditor.thumbnailUrl')} aria-label={t('pageEditor.thumbnailAria', { n: i + 1 })} value={v.thumbnail_url || ''} onChange={e => updateItem(setVideos, i, 'thumbnail_url', e.target.value)} placeholder="https://..." />
                 </div>
               ))}
-              <Button type="button" variant="secondary" icon={Plus} size="sm"
+              <Button type="button" variant="secondary" icon={Plus} size="sm" className="min-h-11 md:min-h-0"
                 onClick={() => addItem(setVideos, { url: '', thumbnail_url: '' })}>
                 {t('pageEditor.addVideo')}
               </Button>
             </div>
-          </Card>
+          </section>
 
           {/* Avaliações Google */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.googleTitle')}</h3>}>
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.googleTitle')}</h2>
             <div className="space-y-3">
               {gReviews.map((r, i) => (
-                <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('pageEditor.reviewN', { n: i + 1 })}</span>
-                    <div className="flex gap-1">
-                      <button type="button" aria-label={t('pageEditor.moveReviewUp', { n: i + 1 })} onClick={() => moveItem(setGReviews, i, -1)} disabled={i === 0}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                        <ChevronUp size={12} strokeWidth={2} />
-                      </button>
-                      <button type="button" aria-label={t('pageEditor.moveReviewDown', { n: i + 1 })} onClick={() => moveItem(setGReviews, i, 1)} disabled={i === gReviews.length - 1}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
-                        <ChevronDown size={12} strokeWidth={2} />
-                      </button>
-                      <button type="button" aria-label={t('pageEditor.removeReview', { n: i + 1 })} onClick={() => removeItem(setGReviews, i)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
-                        <X size={12} strokeWidth={2} />
-                      </button>
-                    </div>
-                  </div>
+                <div key={i} className={`${CAIXA} space-y-2`}>
+                  <CabecalhoItem rotulo={t('pageEditor.reviewN', { n: i + 1 })}
+                    subirAria={t('pageEditor.moveReviewUp', { n: i + 1 })} descerAria={t('pageEditor.moveReviewDown', { n: i + 1 })} removerAria={t('pageEditor.removeReview', { n: i + 1 })}
+                    onSubir={() => moveItem(setGReviews, i, -1)} onDescer={() => moveItem(setGReviews, i, 1)} onRemover={() => removeItem(setGReviews, i)}
+                    noTopo={i === 0} noFim={i === gReviews.length - 1} />
                   <Input label={t('pageEditor.authorName')} aria-label={t('pageEditor.authorNameAria', { n: i + 1 })} value={r.author_name || ''} onChange={e => updateItem(setGReviews, i, 'author_name', e.target.value)} />
                   <Input label={t('pageEditor.photoUrl')} aria-label={t('pageEditor.photoAria', { n: i + 1 })} value={r.author_photo || ''} onChange={e => updateItem(setGReviews, i, 'author_photo', e.target.value)} placeholder="https://..." />
                   <Input label={t('pageEditor.reviewText')} aria-label={t('pageEditor.reviewTextAria', { n: i + 1 })} value={r.text || ''} onChange={e => updateItem(setGReviews, i, 'text', e.target.value)} />
                 </div>
               ))}
-              <Button type="button" variant="secondary" icon={Plus} size="sm"
+              <Button type="button" variant="secondary" icon={Plus} size="sm" className="min-h-11 md:min-h-0"
                 onClick={() => addItem(setGReviews, { author_name: '', author_photo: '', text: '' })}>
                 {t('pageEditor.addReview')}
               </Button>
             </div>
-          </Card>
+          </section>
 
           {/* Redes sociais */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.socialTitle')}</h3>}>
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.socialTitle')}</h2>
             <div className="space-y-3">
               {[
                 { key: 'instagram',   label: 'Instagram',   icon: Globe, ph: 'https://instagram.com/...' },
@@ -319,26 +304,27 @@ export default function PageEditor() {
                 { key: 'linkedin',    label: t('pageEditor.linkedinOptional'), icon: ExternalLink, ph: 'https://linkedin.com/company/...' },
               ].map(({ key, label, icon: Icon, ph }) => (
                 <div key={key} className="flex items-start gap-2">
-                  <Icon size={16} strokeWidth={1.75} className="text-n-400 shrink-0 mt-7" />
-                  <div className="flex-1">
+                  <Icon size={16} strokeWidth={1.75} className="text-n-500 shrink-0 mt-7" />
+                  <div className="flex-1 min-w-0">
                     <Input label={label} aria-label={label} value={social[key]} placeholder={ph}
                       onChange={e => setSocial(p => ({ ...p, [key]: e.target.value }))} />
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
+          </section>
 
           {/* Horário de funcionamento */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.hoursTitle')}</h3>}>
-            <div className="space-y-2">
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.hoursTitle')}</h2>
+            <div className="space-y-1">
               {WEEK_DAYS.map(d => {
                 const diaRotulo = t(`pageEditor.days.${d.key}`);
                 return (
-                <div key={d.key} className="flex items-center gap-3">
+                <div key={d.key} className="flex flex-wrap items-center gap-x-3 gap-y-1 min-h-11">
                   <button type="button" role="switch" aria-checked={hours[d.key].open} aria-label={t('pageEditor.openDay', { day: diaRotulo })}
                     onClick={() => setHourField(d.key, 'open', !hours[d.key].open)}
-                    className={`w-8 h-4 rounded-full transition-colors relative shrink-0 ${hours[d.key].open ? 'bg-ocean-700' : 'bg-n-300'}`}>
+                    className={`w-8 h-4 rounded-full transition-colors relative shrink-0 before:content-[''] before:absolute before:-inset-x-2 before:-inset-y-3.5 ${FOCO} ${hours[d.key].open ? 'bg-ocean-700' : 'bg-n-300'}`}>
                     <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${hours[d.key].open ? 'left-[18px]' : 'left-0.5'}`} />
                   </button>
                   <span className="text-sm font-body text-n-700 w-16 shrink-0">{diaRotulo}</span>
@@ -346,89 +332,92 @@ export default function PageEditor() {
                     <div className="flex items-center gap-2">
                       <input type="time" aria-label={t('pageEditor.openingOf', { day: diaRotulo })} value={hours[d.key].start}
                         onChange={e => setHourField(d.key, 'start', e.target.value)}
-                        className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
-                      <span className="text-xs text-n-400">{t('pageEditor.until')}</span>
+                        className={`${CAMPO_HORA} ${NUM}`} />
+                      <span className="text-xs text-n-600">{t('pageEditor.until')}</span>
                       <input type="time" aria-label={t('pageEditor.closingOf', { day: diaRotulo })} value={hours[d.key].end}
                         onChange={e => setHourField(d.key, 'end', e.target.value)}
-                        className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
+                        className={`${CAMPO_HORA} ${NUM}`} />
                     </div>
                   ) : (
-                    <span className="text-xs font-body text-n-400 italic">{t('pageEditor.closed')}</span>
+                    <span className="text-xs font-body text-n-600 italic">{t('pageEditor.closed')}</span>
                   )}
                 </div>
                 );
               })}
             </div>
-          </Card>
+          </section>
 
           {/* Idiomas + GPS */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.languagesTitle')}</h3>}>
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.languagesTitle')}</h2>
             <div className="flex gap-2 flex-wrap">
               {SPOKEN_LANGS.map(l => (
                 <button key={l} type="button" aria-pressed={spokenLangs.includes(l)} onClick={() => toggleSpokenLang(l)}
-                  className={`px-3 py-1.5 rounded text-sm font-mono font-medium transition-colors ${spokenLangs.includes(l) ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
+                  className={`px-3 py-1.5 min-h-11 md:min-h-0 rounded text-sm font-mono font-medium transition-colors ${FOCO} ${spokenLangs.includes(l) ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-700 hover:bg-n-200'}`}>
                   {l}
                 </button>
               ))}
             </div>
-          </Card>
+          </section>
 
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.locationTitle')}</h3>}>
-            <div className="grid grid-cols-2 gap-3">
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.locationTitle')}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input label={t('pageEditor.latitude')} aria-label={t('pageEditor.latitude')} value={lat} onChange={e => setLat(e.target.value)} placeholder="16.8948" />
               <Input label={t('pageEditor.longitude')} aria-label={t('pageEditor.longitude')} value={lng} onChange={e => setLng(e.target.value)} placeholder="-22.9144" />
             </div>
-            <p className="text-xs font-body text-n-400 mt-2">
+            <p className="text-xs font-body text-n-600 mt-2">
               {t('pageEditor.coordsHelpBefore')} <strong>maps.google.com</strong> {t('pageEditor.coordsHelpAfter')}
             </p>
-          </Card>
+          </section>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button onClick={handleSave} loading={saving}>{t('pageEditor.save')}</Button>
             <SaveBanner saved={saved} />
           </div>
         </div>
 
         {/* ── Preview (wireframe) ── */}
-        <div className="lg:col-span-1">
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.previewTitle')}</h3>}>
-            <p className="text-xs font-body text-n-400 mb-3">
+        <div className="lg:col-span-1 min-w-0">
+          <section className={CARTAO}>
+            <h2 className={TITULO_BLOCO}>{t('pageEditor.previewTitle')}</h2>
+            <p className={DICA}>
               {t('pageEditor.previewHelp')}
             </p>
-            <div className="border border-n-200 rounded-md overflow-hidden">
+            <div className="rounded-[14px] bg-mare-head border border-mare-card overflow-hidden min-w-0">
               <div className="bg-ocean-900 text-white text-[10px] font-body font-bold uppercase tracking-wide px-3 py-2">
                 Navbar
               </div>
-              <div className="bg-ocean-50 text-ocean-800 text-[10px] font-body font-bold uppercase tracking-wide px-3 py-2 border-t border-n-200">
+              <div className="bg-ocean-50 text-ocean-800 text-[10px] font-body font-bold uppercase tracking-wide px-3 py-2 border-t border-mare-card">
                 Hero
               </div>
               {sections.filter(s => s.enabled).map(s => {
                 const meta = metaSeccao(s.key, t);
                 const Icon = meta.icon;
                 return (
-                  <div key={s.key} className="flex items-center gap-2 px-3 py-2 border-t border-n-200 text-xs font-body text-n-700">
+                  <div key={s.key} className="flex items-center gap-2 px-3 py-2 border-t border-mare-card text-xs font-body text-n-700 min-w-0 break-words">
                     <Icon size={12} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
                     {meta.label}
                   </div>
                 );
               })}
-              <div className="bg-n-800 text-white/70 text-[10px] font-body font-bold uppercase tracking-wide px-3 py-2 border-t border-n-200">
+              <div className="bg-n-800 text-white/70 text-[10px] font-body font-bold uppercase tracking-wide px-3 py-2 border-t border-mare-card">
                 Footer
               </div>
             </div>
             {sections.filter(s => !s.enabled).length > 0 && (
               <div className="mt-3">
-                <p className="text-xs font-body font-bold text-n-400 uppercase tracking-wide mb-1.5">{t('pageEditor.disabled')}</p>
+                <p className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1.5">{t('pageEditor.disabled')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {sections.filter(s => !s.enabled).map(s => (
-                    <span key={s.key} className="text-[10px] font-body text-n-400 bg-n-100 px-2 py-1 rounded-full">
+                    <span key={s.key} className="text-xs font-body text-n-600 bg-white border border-mare-card px-2 py-1 rounded-full min-w-0 break-words">
                       {metaSeccao(s.key, t).label}
                     </span>
                   ))}
                 </div>
               </div>
             )}
-          </Card>
+          </section>
         </div>
       </div>
     </div>

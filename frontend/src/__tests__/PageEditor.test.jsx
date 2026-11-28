@@ -47,10 +47,10 @@ function montar(operador = { id: 'op1', slug: 'demo' }) {
   useAuthStore.setState({ token: 'tok', operator: operador });
   return render(<PageEditor />);
 }
-const cartao = (titulo) => screen.getByText(titulo, { selector: 'h3' }).parentElement.parentElement;
+const cartao = (titulo) => screen.getByText(titulo, { selector: 'h2' }).parentElement;
 const etiquetas = () => [...cartao('Secções da página').querySelectorAll('p.flex-1')].map(p => p.textContent);
 const linhaSeccao = (rotulo) => within(cartao('Secções da página')).getByText(rotulo, { selector: 'p' }).parentElement;
-const interruptorSeccao = (rotulo) => linhaSeccao(rotulo).querySelector('button.rounded-full');
+const interruptorSeccao = (rotulo) => linhaSeccao(rotulo).querySelector('button[role="switch"]');
 const setasSeccao = (rotulo) => [...linhaSeccao(rotulo).querySelectorAll('button')].slice(0, 2);
 const ativo = (btn) => btn.className.includes('bg-ocean-700');
 const bloco = (titulo) => screen.getByText(titulo).parentElement.parentElement;
@@ -278,6 +278,8 @@ describe('Editor da pagina: guardar', () => {
 /* ───────────────────────── design system ───────────────────────── */
 
 const semCoresForaDosTokens = (html) => {
+  /* o hover vermelho do IconBtn (DELETE_HOVER) e o unico text-error permitido */
+  html = html.replace(/hover:text-error/g, '');
   expect(html).not.toMatch(HEX);
   expect(html).not.toMatch(NOMEADAS);
   expect(html).not.toMatch(/(?:text|bg|border)-error/);
@@ -350,6 +352,73 @@ describe('Editor da pagina: design system', () => {
     fireEvent.click(botaoGuardar());
     await screen.findByRole('status');
     semCoresForaDosTokens(classes(container));
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+const fichas = (el) => el.className.split(/\s+/);
+const TITULOS_PT = ['Secções da página', 'Parceiros', 'Testemunhos em vídeo', 'Avaliações Google', 'Redes sociais',
+  'Horário de funcionamento', 'Idiomas falados', 'Localização (coordenadas GPS)', 'Pré-visualização (esquema)'];
+
+describe('Editor da pagina: estilo Mare', () => {
+  it('mostra_o_eyebrow_da_area_Configuracao', () => {
+    const { container } = montar();
+    expect(container.querySelector('[data-eyebrow]')).toHaveTextContent('Configuração');
+  });
+
+  it('cada_bloco_e_um_cartao_Mare_com_titulo_h2', () => {
+    montar();
+    TITULOS_PT.forEach(t => {
+      const h2 = screen.getByText(t, { selector: 'h2' });
+      const cartaoEl = h2.parentElement;
+      expect(cartaoEl.tagName).toBe('SECTION');
+      ['bg-white', 'rounded-[18px]', 'border', 'border-mare-card', 'min-w-0'].forEach(c => expect(fichas(cartaoEl)).toContain(c));
+      ['font-display', 'text-lg', 'font-semibold', 'text-ocean-900'].forEach(c => expect(fichas(h2)).toContain(c));
+    });
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+  });
+
+  it('as_setas_das_seccoes_tem_44px_no_telemovel_e_o_interruptor_do_horario_tambem', () => {
+    montar();
+    setasSeccao('Serviços').forEach(b => expect(fichas(b)).toContain('min-h-11'));
+    const sw = screen.getByRole('switch', { name: 'Aberto Segunda' });
+    expect(fichas(sw)).toContain('before:-inset-y-3.5');
+    expect(fichas(sw)).toContain('focus-visible:ring-sand-500');
+    ['Abertura de Segunda', 'Fecho de Segunda'].forEach(n => expect(fichas(screen.getByLabelText(n))).toContain('h-11'));
+    expect(fichas(screen.getByRole('button', { name: 'FR' }))).toContain('min-h-11');
+  });
+
+  it('os_botoes_pequenos_avulsos_tem_44px_no_telemovel', () => {
+    montar();
+    ['Adicionar parceiro', 'Adicionar vídeo', 'Adicionar avaliação'].forEach(n => {
+      expect(fichas(screen.getByRole('button', { name: n }))).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0']));
+    });
+    expect(fichas(screen.getByRole('link', { name: 'Ver a minha página' }).querySelector('button'))).toContain('min-h-11');
+  });
+
+  it('remover_um_item_mantem_o_sinal_vermelho_e_os_botoes_de_item_tem_44px', () => {
+    montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar parceiro' }));
+    const remover = screen.getByRole('button', { name: 'Remover parceiro 1' });
+    expect(fichas(remover)).toEqual(expect.arrayContaining(['hover:text-error', 'min-h-11', 'focus-visible:ring-sand-500']));
+    expect(fichas(screen.getByRole('button', { name: 'Mover parceiro 1 para cima' }))).toContain('min-h-11');
+    fireEvent.click(remover);
+    expect(screen.queryByText('Parceiro 1')).not.toBeInTheDocument();
+  });
+
+  it('o_item_de_lista_e_a_pre_visualizacao_sao_caixas_internas_Mare', () => {
+    montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar parceiro' }));
+    ['rounded-[14px]', 'bg-mare-head', 'min-w-0'].forEach(c => expect(fichas(bloco('Parceiro 1'))).toContain(c));
+    const caixa = screen.getByText('Navbar').parentElement;
+    ['rounded-[14px]', 'bg-mare-head', 'overflow-hidden'].forEach(c => expect(fichas(caixa)).toContain(c));
+  });
+
+  it('nomes_longos_de_seccao_quebram_linha', () => {
+    montar({ id: 'o', page_config: { sections: [{ key: 'uma-chave-muito-comprida-sem-espacos-nenhuns', enabled: true }] } });
+    const p = screen.getAllByText('uma-chave-muito-comprida-sem-espacos-nenhuns', { selector: 'p' })[0];
+    expect(fichas(p)).toEqual(expect.arrayContaining(['min-w-0', 'break-words']));
   });
 });
 
