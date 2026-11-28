@@ -26,7 +26,7 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title={t('nav.settings')} />
+      <PageHeader eyebrow={t('nav.sections.configuracao')} title={t('nav.settings')} />
 
       <div className="mb-6">
         <Tabs tabs={TABS.map(id => ({ id, label: t(`settings.tabs.${id}`) }))} value={tab} onChange={setTab} />

@@ -5,10 +5,9 @@ import { updateOperator } from '../../services/authService';
 import { camposAlterados } from '../../utils/camposAlterados';
 import useAuthStore from '../../store/authStore';
 import useUiStore from '../../store/uiStore';
-import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input, { Select } from '../../components/ui/Input';
-import { SaveBanner } from './shared';
+import { SaveBanner, CARTAO, TITULO } from './shared';
 import { useT } from '../../i18n';
 import { mensagemErro } from '../../utils/mensagemErro';
 
@@ -59,20 +58,22 @@ export default function ContaTab({ operator, onSaved }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.conta.companyData')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.conta.companyData')}</h2>
         <div className="space-y-4">
           <Input label={t('settings.conta.companyName')} aria-label={t('settings.conta.companyName')} value={form.name} onChange={set('name')} required />
           <Input label={t('settings.conta.email')} aria-label={t('settings.conta.email')} type="email" value={form.email} onChange={set('email')} required />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label={t('settings.conta.phone')} aria-label={t('settings.conta.phone')} type="tel" value={form.phone} onChange={set('phone')} placeholder="+238 900 0000" />
             <Input label="WhatsApp" aria-label="WhatsApp" type="tel" value={form.whatsapp} onChange={set('whatsapp')} placeholder="+238 900 0000" />
           </div>
           <Input label={t('settings.conta.address')} aria-label={t('settings.conta.address')} value={form.address} onChange={set('address')} placeholder={t('settings.conta.addressPlaceholder')} />
         </div>
-      </Card>
+      </section>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.conta.preferences')}</h3>}>
-        <div className="grid grid-cols-3 gap-3">
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.conta.preferences')}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Select label={t('settings.conta.language')} aria-label={t('settings.conta.language')} value={form.language} onChange={set('language')}>
             {LANGS.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
           </Select>
@@ -83,30 +84,32 @@ export default function ContaTab({ operator, onSaved }) {
             {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>)}
           </Select>
         </div>
-      </Card>
+      </section>
 
-      {error && <p className="text-sm font-body px-3 py-2 rounded bg-[var(--error-light)] text-[var(--error)]">{error}</p>}
+      {error && <p className="text-sm font-body px-3 py-2 rounded-md bg-[var(--error-light)] text-[var(--error)]">{error}</p>}
       <div className="flex items-center gap-3">
         <Button type="submit" loading={saving}>{t('settings.conta.save')}</Button>
         <SaveBanner saved={saved} />
       </div>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.conta.help')}</h3>}>
-        <div className="flex items-center justify-between gap-4">
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.conta.help')}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm font-body font-medium text-n-800">{t('settings.conta.tourTitle')}</p>
-            <p className="text-xs font-body text-n-500 mt-0.5">{t('settings.conta.tourHint')}</p>
+            <p className="text-xs font-body text-n-600 mt-0.5">{t('settings.conta.tourHint')}</p>
           </div>
           <Button
             type="button"
             variant="secondary"
             icon={Compass}
+            className="min-h-11 md:min-h-0"
             onClick={() => { startTour(); navigate('/'); }}
           >
             {t('settings.conta.tourButton')}
           </Button>
         </div>
-      </Card>
+      </section>
     </form>
   );
 }

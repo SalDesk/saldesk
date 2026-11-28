@@ -1117,7 +1117,7 @@ describe('Definições: design system (Pagamentos e Facturação)', () => {
     const estados = screen.getAllByText(/^(Configurado|Não configurado)$/).map(p => p.parentElement.parentElement);
     expect(estados).toHaveLength(3);
     expect(estados[0].className).toContain('var(--success-light)');
-    expect(estados[1].className).toContain('bg-n-50');
+    expect(estados[1].className).toContain('bg-mare-head');
     ['Client ID', 'Client Secret', 'Webhook ID', 'POS ID', 'POS Auth Code'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
     expect(screen.getByLabelText('Client ID')).toHaveAttribute('type', 'password');
   });
@@ -1170,5 +1170,93 @@ describe('Definições: design system (Pagamentos e Facturação)', () => {
     await screen.findByText('Não foi possível iniciar a subscrição. Tenta novamente.');
     html += classes(r.container);
     semCoresForaDosTokens(html);
+  });
+});
+
+/* ───────────────────────── estilo Mare: Conta, Notificacoes, Seguranca e Pagamentos ───────────────────────── */
+
+describe('Definições: estilo Maré (cabeçalho, Conta, Notificações, Segurança e Pagamentos)', () => {
+  const fichas = (el) => el.className.split(/\s+/);
+  const secaoDe = (titulo) => screen.getByRole('heading', { level: 2, name: titulo }).closest('section');
+  const ehCartao = (el) => {
+    const c = fichas(el);
+    ['bg-white', 'rounded-[18px]', 'border', 'border-mare-card'].forEach(k => expect(c).toContain(k));
+  };
+
+  it('mostra_o_eyebrow_Configuracao_e_os_separadores_continuam_a_mudar', () => {
+    montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Configuração');
+    fireEvent.click(screen.getByRole('tab', { name: 'Segurança' }));
+    expect(screen.getByRole('tab', { name: 'Segurança', selected: true })).toBeInTheDocument();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Configuração');
+  });
+
+  it('Conta_tem_tres_cartoes_Mare_com_titulo_h2_Sora_e_grelhas_com_uma_coluna_no_telemovel', () => {
+    montar();
+    ['Dados da empresa', 'Preferências', 'Ajuda'].forEach((t) => {
+      const sec = secaoDe(t);
+      ehCartao(sec);
+      const h = within(sec).getByRole('heading', { level: 2, name: t });
+      ['font-display', 'text-lg', 'font-semibold', 'text-ocean-900'].forEach(k => expect(fichas(h)).toContain(k));
+    });
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+    const g2 = screen.getByLabelText('Telefone').closest('div.grid');
+    expect(fichas(g2)).toEqual(expect.arrayContaining(['grid-cols-1', 'sm:grid-cols-2']));
+    const g3 = screen.getByLabelText('Idioma').closest('div.grid');
+    expect(fichas(g3)).toEqual(expect.arrayContaining(['grid-cols-1', 'sm:grid-cols-3']));
+    expect(fichas(botao('Rever tour'))).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0']));
+  });
+
+  it('Notificacoes_tem_dois_cartoes_Mare_h2_e_o_canal_escolhido_mantem_aria_checked', () => {
+    montar('/definicoes?tab=notificacoes');
+    ['Canal de notificações', 'Tipos de notificação'].forEach(t => ehCartao(secaoDe(t)));
+    const grupo = screen.getByRole('radiogroup');
+    expect(fichas(grupo)).toEqual(expect.arrayContaining(['grid-cols-1', 'sm:grid-cols-3']));
+    const push = screen.getByRole('radio', { name: 'Push (PWA)' });
+    const email = screen.getByRole('radio', { name: 'Email' });
+    expect(push).toHaveAttribute('aria-checked', 'true');
+    expect(fichas(push)).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0', 'rounded-[14px]', 'bg-ocean-700']));
+    expect(fichas(email)).toEqual(expect.arrayContaining(['border-mare-field']));
+    expect(fichas(email)).not.toContain('bg-ocean-700');
+    fireEvent.click(email);
+    expect(email).toHaveAttribute('aria-checked', 'true');
+    expect(fichas(email)).toContain('bg-ocean-700');
+    expect(fichas(email)).not.toContain('border-mare-field');
+    expect(push).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('Seguranca_e_um_cartao_Mare_com_h2_e_campos_de_44px_no_telemovel_ligados_as_etiquetas', () => {
+    montar('/definicoes?tab=seguranca');
+    ehCartao(screen.getByRole('heading', { level: 2, name: 'Alterar password' }).closest('section'));
+    ['Password actual', 'Nova password', 'Confirmar nova password'].forEach((e) => {
+      const input = screen.getByLabelText(e);
+      expect(fichas(input)).toEqual(expect.arrayContaining(['h-11', 'md:h-9', 'border-mare-field', 'focus:ring-sand-500']));
+      expect(input.id).toBeTruthy();
+      expect(screen.getByText(e, { selector: 'label' })).toHaveAttribute('for', input.id);
+    });
+    const ver = screen.getByRole('button', { name: 'Mostrar password actual' });
+    expect(fichas(ver)).toEqual(expect.arrayContaining(['min-h-11', 'min-w-11', 'md:min-h-9', 'md:min-w-9']));
+  });
+
+  it('Pagamentos_tem_estados_em_caixas_internas_e_cartoes_Mare_com_h2_e_o_webhook_quebra_linha', async () => {
+    montar();
+    await abrir('Pagamentos', 'Webhook PayPal');
+    ['PayPal', 'SISP Vinti4'].forEach(t => ehCartao(secaoDe(t)));
+    const estados = screen.getAllByText(/^(Configurado|Não configurado)$/).map(p => p.parentElement.parentElement);
+    expect(estados).toHaveLength(3);
+    estados.forEach(e => expect(fichas(e)).toEqual(expect.arrayContaining(['rounded-[14px]', 'border-mare-card'])));
+    expect(fichas(estados[0])).toContain('bg-[var(--success-light)]');
+    expect(fichas(estados[1])).toContain('bg-mare-head');
+    expect(fichas(estados[0].parentElement)).toEqual(expect.arrayContaining(['grid-cols-1', 'sm:grid-cols-3']));
+    const url = screen.getByText('https://api.saldesk.cv/api/v1/payments/webhook/paypal');
+    expect(fichas(url)).toContain('break-all');
+  });
+
+  it('Pagamentos_guarda_so_o_que_foi_preenchido_como_antes', async () => {
+    montar();
+    await abrir('Pagamentos', 'Webhook PayPal');
+    fireEvent.change(screen.getByLabelText('POS ID'), { target: { value: '90051' } });
+    fireEvent.click(screen.getAllByRole('button').find(b => b.type === 'submit'));
+    await waitFor(() => expect(api.put).toHaveBeenCalledWith('/marketing/payment-settings', { sisp_merchant_id: '90051' }));
   });
 });

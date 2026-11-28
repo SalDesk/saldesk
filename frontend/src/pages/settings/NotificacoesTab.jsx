@@ -1,10 +1,9 @@
 import { useState, useRef } from 'react';
 import { updateOperator } from '../../services/authService';
 import useAuthStore from '../../store/authStore';
-import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Toggle from '../../components/ui/Toggle';
-import { SaveBanner } from './shared';
+import { SaveBanner, CARTAO, TITULO } from './shared';
 import { useT } from '../../i18n';
 
 /* ─────────────────────────────────────────────────────────
@@ -59,26 +58,28 @@ export default function NotificacoesTab() {
 
   return (
     <form onSubmit={handleSave} className="space-y-5 max-w-2xl">
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.notificacoes.channelTitle')}</h3>}>
-        <div role="radiogroup" aria-label={t('settings.notificacoes.channelTitle')} className="grid grid-cols-3 gap-2">
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.notificacoes.channelTitle')}</h2>
+        <div role="radiogroup" aria-label={t('settings.notificacoes.channelTitle')} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {CANAIS.map((v, i) => (
             <button key={v} type="button" role="radio" aria-checked={channel === v} onClick={() => setChannel(v)}
               ref={el => { radiosRef.current[i] = el; }} tabIndex={channel === v ? 0 : -1} onKeyDown={e => aoCarregarTecla(e, i)}
-              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded border cursor-pointer text-sm font-body transition-colors ${channel === v ? 'bg-ocean-700 text-white border-ocean-700' : 'bg-n-50 text-n-700 border-n-200 hover:border-n-300'}`}>
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 min-h-11 md:min-h-0 rounded-[14px] border cursor-pointer text-sm font-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${channel === v ? 'bg-ocean-700 text-white border-ocean-700' : 'bg-white text-n-700 border-mare-field hover:border-ocean-400'}`}>
               {t(`settings.notificacoes.channels.${v}`)}
             </button>
           ))}
         </div>
-      </Card>
+      </section>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.notificacoes.typesTitle')}</h3>}>
+      <section className={CARTAO}>
+        <h2 className={`${TITULO} mb-4`}>{t('settings.notificacoes.typesTitle')}</h2>
         <div>
           {NOTIF_ITEMS.map(key => (
             <Toggle key={key} checked={prefs[key]} onChange={v => setPrefs(p => ({ ...p, [key]: v }))}
               label={t(`settings.notificacoes.items.${key}.label`)} hint={t(`settings.notificacoes.items.${key}.hint`)} />
           ))}
         </div>
-      </Card>
+      </section>
 
       <div className="flex items-center gap-3">
         <Button type="submit" loading={saving}>{t('settings.notificacoes.save')}</Button>

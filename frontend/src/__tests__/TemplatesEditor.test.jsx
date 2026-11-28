@@ -50,7 +50,7 @@ async function montar() {
   await screen.findAllByText(/^PREVIA:/);
   return r;
 }
-const cartao = (titulo) => within(screen.getByText(titulo, { selector: 'h3' }).closest('.p-5'));
+const cartao = (titulo) => within(screen.getByText(titulo, { selector: 'h2' }).closest('section'));
 const texto = (titulo, idioma = 'PT') => screen.getByLabelText(`${titulo} (${idioma})`);
 const mudar = (titulo, valor, idioma = 'PT') => fireEvent.change(texto(titulo, idioma), { target: { value: valor } });
 const mensagens = () => useToastStore.getState().toasts.map(x => x.message);
@@ -61,7 +61,7 @@ describe('Editor de mensagens: cartoes', () => {
   it('mostra_o_cartao_do_canal_e_os_tres_gatilhos_com_os_textos_do_servidor', async () => {
     await montar();
     expect(screen.getByText('Como as mensagens são enviadas')).toBeInTheDocument();
-    ['Confirmação da reserva', 'Lembrete da véspera', 'Pedido de avaliação'].forEach(x => expect(screen.getByText(x, { selector: 'h3' })).toBeInTheDocument());
+    ['Confirmação da reserva', 'Lembrete da véspera', 'Pedido de avaliação'].forEach(x => expect(screen.getByText(x, { selector: 'h2' })).toBeInTheDocument());
     expect(screen.getByText('Enviada para reservas confirmadas.')).toBeInTheDocument();
     expect(texto('Confirmação da reserva')).toHaveValue('Ola {nome_cliente} confirmado');
     expect(texto('Lembrete da véspera')).toHaveValue('Lembrete personalizado {data}');
@@ -125,8 +125,8 @@ describe('Editor de mensagens: cartoes', () => {
   it('um_gatilho_sem_o_par_PT_EN_nao_aparece', async () => {
     listMessageTemplates.mockResolvedValue(LISTA.filter(x => !(x.trigger === 'reminder_d1' && x.locale === 'en')));
     await montar();
-    expect(screen.queryByText('Lembrete da véspera', { selector: 'h3' })).not.toBeInTheDocument();
-    expect(screen.getByText('Pedido de avaliação', { selector: 'h3' })).toBeInTheDocument();
+    expect(screen.queryByText('Lembrete da véspera', { selector: 'h2' })).not.toBeInTheDocument();
+    expect(screen.getByText('Pedido de avaliação', { selector: 'h2' })).toBeInTheDocument();
   });
 });
 
@@ -204,7 +204,7 @@ describe('Editor de mensagens: edicao', () => {
     await montar();
     mudar('Confirmação da reserva', 'x'.repeat(1000));
     const ok = cartao('Confirmação da reserva').getByText('1000/1000');
-    expect(ok.className).toBe('');
+    expect(ok.className.split(/\s+/)).not.toContain('font-semibold');
     expect(cartao('Confirmação da reserva').getByRole('button', { name: 'Guardar' })).not.toBeDisabled();
     mudar('Confirmação da reserva', 'x'.repeat(1001));
     const alto = cartao('Confirmação da reserva').getByText('1001/1000');
@@ -323,5 +323,51 @@ describe('Editor de mensagens: design system', () => {
     expect(html).not.toMatch(/(?:text|bg|border)-error/);
     expect(html).not.toMatch(/bg-red-/);
     expect(html).not.toMatch(/sand-(?:700|200)/);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Editor de mensagens: estilo Maré', () => {
+  const fichas = (el) => el.className.split(/\s+/);
+
+  it('o_canal_e_cada_gatilho_sao_cartoes_Mare_com_titulo_h2_Sora', async () => {
+    await montar();
+    ['Como as mensagens são enviadas', 'Confirmação da reserva', 'Lembrete da véspera', 'Pedido de avaliação'].forEach((x) => {
+      const h = screen.getByRole('heading', { level: 2, name: x });
+      ['font-display', 'text-lg', 'font-semibold', 'text-ocean-900'].forEach(k => expect(fichas(h)).toContain(k));
+      const sec = h.closest('section');
+      ['bg-white', 'rounded-[18px]', 'border', 'border-mare-card', 'p-[22px]'].forEach(k => expect(fichas(sec)).toContain(k));
+    });
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+  });
+
+  it('a_troca_de_idioma_e_a_pre_visualizacao_sao_caixas_internas_e_o_idioma_mantem_o_comportamento', async () => {
+    await montar();
+    const c = cartao('Confirmação da reserva');
+    const en = c.getByRole('button', { name: 'English' });
+    expect(fichas(en.parentElement)).toEqual(expect.arrayContaining(['rounded-[14px]', 'bg-mare-head']));
+    expect(fichas(en)).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0']));
+    fireEvent.click(en);
+    expect(texto('Confirmação da reserva', 'EN')).toHaveValue('Hello {nome_cliente}');
+    const previa = screen.getAllByText(/^PREVIA:/)[0];
+    expect(fichas(previa)).toEqual(expect.arrayContaining(['rounded-[14px]']));
+  });
+
+  it('as_variaveis_tem_alvo_de_44px_no_telemovel_foco_sand_e_inserem_como_antes', async () => {
+    await montar();
+    const c = cartao('Confirmação da reserva');
+    const chip = c.getByRole('button', { name: '{data}' });
+    expect(fichas(chip)).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0', 'font-mono', 'focus-visible:ring-2', 'focus-visible:ring-sand-500']));
+    fireEvent.click(chip);
+    expect(texto('Confirmação da reserva').value).toContain('{data}');
+  });
+
+  it('o_contador_usa_figuras_mono_e_o_texto_de_apoio_tem_contraste_suficiente', async () => {
+    await montar();
+    const contador = screen.getAllByText(/^\d+\/1000$/)[0];
+    expect(fichas(contador)).toEqual(expect.arrayContaining(['font-mono', 'tabular-nums']));
+    const apoio = screen.getAllByText('O que o cliente recebe (exemplo)')[0];
+    expect(fichas(apoio)).not.toContain('text-n-400');
   });
 });

@@ -91,7 +91,7 @@ describe('Componentes das Definições em inglês', () => {
     expect(screen.getByText('Approved')).toBeInTheDocument();
     expect(screen.getByText('Under review by Meta')).toBeInTheDocument();
     ['Booking confirmation', 'Day-before reminder', 'Review request'].forEach((x) =>
-      expect(screen.getByText(x, { selector: 'h3' })).toBeInTheDocument());
+      expect(screen.getByText(x, { selector: 'h2' })).toBeInTheDocument());
     expect(screen.getByLabelText('Booking confirmation (PT)')).toHaveValue('Olá {nome_cliente}');
     expect(screen.getAllByRole('button', { name: 'Save' })).toHaveLength(3);
     expect(screen.getAllByText('Original text')).toHaveLength(3);
