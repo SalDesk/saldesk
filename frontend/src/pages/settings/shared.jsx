@@ -19,7 +19,7 @@ export function CopyButton({ text }) {
     });
   }
   return (
-    <Button variant="ghost" size="sm" icon={copied ? Check : Copy} onClick={doCopy}>
+    <Button variant="ghost" size="sm" className="min-h-11 md:min-h-0" icon={copied ? Check : Copy} onClick={doCopy}>
       {copied ? t('settings.shared.copied') : t('settings.shared.copy')}
     </Button>
   );

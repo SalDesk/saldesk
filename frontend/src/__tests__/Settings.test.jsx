@@ -1417,6 +1417,13 @@ describe('Definições: estilo Maré (Facturação e Perfil Público)', () => {
     expect(ultimoPut()).toEqual({ description: 'Outra' });
   });
 
+  it('o_botao_Copiar_tem_44px_no_telemovel_em_todos_os_usos', async () => {
+    await abrirPerfil();
+    const copiar = screen.getAllByRole('button', { name: 'Copiar' });
+    expect(copiar.length).toBeGreaterThanOrEqual(3);
+    copiar.forEach(b => expect(fichas(b)).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0'])));
+  });
+
   it('Perfil_Publico_os_botoes_soltos_tem_44px_no_telemovel', async () => {
     await abrirPerfil();
     ['Escolher logo', 'Adicionar pergunta'].forEach(n => expect(fichas(botao(n))).toEqual(expect.arrayContaining(['min-h-11', 'md:min-h-0'])));
